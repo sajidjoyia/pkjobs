@@ -16,112 +16,47 @@ import {
   GraduationCap,
   Calendar,
   Users,
-  Banknote,
   ArrowRight,
   Filter,
+  Loader2,
 } from "lucide-react";
+import { useJobs, Job } from "@/hooks/useJobs";
+import { useAuth } from "@/hooks/useAuth";
+import { isEligibleForJob } from "@/hooks/useProfile";
 
-// Mock data for jobs
-const mockJobs = [
-  {
-    id: "1",
-    title: "Assistant Sub Inspector (ASI)",
-    department: "Punjab Police",
-    education: "Bachelor's Degree",
-    ageLimit: "18-25 years",
-    gender: "Male",
-    province: "Punjab",
-    lastDate: "2024-02-15",
-    seats: 500,
-    totalCost: 2500,
-    status: "active",
-  },
-  {
-    id: "2",
-    title: "Junior Clerk",
-    department: "Federal Board of Revenue",
-    education: "Intermediate",
-    ageLimit: "18-30 years",
-    gender: "Both",
-    province: "All Pakistan",
-    lastDate: "2024-02-20",
-    seats: 200,
-    totalCost: 1800,
-    status: "active",
-  },
-  {
-    id: "3",
-    title: "Primary School Teacher (PST)",
-    department: "Education Department Sindh",
-    education: "Bachelor's Degree + B.Ed",
-    ageLimit: "21-35 years",
-    gender: "Female",
-    province: "Sindh",
-    lastDate: "2024-02-28",
-    seats: 1000,
-    totalCost: 2200,
-    status: "active",
-  },
-  {
-    id: "4",
-    title: "Constable",
-    department: "KPK Police",
-    education: "Matric",
-    ageLimit: "18-25 years",
-    gender: "Male",
-    province: "Khyber Pakhtunkhwa",
-    lastDate: "2024-03-05",
-    seats: 800,
-    totalCost: 1500,
-    status: "active",
-  },
-  {
-    id: "5",
-    title: "Data Entry Operator",
-    department: "NADRA",
-    education: "Intermediate + Computer Skills",
-    ageLimit: "18-28 years",
-    gender: "Both",
-    province: "All Pakistan",
-    lastDate: "2024-03-10",
-    seats: 150,
-    totalCost: 2000,
-    status: "active",
-  },
-  {
-    id: "6",
-    title: "Stenographer",
-    department: "Federal Government",
-    education: "Intermediate + 80 WPM",
-    ageLimit: "18-30 years",
-    gender: "Both",
-    province: "Islamabad",
-    lastDate: "2024-03-15",
-    seats: 75,
-    totalCost: 2300,
-    status: "active",
-  },
-];
+const educationLabels: Record<string, string> = {
+  matric: "Matric / SSC",
+  intermediate: "Intermediate",
+  bachelor: "Bachelor's Degree",
+  master: "Master's Degree",
+  phd: "PhD / Doctorate",
+};
 
 const Jobs = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProvince, setSelectedProvince] = useState<string>("");
   const [selectedEducation, setSelectedEducation] = useState<string>("");
 
-  const filteredJobs = mockJobs.filter((job) => {
-    const matchesSearch =
-      job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.department.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesProvince =
-      !selectedProvince ||
-      selectedProvince === "all" ||
-      job.province.toLowerCase().includes(selectedProvince.toLowerCase());
-    const matchesEducation =
-      !selectedEducation ||
-      selectedEducation === "all" ||
-      job.education.toLowerCase().includes(selectedEducation.toLowerCase());
-    return matchesSearch && matchesProvince && matchesEducation;
+  const { data: jobs, isLoading, error } = useJobs({
+    search: searchQuery,
+    province: selectedProvince,
+    education: selectedEducation,
   });
+
+  const { profile, user } = useAuth();
+
+  const getEligibilityBadge = (job: Job) => {
+    if (!user || !profile) return null;
+    
+    const { eligible } = isEligibleForJob(profile, job);
+    return (
+      <Badge className={eligible ? "bg-success" : "bg-destructive"}>
+        {eligible ? "Eligible" : "Not Eligible"}
+      </Badge>
+    );
+  };
+
+  const formatAgeRange = (min: number, max: number) => `${min}-${max} years`;
 
   return (
     <div className="py-8">
@@ -175,6 +110,7 @@ const Jobs = () => {
                 <SelectItem value="intermediate">Intermediate</SelectItem>
                 <SelectItem value="bachelor">Bachelor's</SelectItem>
                 <SelectItem value="master">Master's</SelectItem>
+                <SelectItem value="phd">PhD</SelectItem>
               </SelectContent>
             </Select>
             <Button
@@ -193,68 +129,85 @@ const Jobs = () => {
         {/* Results */}
         <div className="mb-4">
           <p className="text-sm text-muted-foreground">
-            Showing {filteredJobs.length} of {mockJobs.length} jobs
+            {isLoading ? "Loading..." : `Showing ${jobs?.length || 0} jobs`}
           </p>
         </div>
 
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="text-center py-12">
+            <p className="text-destructive">Failed to load jobs. Please try again.</p>
+          </div>
+        )}
+
         {/* Job Cards */}
-        <div className="grid gap-4">
-          {filteredJobs.map((job) => (
-            <div key={job.id} className="card-elevated p-6">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-start gap-3 mb-3">
-                    <div>
-                      <h3 className="text-xl font-semibold text-foreground">
-                        {job.title}
-                      </h3>
-                      <p className="text-muted-foreground">{job.department}</p>
+        {!isLoading && !error && (
+          <div className="grid gap-4">
+            {jobs?.map((job) => (
+              <div key={job.id} className="card-elevated p-6">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-start gap-3 mb-3">
+                      <div>
+                        <h3 className="text-xl font-semibold text-foreground">
+                          {job.title}
+                        </h3>
+                        <p className="text-muted-foreground">{job.department}</p>
+                      </div>
+                      <div className="flex gap-2 ml-auto lg:ml-0">
+                        <Badge variant="secondary">{job.total_seats} seats</Badge>
+                        {getEligibilityBadge(job)}
+                      </div>
                     </div>
-                    <Badge variant="secondary" className="ml-auto lg:ml-0">
-                      {job.seats} seats
-                    </Badge>
+
+                    <div className="flex flex-wrap gap-4 text-sm">
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <GraduationCap className="h-4 w-4" />
+                        {educationLabels[job.required_education] || job.required_education}
+                      </div>
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <Users className="h-4 w-4" />
+                        {formatAgeRange(job.min_age, job.max_age)}
+                      </div>
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <MapPin className="h-4 w-4" />
+                        {job.province || "All Pakistan"}
+                      </div>
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <Calendar className="h-4 w-4" />
+                        Last Date: {new Date(job.last_date).toLocaleDateString()}
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-4 text-sm">
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <GraduationCap className="h-4 w-4" />
-                      {job.education}
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <p className="text-sm text-muted-foreground">Total Cost</p>
+                      <p className="text-xl font-bold text-primary">
+                        Rs. {Number(job.total_fee).toLocaleString()}
+                      </p>
                     </div>
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <Users className="h-4 w-4" />
-                      {job.ageLimit}
-                    </div>
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <MapPin className="h-4 w-4" />
-                      {job.province}
-                    </div>
-                    <div className="flex items-center gap-1.5 text-muted-foreground">
-                      <Calendar className="h-4 w-4" />
-                      Last Date: {new Date(job.lastDate).toLocaleDateString()}
-                    </div>
+                    <Link to={`/jobs/${job.id}`}>
+                      <Button className="gap-2">
+                        View Details
+                        <ArrowRight className="h-4 w-4" />
+                      </Button>
+                    </Link>
                   </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <p className="text-sm text-muted-foreground">Total Cost</p>
-                    <p className="text-xl font-bold text-primary">
-                      Rs. {job.totalCost.toLocaleString()}
-                    </p>
-                  </div>
-                  <Link to={`/jobs/${job.id}`}>
-                    <Button className="gap-2">
-                      View Details
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </Link>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
-        {filteredJobs.length === 0 && (
+        {!isLoading && !error && jobs?.length === 0 && (
           <div className="text-center py-12">
             <p className="text-muted-foreground">
               No jobs found matching your criteria.

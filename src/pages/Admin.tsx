@@ -18,49 +18,121 @@ import {
   Briefcase,
   Users,
   FileText,
-  Settings,
   Trash2,
   Edit,
   Eye,
   Calculator,
+  Loader2,
+  XCircle,
+  CheckCircle,
 } from "lucide-react";
-
-// Mock data
-const mockJobs = [
-  {
-    id: "1",
-    title: "Assistant Sub Inspector (ASI)",
-    department: "Punjab Police",
-    seats: 500,
-    lastDate: "2024-02-15",
-    status: "active",
-    applications: 125,
-  },
-  {
-    id: "2",
-    title: "Junior Clerk",
-    department: "Federal Board of Revenue",
-    seats: 200,
-    lastDate: "2024-02-20",
-    status: "active",
-    applications: 89,
-  },
-];
+import { useAllJobs, useCreateJob, useDeleteJob, useToggleJobStatus, CreateJobInput } from "@/hooks/useJobs";
+import { useAllApplications, useUpdateApplicationStatus } from "@/hooks/useApplications";
+import { useAuth } from "@/hooks/useAuth";
 
 const Admin = () => {
+  const { isAdmin } = useAuth();
+  const { data: jobs, isLoading: jobsLoading } = useAllJobs();
+  const { data: applications, isLoading: appsLoading } = useAllApplications();
+  const createJob = useCreateJob();
+  const deleteJob = useDeleteJob();
+  const toggleJobStatus = useToggleJobStatus();
+  const updateApplicationStatus = useUpdateApplicationStatus();
+
   const [activeTab, setActiveTab] = useState("jobs");
   const [showAddJob, setShowAddJob] = useState(false);
-  const [fees, setFees] = useState({
-    challan: "",
-    postOffice: "",
-    photocopy: "",
-    expertService: "",
+  const [formData, setFormData] = useState({
+    title: "",
+    department: "",
+    description: "",
+    required_education: "",
+    min_age: "18",
+    max_age: "35",
+    gender_requirement: "",
+    province: "",
+    domicile: "",
+    total_seats: "1",
+    last_date: "",
+    bank_challan_fee: "",
+    post_office_fee: "",
+    photocopy_fee: "",
+    expert_fee: "",
   });
 
-  const totalFees = Object.values(fees).reduce(
-    (sum, fee) => sum + (parseInt(fee) || 0),
-    0
-  );
+  const totalFees = 
+    (parseInt(formData.bank_challan_fee) || 0) +
+    (parseInt(formData.post_office_fee) || 0) +
+    (parseInt(formData.photocopy_fee) || 0) +
+    (parseInt(formData.expert_fee) || 0);
+
+  const handleChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.title || !formData.department || !formData.required_education || !formData.last_date) {
+      return;
+    }
+
+    const jobData: CreateJobInput = {
+      title: formData.title,
+      department: formData.department,
+      description: formData.description || undefined,
+      required_education: formData.required_education as any,
+      min_age: parseInt(formData.min_age) || 18,
+      max_age: parseInt(formData.max_age) || 35,
+      gender_requirement: formData.gender_requirement ? formData.gender_requirement as any : null,
+      province: formData.province || undefined,
+      domicile: formData.domicile || undefined,
+      total_seats: parseInt(formData.total_seats) || 1,
+      last_date: formData.last_date,
+      bank_challan_fee: parseInt(formData.bank_challan_fee) || 0,
+      post_office_fee: parseInt(formData.post_office_fee) || 0,
+      photocopy_fee: parseInt(formData.photocopy_fee) || 0,
+      expert_fee: parseInt(formData.expert_fee) || 0,
+    };
+
+    try {
+      await createJob.mutateAsync(jobData);
+      setShowAddJob(false);
+      setFormData({
+        title: "",
+        department: "",
+        description: "",
+        required_education: "",
+        min_age: "18",
+        max_age: "35",
+        gender_requirement: "",
+        province: "",
+        domicile: "",
+        total_seats: "1",
+        last_date: "",
+        bank_challan_fee: "",
+        post_office_fee: "",
+        photocopy_fee: "",
+        expert_fee: "",
+      });
+    } catch (error) {
+      // Error handled in mutation
+    }
+  };
+
+  const handleDeleteJob = async (id: string) => {
+    if (confirm("Are you sure you want to delete this job?")) {
+      await deleteJob.mutateAsync(id);
+    }
+  };
+
+  const handleToggleStatus = async (id: string, currentStatus: boolean) => {
+    await toggleJobStatus.mutateAsync({ id, is_active: !currentStatus });
+  };
+
+  // Stats
+  const activeJobs = jobs?.filter((j) => j.is_active).length || 0;
+  const totalApplications = applications?.length || 0;
+  const totalRevenue = applications?.reduce((sum, app) => sum + (Number(app.payment_amount) || 0), 0) || 0;
 
   return (
     <div className="py-8">
@@ -89,7 +161,7 @@ const Admin = () => {
                 <Briefcase className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">6</p>
+                <p className="text-2xl font-bold text-foreground">{activeJobs}</p>
                 <p className="text-sm text-muted-foreground">Active Jobs</p>
               </div>
             </div>
@@ -100,8 +172,8 @@ const Admin = () => {
                 <Users className="h-5 w-5 text-info" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">1,245</p>
-                <p className="text-sm text-muted-foreground">Total Users</p>
+                <p className="text-2xl font-bold text-foreground">{jobs?.length || 0}</p>
+                <p className="text-sm text-muted-foreground">Total Jobs</p>
               </div>
             </div>
           </div>
@@ -111,7 +183,7 @@ const Admin = () => {
                 <FileText className="h-5 w-5 text-success" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">214</p>
+                <p className="text-2xl font-bold text-foreground">{totalApplications}</p>
                 <p className="text-sm text-muted-foreground">Applications</p>
               </div>
             </div>
@@ -122,7 +194,7 @@ const Admin = () => {
                 <Calculator className="h-5 w-5 text-secondary-foreground" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">Rs. 534K</p>
+                <p className="text-2xl font-bold text-foreground">Rs. {(totalRevenue / 1000).toFixed(0)}K</p>
                 <p className="text-sm text-muted-foreground">Revenue</p>
               </div>
             </div>
@@ -135,18 +207,30 @@ const Admin = () => {
             <h2 className="text-lg font-semibold text-foreground mb-6">
               Add New Government Job
             </h2>
-            <form className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
                 {/* Basic Info */}
                 <div className="space-y-4">
                   <h3 className="font-medium text-foreground">Job Details</h3>
                   <div className="space-y-2">
-                    <Label htmlFor="title">Job Title</Label>
-                    <Input id="title" placeholder="e.g., Assistant Sub Inspector" />
+                    <Label htmlFor="title">Job Title *</Label>
+                    <Input 
+                      id="title" 
+                      placeholder="e.g., Assistant Sub Inspector" 
+                      value={formData.title}
+                      onChange={(e) => handleChange("title", e.target.value)}
+                      required
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="department">Department</Label>
-                    <Input id="department" placeholder="e.g., Punjab Police" />
+                    <Label htmlFor="department">Department *</Label>
+                    <Input 
+                      id="department" 
+                      placeholder="e.g., Punjab Police"
+                      value={formData.department}
+                      onChange={(e) => handleChange("department", e.target.value)}
+                      required
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="description">Description</Label>
@@ -154,28 +238,41 @@ const Admin = () => {
                       id="description"
                       placeholder="Job description and responsibilities..."
                       rows={3}
+                      value={formData.description}
+                      onChange={(e) => handleChange("description", e.target.value)}
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="seats">Total Seats</Label>
-                      <Input id="seats" type="number" placeholder="500" />
+                      <Label htmlFor="seats">Total Seats *</Label>
+                      <Input 
+                        id="seats" 
+                        type="number" 
+                        placeholder="500"
+                        value={formData.total_seats}
+                        onChange={(e) => handleChange("total_seats", e.target.value)}
+                        required
+                      />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="bps">BPS Grade</Label>
-                      <Input id="bps" placeholder="BPS-11" />
+                      <Label htmlFor="lastDate">Last Date *</Label>
+                      <Input 
+                        id="lastDate" 
+                        type="date"
+                        value={formData.last_date}
+                        onChange={(e) => handleChange("last_date", e.target.value)}
+                        required
+                      />
                     </div>
                   </div>
                 </div>
 
                 {/* Eligibility */}
                 <div className="space-y-4">
-                  <h3 className="font-medium text-foreground">
-                    Eligibility Criteria
-                  </h3>
+                  <h3 className="font-medium text-foreground">Eligibility Criteria</h3>
                   <div className="space-y-2">
-                    <Label htmlFor="education">Required Education</Label>
-                    <Select>
+                    <Label htmlFor="education">Required Education *</Label>
+                    <Select value={formData.required_education} onValueChange={(v) => handleChange("required_education", v)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select education level" />
                       </SelectTrigger>
@@ -184,51 +281,71 @@ const Admin = () => {
                         <SelectItem value="intermediate">Intermediate</SelectItem>
                         <SelectItem value="bachelor">Bachelor's Degree</SelectItem>
                         <SelectItem value="master">Master's Degree</SelectItem>
+                        <SelectItem value="phd">PhD / Doctorate</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="minAge">Minimum Age</Label>
-                      <Input id="minAge" type="number" placeholder="18" />
+                      <Input 
+                        id="minAge" 
+                        type="number" 
+                        placeholder="18"
+                        value={formData.min_age}
+                        onChange={(e) => handleChange("min_age", e.target.value)}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="maxAge">Maximum Age</Label>
-                      <Input id="maxAge" type="number" placeholder="30" />
+                      <Input 
+                        id="maxAge" 
+                        type="number" 
+                        placeholder="35"
+                        value={formData.max_age}
+                        onChange={(e) => handleChange("max_age", e.target.value)}
+                      />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="gender">Gender Requirement</Label>
-                    <Select>
+                    <Select value={formData.gender_requirement} onValueChange={(v) => handleChange("gender_requirement", v)}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select gender" />
+                        <SelectValue placeholder="Both Male & Female" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="both">Both Male & Female</SelectItem>
+                        <SelectItem value="">Both Male & Female</SelectItem>
                         <SelectItem value="male">Male Only</SelectItem>
                         <SelectItem value="female">Female Only</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="province">Province / Domicile</Label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select province" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Pakistan</SelectItem>
-                        <SelectItem value="punjab">Punjab</SelectItem>
-                        <SelectItem value="sindh">Sindh</SelectItem>
-                        <SelectItem value="kpk">Khyber Pakhtunkhwa</SelectItem>
-                        <SelectItem value="balochistan">Balochistan</SelectItem>
-                        <SelectItem value="islamabad">Islamabad</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastDate">Last Date to Apply</Label>
-                    <Input id="lastDate" type="date" />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="province">Province</Label>
+                      <Select value={formData.province} onValueChange={(v) => handleChange("province", v)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="All Pakistan" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">All Pakistan</SelectItem>
+                          <SelectItem value="Punjab">Punjab</SelectItem>
+                          <SelectItem value="Sindh">Sindh</SelectItem>
+                          <SelectItem value="Khyber Pakhtunkhwa">KPK</SelectItem>
+                          <SelectItem value="Balochistan">Balochistan</SelectItem>
+                          <SelectItem value="Islamabad">Islamabad</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="domicile">Domicile</Label>
+                      <Input 
+                        id="domicile" 
+                        placeholder="e.g., Lahore"
+                        value={formData.domicile}
+                        onChange={(e) => handleChange("domicile", e.target.value)}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -237,9 +354,7 @@ const Admin = () => {
 
               {/* Fees */}
               <div className="space-y-4">
-                <h3 className="font-medium text-foreground">
-                  Fee Breakdown (in PKR)
-                </h3>
+                <h3 className="font-medium text-foreground">Fee Breakdown (in PKR)</h3>
                 <div className="grid md:grid-cols-4 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="challan">Bank Challan Fee</Label>
@@ -247,10 +362,8 @@ const Admin = () => {
                       id="challan"
                       type="number"
                       placeholder="500"
-                      value={fees.challan}
-                      onChange={(e) =>
-                        setFees({ ...fees, challan: e.target.value })
-                      }
+                      value={formData.bank_challan_fee}
+                      onChange={(e) => handleChange("bank_challan_fee", e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
@@ -259,10 +372,8 @@ const Admin = () => {
                       id="postOffice"
                       type="number"
                       placeholder="300"
-                      value={fees.postOffice}
-                      onChange={(e) =>
-                        setFees({ ...fees, postOffice: e.target.value })
-                      }
+                      value={formData.post_office_fee}
+                      onChange={(e) => handleChange("post_office_fee", e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
@@ -271,10 +382,8 @@ const Admin = () => {
                       id="photocopy"
                       type="number"
                       placeholder="200"
-                      value={fees.photocopy}
-                      onChange={(e) =>
-                        setFees({ ...fees, photocopy: e.target.value })
-                      }
+                      value={formData.photocopy_fee}
+                      onChange={(e) => handleChange("photocopy_fee", e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
@@ -283,18 +392,14 @@ const Admin = () => {
                       id="expertService"
                       type="number"
                       placeholder="1500"
-                      value={fees.expertService}
-                      onChange={(e) =>
-                        setFees({ ...fees, expertService: e.target.value })
-                      }
+                      value={formData.expert_fee}
+                      onChange={(e) => handleChange("expert_fee", e.target.value)}
                     />
                   </div>
                 </div>
                 <div className="flex items-center gap-2 p-4 rounded-lg bg-primary/10">
                   <Calculator className="h-5 w-5 text-primary" />
-                  <span className="font-medium text-foreground">
-                    Total Calculated Cost:
-                  </span>
+                  <span className="font-medium text-foreground">Total Calculated Cost:</span>
                   <span className="text-xl font-bold text-primary">
                     Rs. {totalFees.toLocaleString()}
                   </span>
@@ -302,12 +407,11 @@ const Admin = () => {
               </div>
 
               <div className="flex gap-3">
-                <Button type="submit">Add Job</Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowAddJob(false)}
-                >
+                <Button type="submit" disabled={createJob.isPending}>
+                  {createJob.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  Add Job
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setShowAddJob(false)}>
                   Cancel
                 </Button>
               </div>
@@ -326,104 +430,158 @@ const Admin = () => {
               <FileText className="h-4 w-4" />
               Applications
             </TabsTrigger>
-            <TabsTrigger value="users" className="gap-2">
-              <Users className="h-4 w-4" />
-              Users
-            </TabsTrigger>
           </TabsList>
 
           {/* Jobs Tab */}
           <TabsContent value="jobs">
-            <div className="card-elevated overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-muted/50">
-                  <tr>
-                    <th className="text-left p-4 font-medium text-foreground">
-                      Job Title
-                    </th>
-                    <th className="text-left p-4 font-medium text-foreground">
-                      Department
-                    </th>
-                    <th className="text-left p-4 font-medium text-foreground">
-                      Seats
-                    </th>
-                    <th className="text-left p-4 font-medium text-foreground">
-                      Last Date
-                    </th>
-                    <th className="text-left p-4 font-medium text-foreground">
-                      Applications
-                    </th>
-                    <th className="text-left p-4 font-medium text-foreground">
-                      Status
-                    </th>
-                    <th className="text-right p-4 font-medium text-foreground">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {mockJobs.map((job) => (
-                    <tr key={job.id} className="border-t border-border">
-                      <td className="p-4 font-medium text-foreground">
-                        {job.title}
-                      </td>
-                      <td className="p-4 text-muted-foreground">
-                        {job.department}
-                      </td>
-                      <td className="p-4 text-muted-foreground">{job.seats}</td>
-                      <td className="p-4 text-muted-foreground">
-                        {new Date(job.lastDate).toLocaleDateString()}
-                      </td>
-                      <td className="p-4 text-muted-foreground">
-                        {job.applications}
-                      </td>
-                      <td className="p-4">
-                        <Badge className="bg-success">{job.status}</Badge>
-                      </td>
-                      <td className="p-4">
-                        <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="icon">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon">
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            {jobsLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : jobs?.length === 0 ? (
+              <div className="card-elevated p-8 text-center">
+                <Briefcase className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">No Jobs Yet</h3>
+                <p className="text-muted-foreground">Add your first job posting above.</p>
+              </div>
+            ) : (
+              <div className="card-elevated overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="text-left p-4 font-medium text-foreground">Job Title</th>
+                        <th className="text-left p-4 font-medium text-foreground">Department</th>
+                        <th className="text-left p-4 font-medium text-foreground">Seats</th>
+                        <th className="text-left p-4 font-medium text-foreground">Last Date</th>
+                        <th className="text-left p-4 font-medium text-foreground">Fee</th>
+                        <th className="text-left p-4 font-medium text-foreground">Status</th>
+                        <th className="text-right p-4 font-medium text-foreground">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {jobs?.map((job) => (
+                        <tr key={job.id} className="border-t border-border">
+                          <td className="p-4 font-medium text-foreground">{job.title}</td>
+                          <td className="p-4 text-muted-foreground">{job.department}</td>
+                          <td className="p-4 text-muted-foreground">{job.total_seats}</td>
+                          <td className="p-4 text-muted-foreground">
+                            {new Date(job.last_date).toLocaleDateString()}
+                          </td>
+                          <td className="p-4 text-muted-foreground">
+                            Rs. {Number(job.total_fee).toLocaleString()}
+                          </td>
+                          <td className="p-4">
+                            <Badge className={job.is_active ? "bg-success" : "bg-muted"}>
+                              {job.is_active ? "Active" : "Inactive"}
+                            </Badge>
+                          </td>
+                          <td className="p-4">
+                            <div className="flex justify-end gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => handleToggleStatus(job.id, job.is_active)}
+                              >
+                                {job.is_active ? (
+                                  <XCircle className="h-4 w-4 text-warning" />
+                                ) : (
+                                  <CheckCircle className="h-4 w-4 text-success" />
+                                )}
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => handleDeleteJob(job.id)}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </TabsContent>
 
           {/* Applications Tab */}
           <TabsContent value="applications">
-            <div className="card-elevated p-8 text-center">
-              <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-foreground mb-2">
-                Application Management
-              </h3>
-              <p className="text-muted-foreground">
-                View and manage all user applications here
-              </p>
-            </div>
-          </TabsContent>
-
-          {/* Users Tab */}
-          <TabsContent value="users">
-            <div className="card-elevated p-8 text-center">
-              <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-foreground mb-2">
-                User Management
-              </h3>
-              <p className="text-muted-foreground">
-                View and manage registered users here
-              </p>
-            </div>
+            {appsLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : applications?.length === 0 ? (
+              <div className="card-elevated p-8 text-center">
+                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">No Applications Yet</h3>
+                <p className="text-muted-foreground">Applications will appear here once users start applying.</p>
+              </div>
+            ) : (
+              <div className="card-elevated overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="text-left p-4 font-medium text-foreground">Job</th>
+                        <th className="text-left p-4 font-medium text-foreground">Applied</th>
+                        <th className="text-left p-4 font-medium text-foreground">Amount</th>
+                        <th className="text-left p-4 font-medium text-foreground">Status</th>
+                        <th className="text-right p-4 font-medium text-foreground">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {applications?.map((app) => (
+                        <tr key={app.id} className="border-t border-border">
+                          <td className="p-4">
+                            <div>
+                              <p className="font-medium text-foreground">{app.job?.title}</p>
+                              <p className="text-sm text-muted-foreground">{app.job?.department}</p>
+                            </div>
+                          </td>
+                          <td className="p-4 text-muted-foreground">
+                            {new Date(app.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="p-4 text-muted-foreground">
+                            Rs. {Number(app.payment_amount).toLocaleString()}
+                          </td>
+                          <td className="p-4">
+                            <Select 
+                              value={app.status}
+                              onValueChange={(value) => updateApplicationStatus.mutate({ 
+                                id: app.id, 
+                                status: value as any 
+                              })}
+                            >
+                              <SelectTrigger className="w-[180px]">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="pending">Pending</SelectItem>
+                                <SelectItem value="payment_received">Payment Received</SelectItem>
+                                <SelectItem value="expert_assigned">Expert Assigned</SelectItem>
+                                <SelectItem value="in_progress">In Progress</SelectItem>
+                                <SelectItem value="applied">Applied</SelectItem>
+                                <SelectItem value="completed">Completed</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </td>
+                          <td className="p-4">
+                            <div className="flex justify-end gap-2">
+                              <Button variant="ghost" size="icon">
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>
