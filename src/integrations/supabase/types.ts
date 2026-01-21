@@ -14,16 +14,248 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      applications: {
+        Row: {
+          created_at: string
+          expert_id: string | null
+          id: string
+          job_id: string
+          notes: string | null
+          payment_amount: number | null
+          payment_date: string | null
+          receipt_url: string | null
+          status: Database["public"]["Enums"]["application_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expert_id?: string | null
+          id?: string
+          job_id: string
+          notes?: string | null
+          payment_amount?: number | null
+          payment_date?: string | null
+          receipt_url?: string | null
+          status?: Database["public"]["Enums"]["application_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expert_id?: string | null
+          id?: string
+          job_id?: string
+          notes?: string | null
+          payment_amount?: number | null
+          payment_date?: string | null
+          receipt_url?: string | null
+          status?: Database["public"]["Enums"]["application_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applications_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jobs: {
+        Row: {
+          bank_challan_fee: number
+          created_at: string
+          created_by: string | null
+          department: string
+          description: string | null
+          domicile: string | null
+          expert_fee: number
+          gender_requirement: Database["public"]["Enums"]["gender_type"] | null
+          id: string
+          is_active: boolean
+          last_date: string
+          max_age: number
+          min_age: number
+          photocopy_fee: number
+          post_office_fee: number
+          province: string | null
+          required_education: Database["public"]["Enums"]["education_level"]
+          title: string
+          total_fee: number | null
+          total_seats: number
+          updated_at: string
+        }
+        Insert: {
+          bank_challan_fee?: number
+          created_at?: string
+          created_by?: string | null
+          department: string
+          description?: string | null
+          domicile?: string | null
+          expert_fee?: number
+          gender_requirement?: Database["public"]["Enums"]["gender_type"] | null
+          id?: string
+          is_active?: boolean
+          last_date: string
+          max_age?: number
+          min_age?: number
+          photocopy_fee?: number
+          post_office_fee?: number
+          province?: string | null
+          required_education: Database["public"]["Enums"]["education_level"]
+          title: string
+          total_fee?: number | null
+          total_seats?: number
+          updated_at?: string
+        }
+        Update: {
+          bank_challan_fee?: number
+          created_at?: string
+          created_by?: string | null
+          department?: string
+          description?: string | null
+          domicile?: string | null
+          expert_fee?: number
+          gender_requirement?: Database["public"]["Enums"]["gender_type"] | null
+          id?: string
+          is_active?: boolean
+          last_date?: string
+          max_age?: number
+          min_age?: number
+          photocopy_fee?: number
+          post_office_fee?: number
+          province?: string | null
+          required_education?: Database["public"]["Enums"]["education_level"]
+          title?: string
+          total_fee?: number | null
+          total_seats?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          date_of_birth: string | null
+          domicile: string | null
+          education: Database["public"]["Enums"]["education_level"] | null
+          full_name: string
+          gender: Database["public"]["Enums"]["gender_type"] | null
+          id: string
+          phone: string | null
+          province: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          domicile?: string | null
+          education?: Database["public"]["Enums"]["education_level"] | null
+          full_name: string
+          gender?: Database["public"]["Enums"]["gender_type"] | null
+          id?: string
+          phone?: string | null
+          province?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          domicile?: string | null
+          education?: Database["public"]["Enums"]["education_level"] | null
+          full_name?: string
+          gender?: Database["public"]["Enums"]["gender_type"] | null
+          id?: string
+          phone?: string | null
+          province?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_documents: {
+        Row: {
+          created_at: string
+          document_type: string
+          extracted_data: Json | null
+          file_name: string
+          file_url: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_type: string
+          extracted_data?: Json | null
+          file_name: string
+          file_url: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          document_type?: string
+          extracted_data?: Json | null
+          file_name?: string
+          file_url?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user" | "expert"
+      application_status:
+        | "pending"
+        | "payment_received"
+        | "expert_assigned"
+        | "in_progress"
+        | "applied"
+        | "completed"
+      education_level: "matric" | "intermediate" | "bachelor" | "master" | "phd"
+      gender_type: "male" | "female" | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +382,18 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user", "expert"],
+      application_status: [
+        "pending",
+        "payment_received",
+        "expert_assigned",
+        "in_progress",
+        "applied",
+        "completed",
+      ],
+      education_level: ["matric", "intermediate", "bachelor", "master", "phd"],
+      gender_type: ["male", "female", "other"],
+    },
   },
 } as const

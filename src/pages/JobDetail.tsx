@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -14,47 +14,90 @@ import {
   Building2,
   Clock,
   FileText,
+  Loader2,
+  XCircle,
 } from "lucide-react";
+import { useJob } from "@/hooks/useJobs";
+import { useAuth } from "@/hooks/useAuth";
+import { useCreateApplication, useCheckIfApplied } from "@/hooks/useApplications";
+import { isEligibleForJob } from "@/hooks/useProfile";
+import { toast } from "sonner";
 
-// Mock job data
-const getJobById = (id: string) => ({
-  id,
-  title: "Assistant Sub Inspector (ASI)",
-  department: "Punjab Police",
-  organization: "Government of Punjab",
-  description:
-    "Punjab Police is seeking qualified candidates for the position of Assistant Sub Inspector (ASI). The selected candidates will be responsible for maintaining law and order, investigating crimes, and ensuring public safety.",
-  requirements: [
-    "Bachelor's degree from HEC recognized university",
-    "Height: 5'7\" for male, 5'2\" for female",
-    "Chest: 33\"-35\" for male",
-    "Physical fitness test required",
-    "No criminal record",
-  ],
-  education: "Bachelor's Degree",
-  ageLimit: "18-25 years",
-  gender: "Male",
-  province: "Punjab",
-  domicile: "Punjab (Any District)",
-  lastDate: "2024-02-15",
-  seats: 500,
-  bps: "BPS-11",
-  fees: {
-    challan: 500,
-    postOffice: 300,
-    photocopy: 200,
-    expertService: 1500,
-  },
-  totalCost: 2500,
-  status: "active",
-  postedDate: "2024-01-15",
-});
+const educationLabels: Record<string, string> = {
+  matric: "Matric / SSC",
+  intermediate: "Intermediate",
+  bachelor: "Bachelor's Degree",
+  master: "Master's Degree",
+  phd: "PhD / Doctorate",
+};
 
 const JobDetail = () => {
   const { id } = useParams();
-  const job = getJobById(id || "1");
+  const navigate = useNavigate();
+  const { data: job, isLoading, error } = useJob(id);
+  const { user, profile } = useAuth();
+  const { data: hasApplied } = useCheckIfApplied(id);
+  const createApplication = useCreateApplication();
 
-  const isEligible = true; // This would come from user profile matching
+  if (isLoading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (error || !job) {
+    return (
+      <div className="py-8">
+        <div className="container max-w-5xl">
+          <Link
+            to="/jobs"
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Jobs
+          </Link>
+          <div className="text-center py-12">
+            <p className="text-destructive">Job not found or failed to load.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const eligibility = profile
+    ? isEligibleForJob(profile, job)
+    : { eligible: false, reasons: ["Please complete your profile to check eligibility"] };
+
+  const handleApply = async () => {
+    if (!user) {
+      toast.error("Please sign in to apply for this job");
+      navigate("/auth");
+      return;
+    }
+
+    if (!profile) {
+      toast.error("Please complete your profile before applying");
+      navigate("/dashboard");
+      return;
+    }
+
+    if (!eligibility.eligible) {
+      toast.error("You are not eligible for this job");
+      return;
+    }
+
+    try {
+      await createApplication.mutateAsync({
+        job_id: job.id,
+        payment_amount: Number(job.total_fee),
+      });
+      navigate("/dashboard");
+    } catch (error) {
+      // Error is handled in the mutation
+    }
+  };
 
   return (
     <div className="py-8">
@@ -80,57 +123,44 @@ const JobDetail = () => {
                   </h1>
                   <p className="text-lg text-muted-foreground">{job.department}</p>
                 </div>
-                <Badge className={isEligible ? "bg-success" : "bg-destructive"}>
-                  {isEligible ? "Eligible" : "Not Eligible"}
+                <Badge className={eligibility.eligible ? "bg-success" : "bg-destructive"}>
+                  {eligibility.eligible ? "Eligible" : "Not Eligible"}
                 </Badge>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="flex items-center gap-2 text-sm">
                   <Building2 className="h-4 w-4 text-primary" />
-                  <span className="text-muted-foreground">{job.bps}</span>
+                  <span className="text-muted-foreground">{job.total_seats} seats</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Users className="h-4 w-4 text-primary" />
-                  <span className="text-muted-foreground">{job.seats} seats</span>
+                  <span className="text-muted-foreground">{job.min_age}-{job.max_age} years</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Calendar className="h-4 w-4 text-primary" />
                   <span className="text-muted-foreground">
-                    Due: {new Date(job.lastDate).toLocaleDateString()}
+                    Due: {new Date(job.last_date).toLocaleDateString()}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Clock className="h-4 w-4 text-primary" />
                   <span className="text-muted-foreground">
-                    Posted: {new Date(job.postedDate).toLocaleDateString()}
+                    Posted: {new Date(job.created_at).toLocaleDateString()}
                   </span>
                 </div>
               </div>
             </div>
 
             {/* Description */}
-            <div className="card-elevated p-6">
-              <h2 className="text-lg font-semibold text-foreground mb-4">
-                Job Description
-              </h2>
-              <p className="text-muted-foreground">{job.description}</p>
-            </div>
-
-            {/* Requirements */}
-            <div className="card-elevated p-6">
-              <h2 className="text-lg font-semibold text-foreground mb-4">
-                Requirements
-              </h2>
-              <ul className="space-y-3">
-                {job.requirements.map((req, index) => (
-                  <li key={index} className="flex items-start gap-3">
-                    <CheckCircle className="h-5 w-5 text-success mt-0.5 shrink-0" />
-                    <span className="text-muted-foreground">{req}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {job.description && (
+              <div className="card-elevated p-6">
+                <h2 className="text-lg font-semibold text-foreground mb-4">
+                  Job Description
+                </h2>
+                <p className="text-muted-foreground whitespace-pre-wrap">{job.description}</p>
+              </div>
+            )}
 
             {/* Eligibility */}
             <div className="card-elevated p-6">
@@ -142,31 +172,55 @@ const JobDetail = () => {
                   <GraduationCap className="h-5 w-5 text-primary" />
                   <div>
                     <p className="text-sm text-muted-foreground">Education</p>
-                    <p className="font-medium text-foreground">{job.education}</p>
+                    <p className="font-medium text-foreground">
+                      {educationLabels[job.required_education] || job.required_education}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
                   <Users className="h-5 w-5 text-primary" />
                   <div>
                     <p className="text-sm text-muted-foreground">Age Limit</p>
-                    <p className="font-medium text-foreground">{job.ageLimit}</p>
+                    <p className="font-medium text-foreground">{job.min_age}-{job.max_age} years</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
                   <FileText className="h-5 w-5 text-primary" />
                   <div>
                     <p className="text-sm text-muted-foreground">Gender</p>
-                    <p className="font-medium text-foreground">{job.gender}</p>
+                    <p className="font-medium text-foreground">
+                      {job.gender_requirement ? job.gender_requirement.charAt(0).toUpperCase() + job.gender_requirement.slice(1) : "Both Male & Female"}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
                   <MapPin className="h-5 w-5 text-primary" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Domicile</p>
-                    <p className="font-medium text-foreground">{job.domicile}</p>
+                    <p className="text-sm text-muted-foreground">Province / Domicile</p>
+                    <p className="font-medium text-foreground">
+                      {job.province || "All Pakistan"} {job.domicile && `(${job.domicile})`}
+                    </p>
                   </div>
                 </div>
               </div>
+
+              {/* Eligibility Reasons */}
+              {!eligibility.eligible && eligibility.reasons.length > 0 && (
+                <div className="mt-4 p-4 rounded-lg bg-destructive/10 border border-destructive/20">
+                  <h3 className="font-medium text-foreground mb-2 flex items-center gap-2">
+                    <XCircle className="h-4 w-4 text-destructive" />
+                    Not Eligible Because:
+                  </h3>
+                  <ul className="space-y-1">
+                    {eligibility.reasons.map((reason, index) => (
+                      <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
+                        <span>•</span>
+                        {reason}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
 
@@ -181,41 +235,57 @@ const JobDetail = () => {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Bank Challan Fee</span>
                   <span className="font-medium">
-                    Rs. {job.fees.challan.toLocaleString()}
+                    Rs. {Number(job.bank_challan_fee).toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Post Office Fee</span>
                   <span className="font-medium">
-                    Rs. {job.fees.postOffice.toLocaleString()}
+                    Rs. {Number(job.post_office_fee).toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Photocopy Charges</span>
                   <span className="font-medium">
-                    Rs. {job.fees.photocopy.toLocaleString()}
+                    Rs. {Number(job.photocopy_fee).toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Expert Service Fee</span>
                   <span className="font-medium">
-                    Rs. {job.fees.expertService.toLocaleString()}
+                    Rs. {Number(job.expert_fee).toLocaleString()}
                   </span>
                 </div>
                 <Separator />
                 <div className="flex justify-between text-lg">
                   <span className="font-semibold text-foreground">Total</span>
                   <span className="font-bold text-primary">
-                    Rs. {job.totalCost.toLocaleString()}
+                    Rs. {Number(job.total_fee).toLocaleString()}
                   </span>
                 </div>
               </div>
 
               <div className="mt-6 space-y-3">
-                <Button className="w-full" size="lg">
-                  <Banknote className="h-5 w-5 mr-2" />
-                  Apply Now - Rs. {job.totalCost.toLocaleString()}
-                </Button>
+                {hasApplied ? (
+                  <Button className="w-full" size="lg" disabled>
+                    <CheckCircle className="h-5 w-5 mr-2" />
+                    Already Applied
+                  </Button>
+                ) : (
+                  <Button 
+                    className="w-full" 
+                    size="lg"
+                    onClick={handleApply}
+                    disabled={createApplication.isPending || (!user || (user && !eligibility.eligible))}
+                  >
+                    {createApplication.isPending ? (
+                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    ) : (
+                      <Banknote className="h-5 w-5 mr-2" />
+                    )}
+                    Apply Now - Rs. {Number(job.total_fee).toLocaleString()}
+                  </Button>
+                )}
                 <p className="text-xs text-center text-muted-foreground">
                   Expert will handle complete application process
                 </p>
@@ -230,7 +300,7 @@ const JobDetail = () => {
                       Application Deadline
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      Apply before {new Date(job.lastDate).toLocaleDateString()} to
+                      Apply before {new Date(job.last_date).toLocaleDateString()} to
                       avoid missing this opportunity.
                     </p>
                   </div>

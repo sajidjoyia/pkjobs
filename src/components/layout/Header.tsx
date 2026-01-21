@@ -1,19 +1,26 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Briefcase, User, Shield } from "lucide-react";
+import { Menu, X, Briefcase, User, Shield, LogOut } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, isAdmin, signOut, loading } = useAuth();
 
   const navLinks = [
     { href: "/", label: "Home" },
     { href: "/jobs", label: "Browse Jobs" },
-    { href: "/how-it-works", label: "How It Works" },
   ];
 
   const isActive = (path: string) => location.pathname === path;
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -46,32 +53,42 @@ const Header = () => {
 
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center gap-3">
-          <Link to="/admin">
-            <Button variant="ghost" size="sm" className="gap-2">
-              <Shield className="h-4 w-4" />
-              Admin
-            </Button>
-          </Link>
-          <Link to="/auth">
-            <Button variant="outline" size="sm">
-              Sign In
-            </Button>
-          </Link>
-          <Link to="/auth?mode=register">
-            <Button size="sm">Get Started</Button>
-          </Link>
+          {!loading && user ? (
+            <>
+              {isAdmin && (
+                <Link to="/admin">
+                  <Button variant="ghost" size="sm" className="gap-2">
+                    <Shield className="h-4 w-4" />
+                    Admin
+                  </Button>
+                </Link>
+              )}
+              <Link to="/dashboard">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <User className="h-4 w-4" />
+                  Dashboard
+                </Button>
+              </Link>
+              <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-2">
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </Button>
+            </>
+          ) : (
+            <>
+              <Link to="/auth">
+                <Button variant="outline" size="sm">Sign In</Button>
+              </Link>
+              <Link to="/auth?mode=register">
+                <Button size="sm">Get Started</Button>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
-        <button
-          className="md:hidden p-2"
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-        >
-          {isMenuOpen ? (
-            <X className="h-6 w-6 text-foreground" />
-          ) : (
-            <Menu className="h-6 w-6 text-foreground" />
-          )}
+        <button className="md:hidden p-2" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+          {isMenuOpen ? <X className="h-6 w-6 text-foreground" /> : <Menu className="h-6 w-6 text-foreground" />}
         </button>
       </div>
 
@@ -84,30 +101,39 @@ const Header = () => {
                 key={link.href}
                 to={link.href}
                 onClick={() => setIsMenuOpen(false)}
-                className={`text-sm font-medium py-2 ${
-                  isActive(link.href)
-                    ? "text-primary"
-                    : "text-muted-foreground"
-                }`}
+                className={`text-sm font-medium py-2 ${isActive(link.href) ? "text-primary" : "text-muted-foreground"}`}
               >
                 {link.label}
               </Link>
             ))}
             <div className="flex flex-col gap-2 pt-4 border-t border-border">
-              <Link to="/admin" onClick={() => setIsMenuOpen(false)}>
-                <Button variant="ghost" className="w-full justify-start gap-2">
-                  <Shield className="h-4 w-4" />
-                  Admin Panel
-                </Button>
-              </Link>
-              <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
-                <Button variant="outline" className="w-full">
-                  Sign In
-                </Button>
-              </Link>
-              <Link to="/auth?mode=register" onClick={() => setIsMenuOpen(false)}>
-                <Button className="w-full">Get Started</Button>
-              </Link>
+              {user ? (
+                <>
+                  {isAdmin && (
+                    <Link to="/admin" onClick={() => setIsMenuOpen(false)}>
+                      <Button variant="ghost" className="w-full justify-start gap-2">
+                        <Shield className="h-4 w-4" />
+                        Admin Panel
+                      </Button>
+                    </Link>
+                  )}
+                  <Link to="/dashboard" onClick={() => setIsMenuOpen(false)}>
+                    <Button variant="outline" className="w-full">Dashboard</Button>
+                  </Link>
+                  <Button variant="ghost" className="w-full" onClick={() => { handleSignOut(); setIsMenuOpen(false); }}>
+                    Sign Out
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
+                    <Button variant="outline" className="w-full">Sign In</Button>
+                  </Link>
+                  <Link to="/auth?mode=register" onClick={() => setIsMenuOpen(false)}>
+                    <Button className="w-full">Get Started</Button>
+                  </Link>
+                </>
+              )}
             </div>
           </nav>
         </div>
