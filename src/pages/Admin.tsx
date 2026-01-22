@@ -83,8 +83,8 @@ const Admin = () => {
       required_education: formData.required_education as any,
       min_age: parseInt(formData.min_age) || 18,
       max_age: parseInt(formData.max_age) || 35,
-      gender_requirement: formData.gender_requirement ? formData.gender_requirement as any : null,
-      province: formData.province || undefined,
+      gender_requirement: formData.gender_requirement && formData.gender_requirement !== "any" ? formData.gender_requirement as any : null,
+      province: formData.province && formData.province !== "all" ? formData.province : undefined,
       domicile: formData.domicile || undefined,
       total_seats: parseInt(formData.total_seats) || 1,
       last_date: formData.last_date,
@@ -314,7 +314,7 @@ const Admin = () => {
                         <SelectValue placeholder="Both Male & Female" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Both Male & Female</SelectItem>
+                        <SelectItem value="any">Both Male & Female</SelectItem>
                         <SelectItem value="male">Male Only</SelectItem>
                         <SelectItem value="female">Female Only</SelectItem>
                       </SelectContent>
@@ -328,7 +328,7 @@ const Admin = () => {
                           <SelectValue placeholder="All Pakistan" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">All Pakistan</SelectItem>
+                          <SelectItem value="all">All Pakistan</SelectItem>
                           <SelectItem value="Punjab">Punjab</SelectItem>
                           <SelectItem value="Sindh">Sindh</SelectItem>
                           <SelectItem value="Khyber Pakhtunkhwa">KPK</SelectItem>
