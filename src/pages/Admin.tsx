@@ -25,10 +25,12 @@ import {
   Loader2,
   XCircle,
   CheckCircle,
+  MessageCircle,
 } from "lucide-react";
 import { useAllJobs, useCreateJob, useDeleteJob, useToggleJobStatus, CreateJobInput } from "@/hooks/useJobs";
 import { useAllApplications, useUpdateApplicationStatus } from "@/hooks/useApplications";
 import { useAuth } from "@/hooks/useAuth";
+import AdminChatPanel from "@/components/chat/AdminChatPanel";
 
 const Admin = () => {
   const { isAdmin } = useAuth();
@@ -430,6 +432,10 @@ const Admin = () => {
               <FileText className="h-4 w-4" />
               Applications
             </TabsTrigger>
+            <TabsTrigger value="chat" className="gap-2">
+              <MessageCircle className="h-4 w-4" />
+              Live Chat
+            </TabsTrigger>
           </TabsList>
 
           {/* Jobs Tab */}
@@ -582,6 +588,11 @@ const Admin = () => {
                 </div>
               </div>
             )}
+          </TabsContent>
+
+          {/* Chat Tab */}
+          <TabsContent value="chat">
+            <AdminChatPanel />
           </TabsContent>
         </Tabs>
       </div>
