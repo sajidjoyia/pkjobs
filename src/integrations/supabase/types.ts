@@ -67,6 +67,7 @@ export type Database = {
       conversations: {
         Row: {
           admin_id: string | null
+          application_id: string | null
           created_at: string
           id: string
           status: string | null
@@ -76,6 +77,7 @@ export type Database = {
         }
         Insert: {
           admin_id?: string | null
+          application_id?: string | null
           created_at?: string
           id?: string
           status?: string | null
@@ -85,6 +87,7 @@ export type Database = {
         }
         Update: {
           admin_id?: string | null
+          application_id?: string | null
           created_at?: string
           id?: string
           status?: string | null
@@ -92,7 +95,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "conversations_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       jobs: {
         Row: {

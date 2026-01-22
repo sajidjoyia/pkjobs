@@ -30,6 +30,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useMyApplications, Application } from "@/hooks/useApplications";
 import { useUpdateProfile, calculateAge } from "@/hooks/useProfile";
+import { openApplicationChat } from "@/components/chat/ChatWidget";
 import { toast } from "sonner";
 
 const statusLabels: Record<Application["status"], string> = {
@@ -265,7 +266,12 @@ const Dashboard = () => {
                           Amount: <span className="font-medium text-foreground">Rs. {Number(app.payment_amount).toLocaleString()}</span>
                         </div>
                         <div className="flex gap-2">
-                          <Button variant="outline" size="sm" className="gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="gap-2"
+                            onClick={() => openApplicationChat(app.id, app.job?.title || 'Job Application')}
+                          >
                             <MessageSquare className="h-4 w-4" />
                             Chat
                           </Button>

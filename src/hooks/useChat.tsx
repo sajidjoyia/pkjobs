@@ -10,10 +10,18 @@ export interface Conversation {
   admin_id: string | null;
   subject: string | null;
   status: string;
+  application_id: string | null;
   created_at: string;
   updated_at: string;
   profiles?: {
     full_name: string;
+  };
+  application?: {
+    id: string;
+    job?: {
+      title: string;
+      department: string;
+    };
   };
   unread_count?: number;
 }
@@ -114,7 +122,7 @@ export const useCreateConversation = () => {
   const { user } = useAuth();
   
   return useMutation({
-    mutationFn: async (subject?: string) => {
+    mutationFn: async ({ subject, applicationId }: { subject?: string; applicationId?: string }) => {
       if (!user) throw new Error('Not authenticated');
       
       const { data, error } = await supabase
@@ -122,6 +130,47 @@ export const useCreateConversation = () => {
         .insert({
           user_id: user.id,
           subject: subject || 'General Inquiry',
+          application_id: applicationId || null,
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-conversations'] });
+      queryClient.invalidateQueries({ queryKey: ['all-conversations'] });
+    },
+  });
+};
+
+// Find or create conversation for an application
+export const useGetOrCreateApplicationConversation = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  
+  return useMutation({
+    mutationFn: async ({ applicationId, jobTitle }: { applicationId: string; jobTitle: string }) => {
+      if (!user) throw new Error('Not authenticated');
+      
+      // Check if conversation already exists for this application
+      const { data: existing } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('application_id', applicationId)
+        .eq('user_id', user.id)
+        .single();
+      
+      if (existing) return existing;
+      
+      // Create new conversation linked to application
+      const { data, error } = await supabase
+        .from('conversations')
+        .insert({
+          user_id: user.id,
+          subject: `Application: ${jobTitle}`,
+          application_id: applicationId,
         })
         .select()
         .single();
