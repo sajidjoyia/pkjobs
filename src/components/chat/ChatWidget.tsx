@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Plus } from 'lucide-react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { MessageCircle, X, Send, Plus, Briefcase } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import {
   useMyConversations,
@@ -12,9 +13,17 @@ import {
   useChatSubscription,
   useConversationsSubscription,
   useMarkAsRead,
+  useGetOrCreateApplicationConversation,
 } from '@/hooks/useChat';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+
+// Event for opening chat with specific application
+export const openApplicationChat = (applicationId: string, jobTitle: string) => {
+  window.dispatchEvent(new CustomEvent('openApplicationChat', { 
+    detail: { applicationId, jobTitle } 
+  }));
+};
 
 const ChatWidget = () => {
   const { user } = useAuth();
@@ -28,12 +37,34 @@ const ChatWidget = () => {
   const { data: conversations = [], isLoading: loadingConversations } = useMyConversations();
   const { data: messages = [], isLoading: loadingMessages } = useMessages(selectedConversation);
   const createConversation = useCreateConversation();
+  const getOrCreateAppConv = useGetOrCreateApplicationConversation();
   const sendMessage = useSendMessage();
   const markAsRead = useMarkAsRead();
 
   // Real-time subscriptions
   useChatSubscription(selectedConversation);
   useConversationsSubscription();
+
+  // Handle opening chat from application
+  const handleApplicationChat = useCallback(async (event: CustomEvent<{ applicationId: string; jobTitle: string }>) => {
+    const { applicationId, jobTitle } = event.detail;
+    setIsOpen(true);
+    
+    try {
+      const conv = await getOrCreateAppConv.mutateAsync({ applicationId, jobTitle });
+      setSelectedConversation(conv.id);
+    } catch (error) {
+      console.error('Failed to open application chat:', error);
+    }
+  }, [getOrCreateAppConv]);
+
+  // Listen for application chat events
+  useEffect(() => {
+    window.addEventListener('openApplicationChat', handleApplicationChat as EventListener);
+    return () => {
+      window.removeEventListener('openApplicationChat', handleApplicationChat as EventListener);
+    };
+  }, [handleApplicationChat]);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -65,7 +96,7 @@ const ChatWidget = () => {
 
   const handleCreateConversation = async () => {
     try {
-      const conv = await createConversation.mutateAsync(subject || undefined);
+      const conv = await createConversation.mutateAsync({ subject: subject || undefined });
       setSelectedConversation(conv.id);
       setShowNewChat(false);
       setSubject('');
@@ -167,8 +198,13 @@ const ChatWidget = () => {
                           onClick={() => setSelectedConversation(conv.id)}
                           className="w-full p-3 text-left rounded-lg hover:bg-muted transition-colors"
                         >
-                          <div className="font-medium text-sm truncate">
-                            {conv.subject || 'General Inquiry'}
+                          <div className="flex items-center gap-2">
+                            {conv.application_id && (
+                              <Briefcase className="h-3 w-3 text-primary flex-shrink-0" />
+                            )}
+                            <span className="font-medium text-sm truncate">
+                              {conv.subject || 'General Inquiry'}
+                            </span>
                           </div>
                           <div className="text-xs text-muted-foreground">
                             {format(new Date(conv.updated_at), 'MMM d, h:mm a')}
