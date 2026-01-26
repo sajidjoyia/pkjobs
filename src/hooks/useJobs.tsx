@@ -7,11 +7,11 @@ export interface Job {
   title: string;
   department: string;
   description: string | null;
-  required_education: "matric" | "intermediate" | "bachelor" | "master" | "phd";
+  required_education_levels: string[];
   min_age: number;
   max_age: number;
   gender_requirement: "male" | "female" | "other" | null;
-  province: string | null;
+  provinces: string[];
   domicile: string | null;
   total_seats: number;
   last_date: string;
@@ -29,11 +29,11 @@ export interface CreateJobInput {
   title: string;
   department: string;
   description?: string;
-  required_education: "matric" | "intermediate" | "bachelor" | "master" | "phd";
+  required_education_levels: string[];
   min_age: number;
   max_age: number;
   gender_requirement?: "male" | "female" | "other" | null;
-  province?: string;
+  provinces?: string[];
   domicile?: string;
   total_seats: number;
   last_date: string;
@@ -64,11 +64,11 @@ export const useJobs = (filters?: {
       }
 
       if (filters?.province && filters.province !== "all") {
-        query = query.ilike("province", `%${filters.province}%`);
+        query = query.contains("provinces", [filters.province]);
       }
 
       if (filters?.education && filters.education !== "all") {
-        query = query.eq("required_education", filters.education as "matric" | "intermediate" | "bachelor" | "master" | "phd");
+        query = query.contains("required_education_levels", [filters.education]);
       }
 
       const { data, error } = await query;

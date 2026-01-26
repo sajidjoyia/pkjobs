@@ -58,6 +58,17 @@ const Jobs = () => {
 
   const formatAgeRange = (min: number, max: number) => `${min}-${max} years`;
 
+  const formatEducationLevels = (levels: string[]) => {
+    if (levels.length === 0) return "Any";
+    if (levels.length === 1) return educationLabels[levels[0]] || levels[0];
+    return levels.map(l => educationLabels[l] || l).join(", ");
+  };
+
+  const formatProvinces = (provinces: string[]) => {
+    if (provinces.length === 0) return "All Pakistan";
+    return provinces.join(", ");
+  };
+
   return (
     <div className="py-8">
       <div className="container">
@@ -93,11 +104,11 @@ const Jobs = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Provinces</SelectItem>
-                <SelectItem value="punjab">Punjab</SelectItem>
-                <SelectItem value="sindh">Sindh</SelectItem>
-                <SelectItem value="kpk">Khyber Pakhtunkhwa</SelectItem>
-                <SelectItem value="balochistan">Balochistan</SelectItem>
-                <SelectItem value="islamabad">Islamabad</SelectItem>
+                <SelectItem value="Punjab">Punjab</SelectItem>
+                <SelectItem value="Sindh">Sindh</SelectItem>
+                <SelectItem value="Khyber Pakhtunkhwa">Khyber Pakhtunkhwa</SelectItem>
+                <SelectItem value="Balochistan">Balochistan</SelectItem>
+                <SelectItem value="Islamabad">Islamabad</SelectItem>
               </SelectContent>
             </Select>
             <Select value={selectedEducation} onValueChange={setSelectedEducation}>
@@ -170,7 +181,7 @@ const Jobs = () => {
                     <div className="flex flex-wrap gap-4 text-sm">
                       <div className="flex items-center gap-1.5 text-muted-foreground">
                         <GraduationCap className="h-4 w-4" />
-                        {educationLabels[job.required_education] || job.required_education}
+                        {formatEducationLevels(job.required_education_levels)}
                       </div>
                       <div className="flex items-center gap-1.5 text-muted-foreground">
                         <Users className="h-4 w-4" />
@@ -178,7 +189,7 @@ const Jobs = () => {
                       </div>
                       <div className="flex items-center gap-1.5 text-muted-foreground">
                         <MapPin className="h-4 w-4" />
-                        {job.province || "All Pakistan"}
+                        {formatProvinces(job.provinces)}
                       </div>
                       <div className="flex items-center gap-1.5 text-muted-foreground">
                         <Calendar className="h-4 w-4" />

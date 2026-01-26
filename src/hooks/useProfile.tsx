@@ -74,8 +74,8 @@ export const isEligibleForJob = (
     min_age: number;
     max_age: number;
     gender_requirement: string | null;
-    required_education: string;
-    province: string | null;
+    required_education_levels: string[];
+    provinces: string[];
     domicile: string | null;
   }
 ): { eligible: boolean; reasons: string[] } => {
@@ -94,21 +94,21 @@ export const isEligibleForJob = (
     reasons.push(`Gender requirement: ${job.gender_requirement} only`);
   }
 
-  // Check education
-  if (profile.education) {
+  // Check education - user needs to have at least one of the required education levels or higher
+  if (profile.education && job.required_education_levels.length > 0) {
     const userEducationLevel = getEducationLevel(profile.education);
-    const requiredEducationLevel = getEducationLevel(job.required_education);
-    if (userEducationLevel < requiredEducationLevel) {
-      reasons.push(`Education requirement: ${job.required_education} or higher`);
+    const minRequiredLevel = Math.min(...job.required_education_levels.map(getEducationLevel));
+    if (userEducationLevel < minRequiredLevel) {
+      reasons.push(`Education requirement: ${job.required_education_levels.join(", ")} or higher`);
     }
   }
 
-  // Check province/domicile
-  if (job.province && profile.province) {
-    const jobProvince = job.province.toLowerCase();
+  // Check province/domicile - if job has province restrictions
+  if (job.provinces.length > 0 && profile.province) {
     const userProvince = profile.province.toLowerCase();
-    if (!jobProvince.includes("all") && !jobProvince.includes(userProvince)) {
-      reasons.push(`Province requirement: ${job.province}`);
+    const jobProvinces = job.provinces.map(p => p.toLowerCase());
+    if (!jobProvinces.some(p => p.includes("all") || p.includes(userProvince) || userProvince.includes(p))) {
+      reasons.push(`Province requirement: ${job.provinces.join(", ")}`);
     }
   }
 
