@@ -70,6 +70,16 @@ const JobDetail = () => {
     ? isEligibleForJob(profile, job)
     : { eligible: false, reasons: ["Please complete your profile to check eligibility"] };
 
+  const formatEducationLevels = (levels: string[]) => {
+    if (levels.length === 0) return "Any";
+    return levels.map(l => educationLabels[l] || l).join(", ");
+  };
+
+  const formatProvinces = (provinces: string[]) => {
+    if (provinces.length === 0) return "All Pakistan";
+    return provinces.join(", ");
+  };
+
   const handleApply = async () => {
     if (!user) {
       toast.error("Please sign in to apply for this job");
@@ -173,7 +183,7 @@ const JobDetail = () => {
                   <div>
                     <p className="text-sm text-muted-foreground">Education</p>
                     <p className="font-medium text-foreground">
-                      {educationLabels[job.required_education] || job.required_education}
+                      {formatEducationLevels(job.required_education_levels)}
                     </p>
                   </div>
                 </div>
@@ -198,7 +208,7 @@ const JobDetail = () => {
                   <div>
                     <p className="text-sm text-muted-foreground">Province / Domicile</p>
                     <p className="font-medium text-foreground">
-                      {job.province || "All Pakistan"} {job.domicile && `(${job.domicile})`}
+                      {formatProvinces(job.provinces)} {job.domicile && `(${job.domicile})`}
                     </p>
                   </div>
                 </div>

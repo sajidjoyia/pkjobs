@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, X, Briefcase, User, Shield, LogOut } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -51,8 +52,8 @@ const Header = () => {
           ))}
         </nav>
 
-        {/* Desktop Actions */}
         <div className="hidden md:flex items-center gap-3">
+          <ThemeToggle />
           {!loading && user ? (
             <>
               {isAdmin && (

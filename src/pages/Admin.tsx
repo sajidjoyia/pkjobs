@@ -14,6 +14,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   Plus,
   Briefcase,
   Users,
@@ -26,11 +33,24 @@ import {
   XCircle,
   CheckCircle,
   MessageCircle,
+  GraduationCap,
 } from "lucide-react";
 import { useAllJobs, useCreateJob, useDeleteJob, useToggleJobStatus, CreateJobInput } from "@/hooks/useJobs";
 import { useAllApplications, useUpdateApplicationStatus } from "@/hooks/useApplications";
 import { useAuth } from "@/hooks/useAuth";
+import { useAllEducationLevels, useAddEducationLevel, useCustomEducationLevels, useDeleteEducationLevel } from "@/hooks/useEducationLevels";
+import { MultiSelect } from "@/components/ui/multi-select";
 import AdminChatPanel from "@/components/chat/AdminChatPanel";
+
+const PROVINCE_OPTIONS = [
+  { value: "Punjab", label: "Punjab" },
+  { value: "Sindh", label: "Sindh" },
+  { value: "Khyber Pakhtunkhwa", label: "Khyber Pakhtunkhwa" },
+  { value: "Balochistan", label: "Balochistan" },
+  { value: "Islamabad", label: "Islamabad" },
+  { value: "AJK", label: "AJK" },
+  { value: "Gilgit-Baltistan", label: "Gilgit-Baltistan" },
+];
 
 const Admin = () => {
   const { isAdmin } = useAuth();
@@ -40,18 +60,26 @@ const Admin = () => {
   const deleteJob = useDeleteJob();
   const toggleJobStatus = useToggleJobStatus();
   const updateApplicationStatus = useUpdateApplicationStatus();
+  const { data: educationLevels = [] } = useAllEducationLevels();
+  const { data: customEducationLevels = [] } = useCustomEducationLevels();
+  const addEducationLevel = useAddEducationLevel();
+  const deleteEducationLevel = useDeleteEducationLevel();
 
   const [activeTab, setActiveTab] = useState("jobs");
   const [showAddJob, setShowAddJob] = useState(false);
+  const [showAddEducation, setShowAddEducation] = useState(false);
+  const [newEducationName, setNewEducationName] = useState("");
+  const [newEducationDisplayName, setNewEducationDisplayName] = useState("");
+  
   const [formData, setFormData] = useState({
     title: "",
     department: "",
     description: "",
-    required_education: "",
+    required_education_levels: [] as string[],
     min_age: "18",
     max_age: "35",
     gender_requirement: "",
-    province: "",
+    provinces: [] as string[],
     domicile: "",
     total_seats: "1",
     last_date: "",
@@ -67,14 +95,14 @@ const Admin = () => {
     (parseInt(formData.photocopy_fee) || 0) +
     (parseInt(formData.expert_fee) || 0);
 
-  const handleChange = (field: string, value: string) => {
+  const handleChange = (field: string, value: string | string[]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.title || !formData.department || !formData.required_education || !formData.last_date) {
+    if (!formData.title || !formData.department || formData.required_education_levels.length === 0 || !formData.last_date) {
       return;
     }
 
@@ -82,11 +110,11 @@ const Admin = () => {
       title: formData.title,
       department: formData.department,
       description: formData.description || undefined,
-      required_education: formData.required_education as any,
+      required_education_levels: formData.required_education_levels,
       min_age: parseInt(formData.min_age) || 18,
       max_age: parseInt(formData.max_age) || 35,
       gender_requirement: formData.gender_requirement && formData.gender_requirement !== "any" ? formData.gender_requirement as any : null,
-      province: formData.province && formData.province !== "all" ? formData.province : undefined,
+      provinces: formData.provinces.length > 0 ? formData.provinces : undefined,
       domicile: formData.domicile || undefined,
       total_seats: parseInt(formData.total_seats) || 1,
       last_date: formData.last_date,
@@ -103,11 +131,11 @@ const Admin = () => {
         title: "",
         department: "",
         description: "",
-        required_education: "",
+        required_education_levels: [],
         min_age: "18",
         max_age: "35",
         gender_requirement: "",
-        province: "",
+        provinces: [],
         domicile: "",
         total_seats: "1",
         last_date: "",
@@ -116,6 +144,22 @@ const Admin = () => {
         photocopy_fee: "",
         expert_fee: "",
       });
+    } catch (error) {
+      // Error handled in mutation
+    }
+  };
+
+  const handleAddEducationLevel = async () => {
+    if (!newEducationName || !newEducationDisplayName) return;
+    
+    try {
+      await addEducationLevel.mutateAsync({
+        name: newEducationName.toLowerCase().replace(/\s+/g, '_'),
+        displayName: newEducationDisplayName,
+      });
+      setNewEducationName("");
+      setNewEducationDisplayName("");
+      setShowAddEducation(false);
     } catch (error) {
       // Error handled in mutation
     }
@@ -149,10 +193,69 @@ const Admin = () => {
               Manage jobs, users, and applications
             </p>
           </div>
-          <Button onClick={() => setShowAddJob(!showAddJob)} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Add New Job
-          </Button>
+          <div className="flex gap-2">
+            <Dialog open={showAddEducation} onOpenChange={setShowAddEducation}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <GraduationCap className="h-4 w-4" />
+                  Manage Education
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Manage Education Levels</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Add New Education Level</Label>
+                    <Input
+                      placeholder="e.g., diploma"
+                      value={newEducationName}
+                      onChange={(e) => setNewEducationName(e.target.value)}
+                      className="mb-2"
+                    />
+                    <Input
+                      placeholder="Display Name (e.g., Diploma / DAE)"
+                      value={newEducationDisplayName}
+                      onChange={(e) => setNewEducationDisplayName(e.target.value)}
+                    />
+                    <Button 
+                      onClick={handleAddEducationLevel} 
+                      disabled={addEducationLevel.isPending || !newEducationName || !newEducationDisplayName}
+                      className="w-full mt-2"
+                    >
+                      {addEducationLevel.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+                      Add Education Level
+                    </Button>
+                  </div>
+                  
+                  {customEducationLevels.length > 0 && (
+                    <div className="space-y-2">
+                      <Label>Custom Education Levels</Label>
+                      <div className="space-y-2">
+                        {customEducationLevels.map((level) => (
+                          <div key={level.id} className="flex items-center justify-between p-2 rounded bg-muted">
+                            <span>{level.display_name}</span>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => deleteEducationLevel.mutate(level.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
+            <Button onClick={() => setShowAddJob(!showAddJob)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Add New Job
+            </Button>
+          </div>
         </div>
 
         {/* Stats */}
@@ -273,19 +376,13 @@ const Admin = () => {
                 <div className="space-y-4">
                   <h3 className="font-medium text-foreground">Eligibility Criteria</h3>
                   <div className="space-y-2">
-                    <Label htmlFor="education">Required Education *</Label>
-                    <Select value={formData.required_education} onValueChange={(v) => handleChange("required_education", v)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select education level" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="matric">Matric / SSC</SelectItem>
-                        <SelectItem value="intermediate">Intermediate</SelectItem>
-                        <SelectItem value="bachelor">Bachelor's Degree</SelectItem>
-                        <SelectItem value="master">Master's Degree</SelectItem>
-                        <SelectItem value="phd">PhD / Doctorate</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label>Required Education Levels *</Label>
+                    <MultiSelect
+                      options={educationLevels}
+                      selected={formData.required_education_levels}
+                      onChange={(selected) => handleChange("required_education_levels", selected)}
+                      placeholder="Select education levels..."
+                    />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -322,32 +419,23 @@ const Admin = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="province">Province</Label>
-                      <Select value={formData.province} onValueChange={(v) => handleChange("province", v)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="All Pakistan" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Pakistan</SelectItem>
-                          <SelectItem value="Punjab">Punjab</SelectItem>
-                          <SelectItem value="Sindh">Sindh</SelectItem>
-                          <SelectItem value="Khyber Pakhtunkhwa">KPK</SelectItem>
-                          <SelectItem value="Balochistan">Balochistan</SelectItem>
-                          <SelectItem value="Islamabad">Islamabad</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="domicile">Domicile</Label>
-                      <Input 
-                        id="domicile" 
-                        placeholder="e.g., Lahore"
-                        value={formData.domicile}
-                        onChange={(e) => handleChange("domicile", e.target.value)}
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <Label>Provinces</Label>
+                    <MultiSelect
+                      options={PROVINCE_OPTIONS}
+                      selected={formData.provinces}
+                      onChange={(selected) => handleChange("provinces", selected)}
+                      placeholder="All Pakistan (leave empty)"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="domicile">Domicile</Label>
+                    <Input 
+                      id="domicile" 
+                      placeholder="e.g., Lahore"
+                      value={formData.domicile}
+                      onChange={(e) => handleChange("domicile", e.target.value)}
+                    />
                   </div>
                 </div>
               </div>

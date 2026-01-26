@@ -105,6 +105,30 @@ export type Database = {
           },
         ]
       }
+      custom_education_levels: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          display_name: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          display_name: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          display_name?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       jobs: {
         Row: {
           bank_challan_fee: number
@@ -122,8 +146,8 @@ export type Database = {
           min_age: number
           photocopy_fee: number
           post_office_fee: number
-          province: string | null
-          required_education: Database["public"]["Enums"]["education_level"]
+          provinces: string[] | null
+          required_education_levels: string[] | null
           title: string
           total_fee: number | null
           total_seats: number
@@ -145,8 +169,8 @@ export type Database = {
           min_age?: number
           photocopy_fee?: number
           post_office_fee?: number
-          province?: string | null
-          required_education: Database["public"]["Enums"]["education_level"]
+          provinces?: string[] | null
+          required_education_levels?: string[] | null
           title: string
           total_fee?: number | null
           total_seats?: number
@@ -168,8 +192,8 @@ export type Database = {
           min_age?: number
           photocopy_fee?: number
           post_office_fee?: number
-          province?: string | null
-          required_education?: Database["public"]["Enums"]["education_level"]
+          provinces?: string[] | null
+          required_education_levels?: string[] | null
           title?: string
           total_fee?: number | null
           total_seats?: number
