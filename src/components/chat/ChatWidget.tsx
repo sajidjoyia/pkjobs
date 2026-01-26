@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { MessageCircle, X, Send, Plus, Briefcase } from 'lucide-react';
+import { MessageCircle, X, Send, Plus, Briefcase, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -8,13 +8,13 @@ import { useAuth } from '@/hooks/useAuth';
 import {
   useMyConversations,
   useMessages,
-  useCreateConversation,
   useSendMessage,
   useChatSubscription,
   useConversationsSubscription,
   useMarkAsRead,
   useGetOrCreateApplicationConversation,
 } from '@/hooks/useChat';
+import { useMyApplications } from '@/hooks/useApplications';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 
@@ -30,13 +30,13 @@ const ChatWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [message, setMessage] = useState('');
-  const [subject, setSubject] = useState('');
   const [showNewChat, setShowNewChat] = useState(false);
+  const [selectedAppForNewChat, setSelectedAppForNewChat] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { data: conversations = [], isLoading: loadingConversations } = useMyConversations();
   const { data: messages = [], isLoading: loadingMessages } = useMessages(selectedConversation);
-  const createConversation = useCreateConversation();
+  const { data: myApplications = [], isLoading: loadingApplications } = useMyApplications();
   const getOrCreateAppConv = useGetOrCreateApplicationConversation();
   const sendMessage = useSendMessage();
   const markAsRead = useMarkAsRead();
@@ -94,12 +94,12 @@ const ChatWidget = () => {
     }
   };
 
-  const handleCreateConversation = async () => {
+  const handleCreateConversation = async (applicationId: string, jobTitle: string) => {
     try {
-      const conv = await createConversation.mutateAsync({ subject: subject || undefined });
+      const conv = await getOrCreateAppConv.mutateAsync({ applicationId, jobTitle });
       setSelectedConversation(conv.id);
       setShowNewChat(false);
-      setSubject('');
+      setSelectedAppForNewChat(null);
     } catch (error) {
       console.error('Failed to create conversation:', error);
     }
@@ -160,24 +160,41 @@ const ChatWidget = () => {
 
                 {showNewChat && (
                   <div className="p-3 border-b bg-muted/50">
-                    <Input
-                      placeholder="Subject (optional)"
-                      value={subject}
-                      onChange={(e) => setSubject(e.target.value)}
-                      className="mb-2"
-                    />
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={handleCreateConversation}>
-                        Start Chat
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setShowNewChat(false)}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
+                    <p className="text-sm font-medium mb-2">Select a job application:</p>
+                    {loadingApplications ? (
+                      <p className="text-sm text-muted-foreground">Loading...</p>
+                    ) : myApplications.length === 0 ? (
+                      <div className="text-sm text-muted-foreground">
+                        <p>No applications yet.</p>
+                        <p className="mt-1">Apply for a job first to start a chat.</p>
+                      </div>
+                    ) : (
+                      <ScrollArea className="max-h-40">
+                        <div className="space-y-1">
+                          {myApplications.map((app) => (
+                            <button
+                              key={app.id}
+                              onClick={() => handleCreateConversation(app.id, app.job?.title || 'Job Application')}
+                              className="w-full p-2 text-left rounded-md hover:bg-muted transition-colors flex items-center justify-between group"
+                            >
+                              <div>
+                                <p className="text-sm font-medium">{app.job?.title}</p>
+                                <p className="text-xs text-muted-foreground">{app.job?.department}</p>
+                              </div>
+                              <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+                            </button>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setShowNewChat(false)}
+                      className="mt-2"
+                    >
+                      Cancel
+                    </Button>
                   </div>
                 )}
 
@@ -199,11 +216,9 @@ const ChatWidget = () => {
                           className="w-full p-3 text-left rounded-lg hover:bg-muted transition-colors"
                         >
                           <div className="flex items-center gap-2">
-                            {conv.application_id && (
-                              <Briefcase className="h-3 w-3 text-primary flex-shrink-0" />
-                            )}
+                            <Briefcase className="h-3 w-3 text-primary flex-shrink-0" />
                             <span className="font-medium text-sm truncate">
-                              {conv.subject || 'General Inquiry'}
+                              {conv.application?.job?.title || conv.subject || 'Job Application'}
                             </span>
                           </div>
                           <div className="text-xs text-muted-foreground">
