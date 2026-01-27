@@ -1,9 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { MessageCircle, X, Send, Plus, Briefcase, ChevronRight } from 'lucide-react';
+import { MessageCircle, X, Plus, Briefcase, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import {
   useMyConversations,
@@ -17,6 +15,8 @@ import {
 import { useMyApplications } from '@/hooks/useApplications';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import ChatMessageInput from './ChatMessageInput';
+import ChatMessageBubble from './ChatMessageBubble';
 
 // Event for opening chat with specific application
 export const openApplicationChat = (applicationId: string, jobTitle: string) => {
@@ -29,9 +29,7 @@ const ChatWidget = () => {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
-  const [message, setMessage] = useState('');
   const [showNewChat, setShowNewChat] = useState(false);
-  const [selectedAppForNewChat, setSelectedAppForNewChat] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { data: conversations = [], isLoading: loadingConversations } = useMyConversations();
@@ -80,18 +78,16 @@ const ChatWidget = () => {
 
   if (!user) return null;
 
-  const handleSendMessage = async () => {
-    if (!message.trim() || !selectedConversation) return;
+  const handleSendMessage = async (content: string, attachment?: { url: string; name: string; type: string }) => {
+    if (!selectedConversation) return;
 
-    try {
-      await sendMessage.mutateAsync({
-        conversationId: selectedConversation,
-        content: message.trim(),
-      });
-      setMessage('');
-    } catch (error) {
-      console.error('Failed to send message:', error);
-    }
+    await sendMessage.mutateAsync({
+      conversationId: selectedConversation,
+      content,
+      attachmentUrl: attachment?.url,
+      attachmentName: attachment?.name,
+      attachmentType: attachment?.type,
+    });
   };
 
   const handleCreateConversation = async (applicationId: string, jobTitle: string) => {
@@ -99,16 +95,8 @@ const ChatWidget = () => {
       const conv = await getOrCreateAppConv.mutateAsync({ applicationId, jobTitle });
       setSelectedConversation(conv.id);
       setShowNewChat(false);
-      setSelectedAppForNewChat(null);
     } catch (error) {
       console.error('Failed to create conversation:', error);
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
     }
   };
 
@@ -245,20 +233,15 @@ const ChatWidget = () => {
                   ) : (
                     <div className="space-y-3">
                       {messages.map((msg) => (
-                        <div
+                        <ChatMessageBubble
                           key={msg.id}
-                          className={cn(
-                            'max-w-[80%] p-3 rounded-lg',
-                            msg.sender_id === user.id
-                              ? 'ml-auto bg-primary text-primary-foreground'
-                              : 'bg-muted'
-                          )}
-                        >
-                          <p className="text-sm">{msg.content}</p>
-                          <span className="text-xs opacity-70 mt-1 block">
-                            {format(new Date(msg.created_at), 'h:mm a')}
-                          </span>
-                        </div>
+                          content={msg.content}
+                          timestamp={msg.created_at}
+                          isOwn={msg.sender_id === user.id}
+                          attachmentUrl={msg.attachment_url}
+                          attachmentName={msg.attachment_name}
+                          attachmentType={msg.attachment_type}
+                        />
                       ))}
                       <div ref={messagesEndRef} />
                     </div>
@@ -266,23 +249,10 @@ const ChatWidget = () => {
                 </ScrollArea>
 
                 {/* Message Input */}
-                <div className="p-3 border-t">
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Type a message..."
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                    />
-                    <Button
-                      size="icon"
-                      onClick={handleSendMessage}
-                      disabled={!message.trim() || sendMessage.isPending}
-                    >
-                      <Send className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
+                <ChatMessageInput
+                  onSend={handleSendMessage}
+                  disabled={sendMessage.isPending}
+                />
               </div>
             )}
           </div>

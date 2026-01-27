@@ -22,6 +22,9 @@ export interface Application {
     total_fee: number;
     last_date: string;
   };
+  profile?: {
+    full_name: string;
+  };
 }
 
 export const useMyApplications = () => {
@@ -52,7 +55,8 @@ export const useAllApplications = () => {
   return useQuery({
     queryKey: ["all-applications"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Get applications with jobs
+      const { data: applications, error } = await supabase
         .from("applications")
         .select(`
           *,
@@ -61,7 +65,20 @@ export const useAllApplications = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as Application[];
+      
+      // Fetch profiles for user_ids
+      const userIds = [...new Set(applications.map(app => app.user_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, full_name")
+        .in("user_id", userIds);
+      
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+      
+      return applications.map(app => ({
+        ...app,
+        profile: profileMap.get(app.user_id) || { full_name: "Unknown User" }
+      })) as Application[];
     },
   });
 };

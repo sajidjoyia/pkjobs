@@ -1,7 +1,4 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -16,11 +13,12 @@ import {
 } from '@/hooks/useChat';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import ChatMessageInput from './ChatMessageInput';
+import ChatMessageBubble from './ChatMessageBubble';
 
 const AdminChatPanel = () => {
   const { user } = useAuth();
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
-  const [message, setMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { data: conversations = [], isLoading: loadingConversations } = useAllConversations();
@@ -44,25 +42,16 @@ const AdminChatPanel = () => {
     }
   }, [selectedConversation, messages.length]);
 
-  const handleSendMessage = async () => {
-    if (!message.trim() || !selectedConversation) return;
+  const handleSendMessage = async (content: string, attachment?: { url: string; name: string; type: string }) => {
+    if (!selectedConversation) return;
 
-    try {
-      await sendMessage.mutateAsync({
-        conversationId: selectedConversation,
-        content: message.trim(),
-      });
-      setMessage('');
-    } catch (error) {
-      console.error('Failed to send message:', error);
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
+    await sendMessage.mutateAsync({
+      conversationId: selectedConversation,
+      content,
+      attachmentUrl: attachment?.url,
+      attachmentName: attachment?.name,
+      attachmentType: attachment?.type,
+    });
   };
 
   const selectedConv = conversations.find((c) => c.id === selectedConversation);
@@ -160,20 +149,15 @@ const AdminChatPanel = () => {
                 ) : (
                   <div className="space-y-3">
                     {messages.map((msg) => (
-                      <div
+                      <ChatMessageBubble
                         key={msg.id}
-                        className={cn(
-                          'max-w-[80%] p-3 rounded-lg',
-                          msg.sender_id === user?.id
-                            ? 'ml-auto bg-primary text-primary-foreground'
-                            : 'bg-muted'
-                        )}
-                      >
-                        <p className="text-sm">{msg.content}</p>
-                        <span className="text-xs opacity-70 mt-1 block">
-                          {format(new Date(msg.created_at), 'h:mm a')}
-                        </span>
-                      </div>
+                        content={msg.content}
+                        timestamp={msg.created_at}
+                        isOwn={msg.sender_id === user?.id}
+                        attachmentUrl={msg.attachment_url}
+                        attachmentName={msg.attachment_name}
+                        attachmentType={msg.attachment_type}
+                      />
                     ))}
                     <div ref={messagesEndRef} />
                   </div>
@@ -181,23 +165,11 @@ const AdminChatPanel = () => {
               </ScrollArea>
 
               {/* Input */}
-              <div className="p-3 border-t">
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Type your reply..."
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                  />
-                  <Button
-                    size="icon"
-                    onClick={handleSendMessage}
-                    disabled={!message.trim() || sendMessage.isPending}
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
+              <ChatMessageInput
+                onSend={handleSendMessage}
+                disabled={sendMessage.isPending}
+                placeholder="Type your reply..."
+              />
             </>
           )}
         </div>
