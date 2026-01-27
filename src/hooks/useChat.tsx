@@ -33,6 +33,9 @@ export interface Message {
   content: string;
   is_read: boolean;
   created_at: string;
+  attachment_url?: string | null;
+  attachment_name?: string | null;
+  attachment_type?: string | null;
   profiles?: {
     full_name: string;
   };
@@ -191,7 +194,19 @@ export const useSendMessage = () => {
   const { user } = useAuth();
   
   return useMutation({
-    mutationFn: async ({ conversationId, content }: { conversationId: string; content: string }) => {
+    mutationFn: async ({ 
+      conversationId, 
+      content,
+      attachmentUrl,
+      attachmentName,
+      attachmentType,
+    }: { 
+      conversationId: string; 
+      content: string;
+      attachmentUrl?: string;
+      attachmentName?: string;
+      attachmentType?: string;
+    }) => {
       if (!user) throw new Error('Not authenticated');
       
       const { data, error } = await supabase
@@ -200,6 +215,9 @@ export const useSendMessage = () => {
           conversation_id: conversationId,
           sender_id: user.id,
           content,
+          attachment_url: attachmentUrl || null,
+          attachment_name: attachmentName || null,
+          attachment_type: attachmentType || null,
         })
         .select()
         .single();
@@ -216,6 +234,46 @@ export const useSendMessage = () => {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['messages', variables.conversationId] });
+      queryClient.invalidateQueries({ queryKey: ['my-conversations'] });
+      queryClient.invalidateQueries({ queryKey: ['all-conversations'] });
+    },
+  });
+};
+
+// Admin start conversation with user
+export const useAdminStartConversation = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  
+  return useMutation({
+    mutationFn: async ({ userId, applicationId, jobTitle }: { userId: string; applicationId: string; jobTitle: string }) => {
+      if (!user) throw new Error('Not authenticated');
+      
+      // Check if conversation already exists for this application
+      const { data: existing } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('application_id', applicationId)
+        .single();
+      
+      if (existing) return existing;
+      
+      // Create new conversation
+      const { data, error } = await supabase
+        .from('conversations')
+        .insert({
+          user_id: userId,
+          admin_id: user.id,
+          subject: `Application: ${jobTitle}`,
+          application_id: applicationId,
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-conversations'] });
       queryClient.invalidateQueries({ queryKey: ['all-conversations'] });
     },

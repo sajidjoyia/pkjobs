@@ -41,6 +41,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAllEducationLevels, useAddEducationLevel, useCustomEducationLevels, useDeleteEducationLevel } from "@/hooks/useEducationLevels";
 import { MultiSelect } from "@/components/ui/multi-select";
 import AdminChatPanel from "@/components/chat/AdminChatPanel";
+import { useAdminStartConversation } from "@/hooks/useChat";
+import { toast } from "@/hooks/use-toast";
 
 const PROVINCE_OPTIONS = [
   { value: "Punjab", label: "Punjab" },
@@ -64,6 +66,7 @@ const Admin = () => {
   const { data: customEducationLevels = [] } = useCustomEducationLevels();
   const addEducationLevel = useAddEducationLevel();
   const deleteEducationLevel = useDeleteEducationLevel();
+  const adminStartConversation = useAdminStartConversation();
 
   const [activeTab, setActiveTab] = useState("jobs");
   const [showAddJob, setShowAddJob] = useState(false);
@@ -619,6 +622,7 @@ const Admin = () => {
                   <table className="w-full">
                     <thead className="bg-muted/50">
                       <tr>
+                        <th className="text-left p-4 font-medium text-foreground">User</th>
                         <th className="text-left p-4 font-medium text-foreground">Job</th>
                         <th className="text-left p-4 font-medium text-foreground">Applied</th>
                         <th className="text-left p-4 font-medium text-foreground">Amount</th>
@@ -629,6 +633,9 @@ const Admin = () => {
                     <tbody>
                       {applications?.map((app) => (
                         <tr key={app.id} className="border-t border-border">
+                          <td className="p-4">
+                            <p className="font-medium text-foreground">{app.profile?.full_name || 'Unknown'}</p>
+                          </td>
                           <td className="p-4">
                             <div>
                               <p className="font-medium text-foreground">{app.job?.title}</p>
@@ -664,6 +671,29 @@ const Admin = () => {
                           </td>
                           <td className="p-4">
                             <div className="flex justify-end gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={async () => {
+                                  try {
+                                    await adminStartConversation.mutateAsync({
+                                      userId: app.user_id,
+                                      applicationId: app.id,
+                                      jobTitle: app.job?.title || 'Job Application',
+                                    });
+                                    setActiveTab("chat");
+                                    toast({
+                                      title: "Conversation started",
+                                      description: `Chat opened with ${app.profile?.full_name || 'user'}`,
+                                    });
+                                  } catch (error) {
+                                    console.error('Failed to start conversation:', error);
+                                  }
+                                }}
+                                title="Start Chat"
+                              >
+                                <MessageCircle className="h-4 w-4" />
+                              </Button>
                               <Button variant="ghost" size="icon">
                                 <Eye className="h-4 w-4" />
                               </Button>
