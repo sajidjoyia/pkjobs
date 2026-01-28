@@ -4,6 +4,7 @@ import { Menu, X, Briefcase, User, Shield, LogOut } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import ThemeToggle from "@/components/ThemeToggle";
+import NotificationDropdown from "@/components/NotificationDropdown";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -14,6 +15,8 @@ const Header = () => {
   const navLinks = [
     { href: "/", label: "Home" },
     { href: "/jobs", label: "Browse Jobs" },
+    { href: "/about", label: "About" },
+    { href: "/faq", label: "FAQ" },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -54,6 +57,7 @@ const Header = () => {
 
         <div className="hidden md:flex items-center gap-3">
           <ThemeToggle />
+          {!loading && user && <NotificationDropdown />}
           {!loading && user ? (
             <>
               {isAdmin && (
