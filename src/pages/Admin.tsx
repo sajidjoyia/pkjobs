@@ -43,6 +43,9 @@ import { MultiSelect } from "@/components/ui/multi-select";
 import AdminChatPanel from "@/components/chat/AdminChatPanel";
 import { useAdminStartConversation } from "@/hooks/useChat";
 import { toast } from "@/hooks/use-toast";
+import { useBulkCreateJobs, parseJobsFromText, BULK_JOB_SAMPLE } from "@/hooks/useBulkJobImport";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Copy, FileUp } from "lucide-react";
 
 const PROVINCE_OPTIONS = [
   { value: "Punjab", label: "Punjab" },
@@ -67,10 +70,14 @@ const Admin = () => {
   const addEducationLevel = useAddEducationLevel();
   const deleteEducationLevel = useDeleteEducationLevel();
   const adminStartConversation = useAdminStartConversation();
+  const bulkCreateJobs = useBulkCreateJobs();
 
   const [activeTab, setActiveTab] = useState("jobs");
   const [showAddJob, setShowAddJob] = useState(false);
   const [showAddEducation, setShowAddEducation] = useState(false);
+  const [showBulkImport, setShowBulkImport] = useState(false);
+  const [bulkJobText, setBulkJobText] = useState("");
+  const [bulkParseResult, setBulkParseResult] = useState<{ jobs: any[]; errors: string[] } | null>(null);
   const [newEducationName, setNewEducationName] = useState("");
   const [newEducationDisplayName, setNewEducationDisplayName] = useState("");
   
@@ -178,6 +185,32 @@ const Admin = () => {
     await toggleJobStatus.mutateAsync({ id, is_active: !currentStatus });
   };
 
+  const handleParseBulkJobs = () => {
+    const result = parseJobsFromText(bulkJobText);
+    setBulkParseResult(result);
+  };
+
+  const handleBulkImport = async () => {
+    if (!bulkParseResult || bulkParseResult.jobs.length === 0) return;
+    
+    try {
+      await bulkCreateJobs.mutateAsync(bulkParseResult.jobs);
+      setShowBulkImport(false);
+      setBulkJobText("");
+      setBulkParseResult(null);
+    } catch (error) {
+      // Error handled in mutation
+    }
+  };
+
+  const handleCopySample = () => {
+    navigator.clipboard.writeText(BULK_JOB_SAMPLE);
+    toast({
+      title: "Copied!",
+      description: "Sample format copied to clipboard",
+    });
+  };
+
   // Stats
   const activeJobs = jobs?.filter((j) => j.is_active).length || 0;
   const totalApplications = applications?.length || 0;
@@ -250,6 +283,130 @@ const Admin = () => {
                         ))}
                       </div>
                     </div>
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
+            <Dialog open={showBulkImport} onOpenChange={(open) => {
+              setShowBulkImport(open);
+              if (!open) {
+                setBulkJobText("");
+                setBulkParseResult(null);
+              }
+            }}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <FileUp className="h-4 w-4" />
+                  Add Multiple Jobs
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[90vh]">
+                <DialogHeader>
+                  <DialogTitle>Bulk Import Jobs</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-muted-foreground">
+                      Paste job data in the format below. Separate multiple jobs with "---".
+                    </p>
+                    <Button variant="outline" size="sm" onClick={handleCopySample} className="gap-2">
+                      <Copy className="h-3 w-3" />
+                      Copy Sample Format
+                    </Button>
+                  </div>
+                  
+                  <div className="bg-muted/50 rounded-lg p-4 text-xs font-mono">
+                    <p className="font-semibold mb-2">Sample Format:</p>
+                    <pre className="whitespace-pre-wrap text-muted-foreground">
+{`Title: Assistant Sub Inspector
+Department: Punjab Police
+Description: Assist in maintaining law and order
+Education: matric, intermediate
+Min Age: 18
+Max Age: 30
+Gender: male (or female, any)
+Provinces: Punjab, Sindh
+Domicile: Punjab
+Total Seats: 500
+Last Date: 2026-03-15
+Bank Challan Fee: 500
+Post Office Fee: 200
+Photocopy Fee: 100
+Expert Fee: 1000
+
+---
+
+(Next job here...)`}
+                    </pre>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Paste Job Data</Label>
+                    <Textarea
+                      placeholder="Paste your job data here..."
+                      rows={10}
+                      value={bulkJobText}
+                      onChange={(e) => {
+                        setBulkJobText(e.target.value);
+                        setBulkParseResult(null);
+                      }}
+                      className="font-mono text-sm"
+                    />
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={handleParseBulkJobs}
+                      disabled={!bulkJobText.trim()}
+                    >
+                      Preview Jobs
+                    </Button>
+                    {bulkParseResult && bulkParseResult.jobs.length > 0 && (
+                      <Button 
+                        onClick={handleBulkImport}
+                        disabled={bulkCreateJobs.isPending}
+                        className="gap-2"
+                      >
+                        {bulkCreateJobs.isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Plus className="h-4 w-4" />
+                        )}
+                        Import {bulkParseResult.jobs.length} Job{bulkParseResult.jobs.length > 1 ? 's' : ''}
+                      </Button>
+                    )}
+                  </div>
+                  
+                  {bulkParseResult && (
+                    <ScrollArea className="h-48 rounded-lg border p-3">
+                      {bulkParseResult.errors.length > 0 && (
+                        <div className="mb-3">
+                          <p className="text-sm font-medium text-destructive mb-1">Errors:</p>
+                          {bulkParseResult.errors.map((error, i) => (
+                            <p key={i} className="text-xs text-destructive">{error}</p>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {bulkParseResult.jobs.length > 0 && (
+                        <div>
+                          <p className="text-sm font-medium text-success mb-2">
+                            ✓ {bulkParseResult.jobs.length} job{bulkParseResult.jobs.length > 1 ? 's' : ''} ready to import:
+                          </p>
+                          {bulkParseResult.jobs.map((job, i) => (
+                            <div key={i} className="text-xs p-2 bg-muted rounded mb-2">
+                              <p className="font-medium">{job.title}</p>
+                              <p className="text-muted-foreground">{job.department} • {job.total_seats} seats • Last: {job.last_date}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {bulkParseResult.jobs.length === 0 && bulkParseResult.errors.length === 0 && (
+                        <p className="text-sm text-muted-foreground">No jobs found. Check your format.</p>
+                      )}
+                    </ScrollArea>
                   )}
                 </div>
               </DialogContent>
