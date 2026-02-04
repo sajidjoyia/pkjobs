@@ -43,7 +43,7 @@ import { MultiSelect } from "@/components/ui/multi-select";
 import AdminChatPanel from "@/components/chat/AdminChatPanel";
 import { useAdminStartConversation } from "@/hooks/useChat";
 import { toast } from "@/hooks/use-toast";
-import { useBulkCreateJobs, parseJobsFromText, BULK_JOB_SAMPLE } from "@/hooks/useBulkJobImport";
+import { useBulkCreateJobs, parseJobsFromText, BULK_JOB_SAMPLE, ValidationOptions } from "@/hooks/useBulkJobImport";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Copy, FileUp } from "lucide-react";
 
@@ -77,7 +77,7 @@ const Admin = () => {
   const [showAddEducation, setShowAddEducation] = useState(false);
   const [showBulkImport, setShowBulkImport] = useState(false);
   const [bulkJobText, setBulkJobText] = useState("");
-  const [bulkParseResult, setBulkParseResult] = useState<{ jobs: any[]; errors: string[] } | null>(null);
+  const [bulkParseResult, setBulkParseResult] = useState<{ jobs: any[]; errors: string[]; skippedJobs: { title: string; reasons: string[] }[] } | null>(null);
   const [newEducationName, setNewEducationName] = useState("");
   const [newEducationDisplayName, setNewEducationDisplayName] = useState("");
   
@@ -186,8 +186,21 @@ const Admin = () => {
   };
 
   const handleParseBulkJobs = () => {
-    const result = parseJobsFromText(bulkJobText);
+    const validationOptions: ValidationOptions = {
+      educationLevels: educationLevels,
+      provinces: PROVINCE_OPTIONS,
+    };
+    const result = parseJobsFromText(bulkJobText, validationOptions);
     setBulkParseResult(result);
+    
+    // Show toast for skipped jobs
+    if (result.skippedJobs.length > 0) {
+      toast({
+        title: `${result.skippedJobs.length} job(s) skipped`,
+        description: "Some jobs have invalid categories. Check the preview for details.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleBulkImport = async () => {
@@ -379,12 +392,30 @@ Expert Fee: 1000
                   </div>
                   
                   {bulkParseResult && (
-                    <ScrollArea className="h-48 rounded-lg border p-3">
+                    <ScrollArea className="h-64 rounded-lg border p-3">
                       {bulkParseResult.errors.length > 0 && (
                         <div className="mb-3">
-                          <p className="text-sm font-medium text-destructive mb-1">Errors:</p>
+                          <p className="text-sm font-medium text-destructive mb-1">Parse Errors:</p>
                           {bulkParseResult.errors.map((error, i) => (
                             <p key={i} className="text-xs text-destructive">{error}</p>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {bulkParseResult.skippedJobs.length > 0 && (
+                        <div className="mb-3">
+                          <p className="text-sm font-medium text-warning mb-1">
+                            ⚠ {bulkParseResult.skippedJobs.length} job(s) skipped due to invalid categories:
+                          </p>
+                          {bulkParseResult.skippedJobs.map((skipped, i) => (
+                            <div key={i} className="text-xs p-2 bg-warning/10 border border-warning/30 rounded mb-2">
+                              <p className="font-medium text-warning">{skipped.title}</p>
+                              <ul className="mt-1 space-y-0.5">
+                                {skipped.reasons.map((reason, j) => (
+                                  <li key={j} className="text-muted-foreground">• {reason}</li>
+                                ))}
+                              </ul>
+                            </div>
                           ))}
                         </div>
                       )}
@@ -403,7 +434,7 @@ Expert Fee: 1000
                         </div>
                       )}
                       
-                      {bulkParseResult.jobs.length === 0 && bulkParseResult.errors.length === 0 && (
+                      {bulkParseResult.jobs.length === 0 && bulkParseResult.errors.length === 0 && bulkParseResult.skippedJobs.length === 0 && (
                         <p className="text-sm text-muted-foreground">No jobs found. Check your format.</p>
                       )}
                     </ScrollArea>

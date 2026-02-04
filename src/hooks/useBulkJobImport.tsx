@@ -20,6 +20,13 @@ export interface ParsedJob {
   expert_fee: number;
 }
 
+export interface ValidationOptions {
+  educationLevels: { value: string; label: string }[];
+  provinces: { value: string; label: string }[];
+}
+
+const VALID_GENDERS = ["male", "female", "other", "any", "both"];
+
 export const BULK_JOB_SAMPLE = `Title: Assistant Sub Inspector
 Department: Punjab Police
 Description: Assist in maintaining law and order
@@ -55,9 +62,17 @@ Expert Fee: 800
 
 ---`;
 
-export const parseJobsFromText = (text: string): { jobs: ParsedJob[]; errors: string[] } => {
+export const parseJobsFromText = (
+  text: string,
+  validationOptions?: ValidationOptions
+): { jobs: ParsedJob[]; errors: string[]; skippedJobs: { title: string; reasons: string[] }[] } => {
   const jobs: ParsedJob[] = [];
   const errors: string[] = [];
+  const skippedJobs: { title: string; reasons: string[] }[] = [];
+  
+  // Build validation sets
+  const validEducationValues = validationOptions?.educationLevels.map(e => e.value.toLowerCase()) || [];
+  const validProvinceValues = validationOptions?.provinces.map(p => p.value) || [];
   
   // Split by separator (---)
   const jobBlocks = text.split(/\n---\n/).filter(block => block.trim());
@@ -66,6 +81,7 @@ export const parseJobsFromText = (text: string): { jobs: ParsedJob[]; errors: st
     try {
       const lines = block.trim().split('\n');
       const jobData: Partial<ParsedJob> = {};
+      const rawData: { education?: string[]; gender?: string; provinces?: string[] } = {};
       
       lines.forEach(line => {
         const colonIndex = line.indexOf(':');
@@ -85,6 +101,7 @@ export const parseJobsFromText = (text: string): { jobs: ParsedJob[]; errors: st
             jobData.description = value;
             break;
           case 'education':
+            rawData.education = value.split(',').map(e => e.trim());
             jobData.required_education_levels = value.split(',').map(e => e.trim().toLowerCase().replace(/\s+/g, '_'));
             break;
           case 'min age':
@@ -94,6 +111,7 @@ export const parseJobsFromText = (text: string): { jobs: ParsedJob[]; errors: st
             jobData.max_age = parseInt(value) || 35;
             break;
           case 'gender':
+            rawData.gender = value;
             if (value.toLowerCase() === 'any' || value.toLowerCase() === 'both') {
               jobData.gender_requirement = null;
             } else if (['male', 'female', 'other'].includes(value.toLowerCase())) {
@@ -101,6 +119,7 @@ export const parseJobsFromText = (text: string): { jobs: ParsedJob[]; errors: st
             }
             break;
           case 'provinces':
+            rawData.provinces = value.split(',').map(p => p.trim());
             jobData.provinces = value.split(',').map(p => p.trim());
             break;
           case 'domicile':
@@ -127,6 +146,9 @@ export const parseJobsFromText = (text: string): { jobs: ParsedJob[]; errors: st
         }
       });
       
+      const jobTitle = jobData.title || `Job ${index + 1}`;
+      const validationErrors: string[] = [];
+      
       // Validate required fields
       if (!jobData.title) {
         errors.push(`Job ${index + 1}: Missing title`);
@@ -142,6 +164,72 @@ export const parseJobsFromText = (text: string): { jobs: ParsedJob[]; errors: st
       }
       if (!jobData.last_date) {
         errors.push(`Job ${index + 1}: Missing last date`);
+        return;
+      }
+      
+      // Validate education levels against available options
+      if (validationOptions && jobData.required_education_levels) {
+        const invalidEducation: string[] = [];
+        const validEducation: string[] = [];
+        
+        jobData.required_education_levels.forEach((edu, i) => {
+          if (validEducationValues.includes(edu.toLowerCase())) {
+            validEducation.push(edu);
+          } else {
+            invalidEducation.push(rawData.education?.[i] || edu);
+          }
+        });
+        
+        if (invalidEducation.length > 0) {
+          validationErrors.push(`Invalid education level(s): ${invalidEducation.join(', ')}`);
+        }
+        
+        // Update to only valid education levels
+        jobData.required_education_levels = validEducation;
+      }
+      
+      // Validate gender
+      if (rawData.gender && !VALID_GENDERS.includes(rawData.gender.toLowerCase())) {
+        validationErrors.push(`Invalid gender: "${rawData.gender}" (use: male, female, other, or any)`);
+      }
+      
+      // Validate provinces against available options
+      if (validationOptions && jobData.provinces && jobData.provinces.length > 0) {
+        const invalidProvinces: string[] = [];
+        const validProvinces: string[] = [];
+        
+        jobData.provinces.forEach(prov => {
+          // Case-insensitive matching
+          const matchedProvince = validProvinceValues.find(
+            vp => vp.toLowerCase() === prov.toLowerCase()
+          );
+          if (matchedProvince) {
+            validProvinces.push(matchedProvince);
+          } else {
+            invalidProvinces.push(prov);
+          }
+        });
+        
+        if (invalidProvinces.length > 0) {
+          validationErrors.push(`Invalid province(s): ${invalidProvinces.join(', ')}`);
+        }
+        
+        // Update to only valid provinces with correct casing
+        jobData.provinces = validProvinces;
+      }
+      
+      // If there are validation errors, skip this job
+      if (validationErrors.length > 0) {
+        skippedJobs.push({ title: jobTitle, reasons: validationErrors });
+        return;
+      }
+      
+      // Ensure we have at least one valid education level
+      if (!jobData.required_education_levels || jobData.required_education_levels.length === 0) {
+        skippedJobs.push({ 
+          title: jobTitle, 
+          reasons: ['No valid education levels after validation'] 
+        });
         return;
       }
       
@@ -167,7 +255,7 @@ export const parseJobsFromText = (text: string): { jobs: ParsedJob[]; errors: st
     }
   });
   
-  return { jobs, errors };
+  return { jobs, errors, skippedJobs };
 };
 
 export const useBulkCreateJobs = () => {
