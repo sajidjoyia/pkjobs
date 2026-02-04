@@ -22,6 +22,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCreateApplication, useCheckIfApplied } from "@/hooks/useApplications";
 import { isEligibleForJob } from "@/hooks/useProfile";
 import { toast } from "sonner";
+import ShareButtons from "@/components/ShareButtons";
 
 const educationLabels: Record<string, string> = {
   matric: "Matric / SSC",
@@ -299,6 +300,14 @@ const JobDetail = () => {
                 <p className="text-xs text-center text-muted-foreground">
                   Expert will handle complete application process
                 </p>
+              </div>
+
+              {/* Share Buttons */}
+              <div className="mt-6 pt-4 border-t border-border">
+                <ShareButtons 
+                  title={job.title} 
+                  description={`${job.department} - ${job.total_seats} seats available. Apply before ${new Date(job.last_date).toLocaleDateString()}`}
+                />
               </div>
 
               {/* Warning */}
