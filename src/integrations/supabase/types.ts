@@ -129,6 +129,33 @@ export type Database = {
         }
         Relationships: []
       }
+      education_fields: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          display_name: string
+          education_level: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          display_name: string
+          education_level: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          display_name?: string
+          education_level?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       jobs: {
         Row: {
           bank_challan_fee: number
@@ -147,6 +174,7 @@ export type Database = {
           photocopy_fee: number
           post_office_fee: number
           provinces: string[] | null
+          required_education_fields: string[] | null
           required_education_levels: string[] | null
           title: string
           total_fee: number | null
@@ -170,6 +198,7 @@ export type Database = {
           photocopy_fee?: number
           post_office_fee?: number
           provinces?: string[] | null
+          required_education_fields?: string[] | null
           required_education_levels?: string[] | null
           title: string
           total_fee?: number | null
@@ -193,6 +222,7 @@ export type Database = {
           photocopy_fee?: number
           post_office_fee?: number
           provinces?: string[] | null
+          required_education_fields?: string[] | null
           required_education_levels?: string[] | null
           title?: string
           total_fee?: number | null
@@ -355,6 +385,38 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_educations: {
+        Row: {
+          created_at: string
+          education_field_id: string | null
+          education_level: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          education_field_id?: string | null
+          education_level: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          education_field_id?: string | null
+          education_level?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_educations_education_field_id_fkey"
+            columns: ["education_field_id"]
+            isOneToOne: false
+            referencedRelation: "education_fields"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

@@ -21,6 +21,11 @@ interface UserRole {
   role: "admin" | "user" | "expert";
 }
 
+interface EducationEntry {
+  education_level: string;
+  education_field_id?: string | null;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -30,7 +35,14 @@ interface AuthContextType {
   isExpert: boolean;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, metadata: { full_name: string; date_of_birth?: string; gender?: string; education?: string; province?: string; domicile?: string }) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, metadata: { 
+    full_name: string; 
+    date_of_birth?: string; 
+    gender?: string; 
+    province?: string; 
+    domicile?: string;
+    educations?: EducationEntry[];
+  }) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -128,9 +140,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       full_name: string;
       date_of_birth?: string;
       gender?: string;
-      education?: string;
       province?: string;
       domicile?: string;
+      educations?: EducationEntry[];
     }
   ) => {
     const redirectUrl = `${window.location.origin}/`;
@@ -140,7 +152,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       password,
       options: {
         emailRedirectTo: redirectUrl,
-        data: metadata,
+        data: {
+          full_name: metadata.full_name,
+          date_of_birth: metadata.date_of_birth,
+          gender: metadata.gender,
+          province: metadata.province,
+          domicile: metadata.domicile,
+        },
       },
     });
 
@@ -156,14 +174,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Update profile with additional data after signup
     const { data: { user: newUser } } = await supabase.auth.getUser();
     if (newUser) {
+      // Update basic profile
       await supabase.from("profiles").update({
         full_name: metadata.full_name,
         date_of_birth: metadata.date_of_birth || null,
         gender: metadata.gender as any || null,
-        education: metadata.education as any || null,
         province: metadata.province || null,
         domicile: metadata.domicile || null,
       }).eq("user_id", newUser.id);
+
+      // Insert education entries
+      if (metadata.educations && metadata.educations.length > 0) {
+        await supabase.from("user_educations").insert(
+          metadata.educations.map((e) => ({
+            user_id: newUser.id,
+            education_level: e.education_level,
+            education_field_id: e.education_field_id || null,
+          }))
+        );
+      }
     }
 
     toast.success("Account created successfully!");

@@ -14,6 +14,7 @@ import { useSearchParams, Link, useNavigate, useLocation } from "react-router-do
 import { useAuth } from "@/hooks/useAuth";
 import { z } from "zod";
 import { toast } from "sonner";
+import EducationSelector, { EducationEntry } from "@/components/education/EducationSelector";
 
 const emailSchema = z.string().trim().email("Invalid email address").max(255);
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters").max(100);
@@ -35,10 +36,11 @@ const Auth = () => {
     confirmPassword: "",
     dob: "",
     gender: "",
-    education: "",
     province: "",
     domicile: "",
   });
+  
+  const [educationEntries, setEducationEntries] = useState<EducationEntry[]>([]);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -98,9 +100,9 @@ const Auth = () => {
           full_name: formData.name,
           date_of_birth: formData.dob || undefined,
           gender: formData.gender || undefined,
-          education: formData.education || undefined,
           province: formData.province || undefined,
           domicile: formData.domicile || undefined,
+          educations: educationEntries,
         });
         
         if (!error) {
@@ -193,22 +195,12 @@ const Auth = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="education">Education Level</Label>
-                  <div className="relative">
-                    <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
-                    <Select value={formData.education} onValueChange={(v) => handleChange("education", v)}>
-                      <SelectTrigger className="pl-10">
-                        <SelectValue placeholder="Select your education" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="matric">Matric / SSC</SelectItem>
-                        <SelectItem value="intermediate">Intermediate / FA / FSc</SelectItem>
-                        <SelectItem value="bachelor">Bachelor's Degree (BA/BSc/BS)</SelectItem>
-                        <SelectItem value="master">Master's Degree (MA/MSc/MS)</SelectItem>
-                        <SelectItem value="phd">PhD / Doctorate</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <Label>Education</Label>
+                  <EducationSelector
+                    value={educationEntries}
+                    onChange={setEducationEntries}
+                    maxEntries={3}
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">

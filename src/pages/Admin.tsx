@@ -38,7 +38,8 @@ import {
 import { useAllJobs, useCreateJob, useDeleteJob, useToggleJobStatus, CreateJobInput } from "@/hooks/useJobs";
 import { useAllApplications, useUpdateApplicationStatus } from "@/hooks/useApplications";
 import { useAuth } from "@/hooks/useAuth";
-import { useAllEducationLevels, useAddEducationLevel, useCustomEducationLevels, useDeleteEducationLevel } from "@/hooks/useEducationLevels";
+import { useAllEducationLevels } from "@/hooks/useEducationLevels";
+import { useEducationFields } from "@/hooks/useEducationFields";
 import { MultiSelect } from "@/components/ui/multi-select";
 import AdminChatPanel from "@/components/chat/AdminChatPanel";
 import { useAdminStartConversation } from "@/hooks/useChat";
@@ -46,6 +47,7 @@ import { toast } from "@/hooks/use-toast";
 import { useBulkCreateJobs, parseJobsFromText, BULK_JOB_SAMPLE, ValidationOptions } from "@/hooks/useBulkJobImport";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Copy, FileUp } from "lucide-react";
+import EducationFieldsManager from "@/components/admin/EducationFieldsManager";
 
 const PROVINCE_OPTIONS = [
   { value: "Punjab", label: "Punjab" },
@@ -66,26 +68,24 @@ const Admin = () => {
   const toggleJobStatus = useToggleJobStatus();
   const updateApplicationStatus = useUpdateApplicationStatus();
   const { data: educationLevels = [] } = useAllEducationLevels();
-  const { data: customEducationLevels = [] } = useCustomEducationLevels();
-  const addEducationLevel = useAddEducationLevel();
-  const deleteEducationLevel = useDeleteEducationLevel();
+  const { data: educationFields = [] } = useEducationFields();
   const adminStartConversation = useAdminStartConversation();
   const bulkCreateJobs = useBulkCreateJobs();
 
   const [activeTab, setActiveTab] = useState("jobs");
   const [showAddJob, setShowAddJob] = useState(false);
-  const [showAddEducation, setShowAddEducation] = useState(false);
+  const [showEducationManager, setShowEducationManager] = useState(false);
   const [showBulkImport, setShowBulkImport] = useState(false);
   const [bulkJobText, setBulkJobText] = useState("");
   const [bulkParseResult, setBulkParseResult] = useState<{ jobs: any[]; errors: string[]; skippedJobs: { title: string; reasons: string[] }[] } | null>(null);
-  const [newEducationName, setNewEducationName] = useState("");
-  const [newEducationDisplayName, setNewEducationDisplayName] = useState("");
+  const [selectedEducationFields, setSelectedEducationFields] = useState<string[]>([]);
   
   const [formData, setFormData] = useState({
     title: "",
     department: "",
     description: "",
     required_education_levels: [] as string[],
+    required_education_fields: [] as string[],
     min_age: "18",
     max_age: "35",
     gender_requirement: "",
@@ -98,6 +98,16 @@ const Admin = () => {
     photocopy_fee: "",
     expert_fee: "",
   });
+
+  // Get education fields for selected levels
+  const availableFieldsForSelectedLevels = educationFields.filter(
+    (f) => formData.required_education_levels.includes(f.education_level)
+  );
+
+  const educationFieldOptions = availableFieldsForSelectedLevels.map((f) => ({
+    value: f.id,
+    label: `${f.display_name} (${educationLevels.find(l => l.value === f.education_level)?.label || f.education_level})`,
+  }));
 
   const totalFees = 
     (parseInt(formData.bank_challan_fee) || 0) +
@@ -121,6 +131,7 @@ const Admin = () => {
       department: formData.department,
       description: formData.description || undefined,
       required_education_levels: formData.required_education_levels,
+      required_education_fields: formData.required_education_fields.length > 0 ? formData.required_education_fields : undefined,
       min_age: parseInt(formData.min_age) || 18,
       max_age: parseInt(formData.max_age) || 35,
       gender_requirement: formData.gender_requirement && formData.gender_requirement !== "any" ? formData.gender_requirement as any : null,
@@ -142,6 +153,7 @@ const Admin = () => {
         department: "",
         description: "",
         required_education_levels: [],
+        required_education_fields: [],
         min_age: "18",
         max_age: "35",
         gender_requirement: "",
@@ -159,21 +171,6 @@ const Admin = () => {
     }
   };
 
-  const handleAddEducationLevel = async () => {
-    if (!newEducationName || !newEducationDisplayName) return;
-    
-    try {
-      await addEducationLevel.mutateAsync({
-        name: newEducationName.toLowerCase().replace(/\s+/g, '_'),
-        displayName: newEducationDisplayName,
-      });
-      setNewEducationName("");
-      setNewEducationDisplayName("");
-      setShowAddEducation(false);
-    } catch (error) {
-      // Error handled in mutation
-    }
-  };
 
   const handleDeleteJob = async (id: string) => {
     if (confirm("Are you sure you want to delete this job?")) {
@@ -243,61 +240,18 @@ const Admin = () => {
             </p>
           </div>
           <div className="flex gap-2">
-            <Dialog open={showAddEducation} onOpenChange={setShowAddEducation}>
+            <Dialog open={showEducationManager} onOpenChange={setShowEducationManager}>
               <DialogTrigger asChild>
                 <Button variant="outline" className="gap-2">
                   <GraduationCap className="h-4 w-4" />
                   Manage Education
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>Manage Education Levels</DialogTitle>
+                  <DialogTitle>Manage Education Levels & Fields</DialogTitle>
                 </DialogHeader>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Add New Education Level</Label>
-                    <Input
-                      placeholder="e.g., diploma"
-                      value={newEducationName}
-                      onChange={(e) => setNewEducationName(e.target.value)}
-                      className="mb-2"
-                    />
-                    <Input
-                      placeholder="Display Name (e.g., Diploma / DAE)"
-                      value={newEducationDisplayName}
-                      onChange={(e) => setNewEducationDisplayName(e.target.value)}
-                    />
-                    <Button 
-                      onClick={handleAddEducationLevel} 
-                      disabled={addEducationLevel.isPending || !newEducationName || !newEducationDisplayName}
-                      className="w-full mt-2"
-                    >
-                      {addEducationLevel.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
-                      Add Education Level
-                    </Button>
-                  </div>
-                  
-                  {customEducationLevels.length > 0 && (
-                    <div className="space-y-2">
-                      <Label>Custom Education Levels</Label>
-                      <div className="space-y-2">
-                        {customEducationLevels.map((level) => (
-                          <div key={level.id} className="flex items-center justify-between p-2 rounded bg-muted">
-                            <span>{level.display_name}</span>
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => deleteEducationLevel.mutate(level.id)}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <EducationFieldsManager />
               </DialogContent>
             </Dialog>
             <Dialog open={showBulkImport} onOpenChange={(open) => {
@@ -571,10 +525,32 @@ Expert Fee: 1000
                     <MultiSelect
                       options={educationLevels}
                       selected={formData.required_education_levels}
-                      onChange={(selected) => handleChange("required_education_levels", selected)}
+                      onChange={(selected) => {
+                        handleChange("required_education_levels", selected);
+                        // Clear fields that are no longer valid
+                        const validFields = formData.required_education_fields.filter((fieldId) => {
+                          const field = educationFields.find((f) => f.id === fieldId);
+                          return field && selected.includes(field.education_level);
+                        });
+                        handleChange("required_education_fields", validFields);
+                      }}
                       placeholder="Select education levels..."
                     />
                   </div>
+                  {availableFieldsForSelectedLevels.length > 0 && (
+                    <div className="space-y-2">
+                      <Label>Required Education Fields (Optional)</Label>
+                      <MultiSelect
+                        options={educationFieldOptions}
+                        selected={formData.required_education_fields}
+                        onChange={(selected) => handleChange("required_education_fields", selected)}
+                        placeholder="Any field within selected levels..."
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Leave empty to accept any field within the selected education levels.
+                      </p>
+                    </div>
+                  )}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="minAge">Minimum Age</Label>
