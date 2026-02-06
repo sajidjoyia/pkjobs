@@ -8,6 +8,7 @@ export interface Job {
   department: string;
   description: string | null;
   required_education_levels: string[];
+  required_education_fields: string[] | null;
   min_age: number;
   max_age: number;
   gender_requirement: "male" | "female" | "other" | null;
@@ -30,6 +31,7 @@ export interface CreateJobInput {
   department: string;
   description?: string;
   required_education_levels: string[];
+  required_education_fields?: string[];
   min_age: number;
   max_age: number;
   gender_requirement?: "male" | "female" | "other" | null;

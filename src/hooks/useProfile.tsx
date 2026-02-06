@@ -7,7 +7,6 @@ interface UpdateProfileInput {
   full_name?: string;
   date_of_birth?: string;
   gender?: "male" | "female" | "other";
-  education?: "matric" | "intermediate" | "bachelor" | "master" | "phd";
   province?: string;
   domicile?: string;
   phone?: string;

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -30,8 +30,12 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useMyApplications, Application } from "@/hooks/useApplications";
 import { useUpdateProfile, calculateAge } from "@/hooks/useProfile";
+import { useUserEducations, useSetUserEducations } from "@/hooks/useEducationFields";
+import { useEducationFields } from "@/hooks/useEducationFields";
+import { useAllEducationLevels } from "@/hooks/useEducationLevels";
 import { openApplicationChat } from "@/components/chat/ChatWidget";
 import { toast } from "sonner";
+import EducationSelector, { EducationEntry } from "@/components/education/EducationSelector";
 
 const statusLabels: Record<Application["status"], string> = {
   pending: "Pending",
@@ -51,18 +55,15 @@ const statusProgress: Record<Application["status"], number> = {
   completed: 100,
 };
 
-const educationLabels: Record<string, string> = {
-  matric: "Matric / SSC",
-  intermediate: "Intermediate",
-  bachelor: "Bachelor's Degree",
-  master: "Master's Degree",
-  phd: "PhD / Doctorate",
-};
 
 const Dashboard = () => {
   const { profile, user, loading: authLoading } = useAuth();
   const { data: applications, isLoading: appsLoading } = useMyApplications();
   const updateProfile = useUpdateProfile();
+  const { data: userEducations = [], isLoading: educationsLoading } = useUserEducations(user?.id);
+  const setUserEducations = useSetUserEducations();
+  const { data: allEducationLevels = [] } = useAllEducationLevels();
+  const { data: allEducationFields = [] } = useEducationFields();
   
   const [activeTab, setActiveTab] = useState("applications");
   const [isEditing, setIsEditing] = useState(false);
@@ -70,26 +71,37 @@ const Dashboard = () => {
     full_name: profile?.full_name || "",
     date_of_birth: profile?.date_of_birth || "",
     gender: profile?.gender || "",
-    education: profile?.education || "",
     province: profile?.province || "",
     domicile: profile?.domicile || "",
     phone: profile?.phone || "",
   });
+  const [editEducations, setEditEducations] = useState<EducationEntry[]>([]);
 
   // Update form when profile loads
-  useState(() => {
+  useEffect(() => {
     if (profile) {
       setEditForm({
         full_name: profile.full_name || "",
         date_of_birth: profile.date_of_birth || "",
         gender: profile.gender || "",
-        education: profile.education || "",
         province: profile.province || "",
         domicile: profile.domicile || "",
         phone: profile.phone || "",
       });
     }
-  });
+  }, [profile]);
+
+  // Update educations when user educations load
+  useEffect(() => {
+    if (userEducations.length > 0) {
+      setEditEducations(
+        userEducations.map((e) => ({
+          education_level: e.education_level,
+          education_field_id: e.education_field_id,
+        }))
+      );
+    }
+  }, [userEducations]);
 
   const getStatusBadge = (status: Application["status"]) => {
     const colors: Record<Application["status"], string> = {
@@ -109,11 +121,19 @@ const Dashboard = () => {
         full_name: editForm.full_name,
         date_of_birth: editForm.date_of_birth || undefined,
         gender: editForm.gender as any || undefined,
-        education: editForm.education as any || undefined,
         province: editForm.province || undefined,
         domicile: editForm.domicile || undefined,
         phone: editForm.phone || undefined,
       });
+      
+      // Save educations
+      if (user) {
+        await setUserEducations.mutateAsync({
+          user_id: user.id,
+          educations: editEducations,
+        });
+      }
+      
       setIsEditing(false);
     } catch (error) {
       // Error handled in mutation
@@ -330,11 +350,16 @@ const Dashboard = () => {
                         full_name: profile?.full_name || "",
                         date_of_birth: profile?.date_of_birth || "",
                         gender: profile?.gender || "",
-                        education: profile?.education || "",
                         province: profile?.province || "",
                         domicile: profile?.domicile || "",
                         phone: profile?.phone || "",
                       });
+                      setEditEducations(
+                        userEducations.map((e) => ({
+                          education_level: e.education_level,
+                          education_field_id: e.education_field_id,
+                        }))
+                      );
                       setIsEditing(true);
                     }}
                   >
@@ -390,21 +415,11 @@ const Dashboard = () => {
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label>Education</Label>
-                      <Select 
-                        value={editForm.education} 
-                        onValueChange={(v) => setEditForm({ ...editForm, education: v })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select education" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="matric">Matric / SSC</SelectItem>
-                          <SelectItem value="intermediate">Intermediate</SelectItem>
-                          <SelectItem value="bachelor">Bachelor's Degree</SelectItem>
-                          <SelectItem value="master">Master's Degree</SelectItem>
-                          <SelectItem value="phd">PhD / Doctorate</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <EducationSelector
+                        value={editEducations}
+                        onChange={setEditEducations}
+                        maxEntries={5}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>Province</Label>
@@ -473,16 +488,31 @@ const Dashboard = () => {
                   </div>
 
                   <div className="space-y-4">
-                    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                      <GraduationCap className="h-5 w-5 text-primary" />
-                      <div>
+                    <div className="p-3 rounded-lg bg-muted/50">
+                      <div className="flex items-center gap-2 mb-2">
+                        <GraduationCap className="h-5 w-5 text-primary" />
                         <p className="text-sm text-muted-foreground">Education</p>
-                        <p className="font-medium text-foreground">
-                          {profile?.education 
-                            ? educationLabels[profile.education] || profile.education 
-                            : "Not set"}
-                        </p>
                       </div>
+                      {userEducations.length > 0 ? (
+                        <div className="space-y-1">
+                          {userEducations.map((edu, idx) => {
+                            const levelLabel = allEducationLevels.find(
+                              (l) => l.value === edu.education_level
+                            )?.label || edu.education_level;
+                            const fieldLabel = edu.education_field?.display_name;
+                            return (
+                              <p key={idx} className="font-medium text-foreground text-sm">
+                                {levelLabel}
+                                {fieldLabel && (
+                                  <span className="text-muted-foreground"> - {fieldLabel}</span>
+                                )}
+                              </p>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p className="font-medium text-foreground">Not set</p>
+                      )}
                     </div>
                     <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
                       <MapPin className="h-5 w-5 text-primary" />
