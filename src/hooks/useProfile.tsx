@@ -73,12 +73,16 @@ export const isEligibleForJob = (
     min_age: number;
     max_age: number;
     gender_requirement: string | null;
-    required_education_levels: string[];
-    provinces: string[];
+    required_education_levels: string[] | null;
+    provinces: string[] | null;
     domicile: string | null;
   }
 ): { eligible: boolean; reasons: string[] } => {
   const reasons: string[] = [];
+
+  // Normalize arrays to prevent null errors
+  const requiredLevels = job.required_education_levels || [];
+  const jobProvinces = job.provinces || [];
 
   // Check age
   if (profile.date_of_birth) {
@@ -94,20 +98,20 @@ export const isEligibleForJob = (
   }
 
   // Check education - user needs to have at least one of the required education levels or higher
-  if (profile.education && job.required_education_levels.length > 0) {
+  if (profile.education && requiredLevels.length > 0) {
     const userEducationLevel = getEducationLevel(profile.education);
-    const minRequiredLevel = Math.min(...job.required_education_levels.map(getEducationLevel));
+    const minRequiredLevel = Math.min(...requiredLevels.map(getEducationLevel));
     if (userEducationLevel < minRequiredLevel) {
-      reasons.push(`Education requirement: ${job.required_education_levels.join(", ")} or higher`);
+      reasons.push(`Education requirement: ${requiredLevels.join(", ")} or higher`);
     }
   }
 
   // Check province/domicile - if job has province restrictions
-  if (job.provinces.length > 0 && profile.province) {
+  if (jobProvinces.length > 0 && profile.province) {
     const userProvince = profile.province.toLowerCase();
-    const jobProvinces = job.provinces.map(p => p.toLowerCase());
-    if (!jobProvinces.some(p => p.includes("all") || p.includes(userProvince) || userProvince.includes(p))) {
-      reasons.push(`Province requirement: ${job.provinces.join(", ")}`);
+    const normalizedProvinces = jobProvinces.map(p => p.toLowerCase());
+    if (!normalizedProvinces.some(p => p.includes("all") || p.includes(userProvince) || userProvince.includes(p))) {
+      reasons.push(`Province requirement: ${jobProvinces.join(", ")}`);
     }
   }
 
