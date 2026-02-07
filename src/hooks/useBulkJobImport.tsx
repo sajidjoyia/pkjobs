@@ -7,6 +7,7 @@ export interface ParsedJob {
   department: string;
   description?: string;
   required_education_levels: string[];
+  required_education_fields?: string[];
   min_age: number;
   max_age: number;
   gender_requirement?: "male" | "female" | "other" | null;
@@ -20,9 +21,22 @@ export interface ParsedJob {
   expert_fee: number;
 }
 
+export interface EducationField {
+  id: string;
+  name: string;
+  display_name: string;
+  education_level: string;
+}
+
 export interface ValidationOptions {
   educationLevels: { value: string; label: string }[];
+  educationFields: EducationField[];
   provinces: { value: string; label: string }[];
+}
+
+export interface MissingEducationField {
+  name: string;
+  suggestedLevel: string;
 }
 
 const VALID_GENDERS = ["male", "female", "other", "any", "both"];
@@ -30,7 +44,8 @@ const VALID_GENDERS = ["male", "female", "other", "any", "both"];
 export const BULK_JOB_SAMPLE = `Title: Assistant Sub Inspector
 Department: Punjab Police
 Description: Assist in maintaining law and order
-Education: matric, intermediate
+Education Level: matric, intermediate
+Education Field: science, arts
 Min Age: 18
 Max Age: 30
 Gender: male
@@ -43,12 +58,11 @@ Post Office Fee: 200
 Photocopy Fee: 100
 Expert Fee: 1000
 
----
-
 Title: Junior Clerk
 Department: Ministry of Finance
 Description: Office administration and clerical work
-Education: intermediate, bachelor
+Education Level: intermediate, bachelor
+Education Field: bs_computer_science, bcom
 Min Age: 18
 Max Age: 35
 Gender: any
@@ -60,30 +74,77 @@ Post Office Fee: 150
 Photocopy Fee: 50
 Expert Fee: 800
 
----`;
+Title: Data Entry Operator
+Department: NADRA
+Description: Data entry and verification
+Education Level: intermediate
+Min Age: 18
+Max Age: 30
+Gender: any
+Provinces: Punjab
+Total Seats: 100
+Last Date: 2026-04-15
+Bank Challan Fee: 300
+Post Office Fee: 100
+Photocopy Fee: 50
+Expert Fee: 600`;
 
 export const parseJobsFromText = (
   text: string,
   validationOptions?: ValidationOptions
-): { jobs: ParsedJob[]; errors: string[]; skippedJobs: { title: string; reasons: string[] }[] } => {
+): { 
+  jobs: ParsedJob[]; 
+  errors: string[]; 
+  skippedJobs: { title: string; reasons: string[] }[];
+  missingEducationFields: MissingEducationField[];
+} => {
   const jobs: ParsedJob[] = [];
   const errors: string[] = [];
   const skippedJobs: { title: string; reasons: string[] }[] = [];
+  const missingEducationFields: MissingEducationField[] = [];
+  const seenMissingFields = new Set<string>();
   
   // Build validation sets
   const validEducationValues = validationOptions?.educationLevels.map(e => e.value.toLowerCase()) || [];
   const validProvinceValues = validationOptions?.provinces.map(p => p.value) || [];
+  const validEducationFields = validationOptions?.educationFields || [];
   
-  // Split by separator (---)
-  const jobBlocks = text.split(/\n---\n/).filter(block => block.trim());
+  // Split by "Title:" - each job block starts with "Title:"
+  const normalizedText = text.trim();
+  const jobBlocks: string[] = [];
+  
+  // Split on lines that start with "Title:" (case-insensitive)
+  const lines = normalizedText.split('\n');
+  let currentBlock = '';
+  
+  lines.forEach((line) => {
+    if (line.trim().toLowerCase().startsWith('title:')) {
+      if (currentBlock.trim()) {
+        jobBlocks.push(currentBlock.trim());
+      }
+      currentBlock = line;
+    } else {
+      currentBlock += '\n' + line;
+    }
+  });
+  
+  // Don't forget the last block
+  if (currentBlock.trim()) {
+    jobBlocks.push(currentBlock.trim());
+  }
   
   jobBlocks.forEach((block, index) => {
     try {
-      const lines = block.trim().split('\n');
+      const blockLines = block.trim().split('\n');
       const jobData: Partial<ParsedJob> = {};
-      const rawData: { education?: string[]; gender?: string; provinces?: string[] } = {};
+      const rawData: { 
+        educationLevels?: string[]; 
+        educationFields?: string[];
+        gender?: string; 
+        provinces?: string[] 
+      } = {};
       
-      lines.forEach(line => {
+      blockLines.forEach(line => {
         const colonIndex = line.indexOf(':');
         if (colonIndex === -1) return;
         
@@ -100,9 +161,18 @@ export const parseJobsFromText = (
           case 'description':
             jobData.description = value;
             break;
+          case 'education level':
+          case 'education levels':
           case 'education':
-            rawData.education = value.split(',').map(e => e.trim());
+            rawData.educationLevels = value.split(',').map(e => e.trim());
             jobData.required_education_levels = value.split(',').map(e => e.trim().toLowerCase().replace(/\s+/g, '_'));
+            break;
+          case 'education field':
+          case 'education fields':
+          case 'specialization':
+          case 'specializations':
+            rawData.educationFields = value.split(',').map(e => e.trim());
+            jobData.required_education_fields = value.split(',').map(e => e.trim().toLowerCase().replace(/\s+/g, '_'));
             break;
           case 'min age':
             jobData.min_age = parseInt(value) || 18;
@@ -176,7 +246,7 @@ export const parseJobsFromText = (
           if (validEducationValues.includes(edu.toLowerCase())) {
             validEducation.push(edu);
           } else {
-            invalidEducation.push(rawData.education?.[i] || edu);
+            invalidEducation.push(rawData.educationLevels?.[i] || edu);
           }
         });
         
@@ -186,6 +256,45 @@ export const parseJobsFromText = (
         
         // Update to only valid education levels
         jobData.required_education_levels = validEducation;
+      }
+      
+      // Validate education fields/specializations
+      if (validationOptions && jobData.required_education_fields && jobData.required_education_fields.length > 0) {
+        const invalidFields: string[] = [];
+        const validFieldIds: string[] = [];
+        
+        jobData.required_education_fields.forEach((fieldName, i) => {
+          // Find the field by name (case-insensitive)
+          const matchedField = validEducationFields.find(
+            f => f.name.toLowerCase() === fieldName.toLowerCase() ||
+                 f.display_name.toLowerCase() === fieldName.toLowerCase()
+          );
+          
+          if (matchedField) {
+            validFieldIds.push(matchedField.id);
+          } else {
+            const rawFieldName = rawData.educationFields?.[i] || fieldName;
+            invalidFields.push(rawFieldName);
+            
+            // Track missing fields for suggestion
+            if (!seenMissingFields.has(rawFieldName.toLowerCase())) {
+              seenMissingFields.add(rawFieldName.toLowerCase());
+              // Suggest the first education level from the job if available
+              const suggestedLevel = jobData.required_education_levels?.[0] || 'bachelor';
+              missingEducationFields.push({
+                name: rawFieldName,
+                suggestedLevel: suggestedLevel,
+              });
+            }
+          }
+        });
+        
+        if (invalidFields.length > 0) {
+          validationErrors.push(`Missing education field(s): ${invalidFields.join(', ')} — Please add these fields in "Manage Education" first`);
+        }
+        
+        // Update to only valid field IDs
+        jobData.required_education_fields = validFieldIds.length > 0 ? validFieldIds : undefined;
       }
       
       // Validate gender
@@ -238,6 +347,7 @@ export const parseJobsFromText = (
         department: jobData.department,
         description: jobData.description,
         required_education_levels: jobData.required_education_levels,
+        required_education_fields: jobData.required_education_fields,
         min_age: jobData.min_age || 18,
         max_age: jobData.max_age || 35,
         gender_requirement: jobData.gender_requirement,
@@ -255,7 +365,7 @@ export const parseJobsFromText = (
     }
   });
   
-  return { jobs, errors, skippedJobs };
+  return { jobs, errors, skippedJobs, missingEducationFields };
 };
 
 export const useBulkCreateJobs = () => {
