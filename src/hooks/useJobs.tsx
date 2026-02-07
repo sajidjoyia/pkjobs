@@ -26,6 +26,14 @@ export interface Job {
   updated_at: string;
 }
 
+// Helper to normalize job data (handle null arrays from DB)
+const normalizeJob = (job: any): Job => ({
+  ...job,
+  required_education_levels: job.required_education_levels || [],
+  required_education_fields: job.required_education_fields || null,
+  provinces: job.provinces || [],
+});
+
 export interface CreateJobInput {
   title: string;
   department: string;
@@ -76,7 +84,7 @@ export const useJobs = (filters?: {
       const { data, error } = await query;
 
       if (error) throw error;
-      return data as Job[];
+      return (data || []).map(normalizeJob);
     },
   });
 };
@@ -94,7 +102,7 @@ export const useJob = (id: string | undefined) => {
         .single();
 
       if (error) throw error;
-      return data as Job;
+      return normalizeJob(data);
     },
     enabled: !!id,
   });
@@ -110,7 +118,7 @@ export const useAllJobs = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as Job[];
+      return (data || []).map(normalizeJob);
     },
   });
 };
