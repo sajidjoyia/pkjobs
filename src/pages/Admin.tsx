@@ -77,7 +77,7 @@ const Admin = () => {
   const [showEducationManager, setShowEducationManager] = useState(false);
   const [showBulkImport, setShowBulkImport] = useState(false);
   const [bulkJobText, setBulkJobText] = useState("");
-  const [bulkParseResult, setBulkParseResult] = useState<{ jobs: any[]; errors: string[]; skippedJobs: { title: string; reasons: string[] }[] } | null>(null);
+  const [bulkParseResult, setBulkParseResult] = useState<{ jobs: any[]; errors: string[]; skippedJobs: { title: string; reasons: string[] }[]; missingEducationFields: { name: string; suggestedLevel: string }[] } | null>(null);
   const [selectedEducationFields, setSelectedEducationFields] = useState<string[]>([]);
   
   const [formData, setFormData] = useState({
@@ -185,6 +185,7 @@ const Admin = () => {
   const handleParseBulkJobs = () => {
     const validationOptions: ValidationOptions = {
       educationLevels: educationLevels,
+      educationFields: educationFields,
       provinces: PROVINCE_OPTIONS,
     };
     const result = parseJobsFromText(bulkJobText, validationOptions);
@@ -195,6 +196,15 @@ const Admin = () => {
       toast({
         title: `${result.skippedJobs.length} job(s) skipped`,
         description: "Some jobs have invalid categories. Check the preview for details.",
+        variant: "destructive",
+      });
+    }
+    
+    // Show toast for missing education fields
+    if (result.missingEducationFields.length > 0) {
+      toast({
+        title: `${result.missingEducationFields.length} education field(s) missing`,
+        description: "Add the missing fields via 'Manage Education' to import all jobs.",
         variant: "destructive",
       });
     }
@@ -274,7 +284,7 @@ const Admin = () => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-muted-foreground">
-                      Paste job data in the format below. Separate multiple jobs with "---".
+                      Paste job data below. Each job starts with "Title:" on a new line.
                     </p>
                     <Button variant="outline" size="sm" onClick={handleCopySample} className="gap-2">
                       <Copy className="h-3 w-3" />
@@ -288,7 +298,8 @@ const Admin = () => {
 {`Title: Assistant Sub Inspector
 Department: Punjab Police
 Description: Assist in maintaining law and order
-Education: matric, intermediate
+Education Level: matric, intermediate
+Education Field: science, arts
 Min Age: 18
 Max Age: 30
 Gender: male (or female, any)
@@ -301,9 +312,9 @@ Post Office Fee: 200
 Photocopy Fee: 100
 Expert Fee: 1000
 
----
-
-(Next job here...)`}
+Title: Junior Clerk
+Department: Ministry of Finance
+...`}
                     </pre>
                   </div>
                   
@@ -371,6 +382,32 @@ Expert Fee: 1000
                               </ul>
                             </div>
                           ))}
+                        </div>
+                      )}
+                      
+                      {bulkParseResult.missingEducationFields && bulkParseResult.missingEducationFields.length > 0 && (
+                        <div className="mb-3">
+                          <p className="text-sm font-medium text-destructive mb-1">
+                            🎓 Missing Education Fields — Add these via "Manage Education":
+                          </p>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {bulkParseResult.missingEducationFields.map((field, i) => (
+                              <Badge key={i} variant="outline" className="text-xs border-destructive text-destructive">
+                                {field.name} → {educationLevels.find(l => l.value === field.suggestedLevel)?.label || field.suggestedLevel}
+                              </Badge>
+                            ))}
+                          </div>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="mt-2 gap-2"
+                            onClick={() => {
+                              setShowEducationManager(true);
+                            }}
+                          >
+                            <GraduationCap className="h-3 w-3" />
+                            Open Education Manager
+                          </Button>
                         </div>
                       )}
                       
