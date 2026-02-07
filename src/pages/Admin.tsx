@@ -48,6 +48,7 @@ import { useBulkCreateJobs, parseJobsFromText, BULK_JOB_SAMPLE, ValidationOption
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Copy, FileUp } from "lucide-react";
 import EducationFieldsManager from "@/components/admin/EducationFieldsManager";
+import BulkImportValidationErrors from "@/components/admin/BulkImportValidationErrors";
 
 const PROVINCE_OPTIONS = [
   { value: "Punjab", label: "Punjab" },
@@ -357,77 +358,47 @@ Department: Ministry of Finance
                   </div>
                   
                   {bulkParseResult && (
-                    <ScrollArea className="h-64 rounded-lg border p-3">
-                      {bulkParseResult.errors.length > 0 && (
-                        <div className="mb-3">
-                          <p className="text-sm font-medium text-destructive mb-1">Parse Errors:</p>
-                          {bulkParseResult.errors.map((error, i) => (
-                            <p key={i} className="text-xs text-destructive">{error}</p>
-                          ))}
-                        </div>
-                      )}
-                      
-                      {bulkParseResult.skippedJobs.length > 0 && (
-                        <div className="mb-3">
-                          <p className="text-sm font-medium text-warning mb-1">
-                            ⚠ {bulkParseResult.skippedJobs.length} job(s) skipped due to invalid categories:
-                          </p>
-                          {bulkParseResult.skippedJobs.map((skipped, i) => (
-                            <div key={i} className="text-xs p-2 bg-warning/10 border border-warning/30 rounded mb-2">
-                              <p className="font-medium text-warning">{skipped.title}</p>
-                              <ul className="mt-1 space-y-0.5">
-                                {skipped.reasons.map((reason, j) => (
-                                  <li key={j} className="text-muted-foreground">• {reason}</li>
-                                ))}
-                              </ul>
+                    <ScrollArea className="h-80 rounded-lg border p-4">
+                      <div className="space-y-4">
+                        {/* Validation Errors Component */}
+                        <BulkImportValidationErrors
+                          errors={bulkParseResult.errors}
+                          skippedJobs={bulkParseResult.skippedJobs}
+                          missingEducationFields={bulkParseResult.missingEducationFields || []}
+                          validJobsCount={bulkParseResult.jobs.length}
+                          educationLevels={educationLevels}
+                          onOpenEducationManager={() => setShowEducationManager(true)}
+                        />
+                        
+                        {/* Valid Jobs List */}
+                        {bulkParseResult.jobs.length > 0 && (
+                          <div className="pt-2 border-t">
+                            <p className="text-sm font-medium text-success mb-3 flex items-center gap-2">
+                              <span className="h-2 w-2 rounded-full bg-success" />
+                              {bulkParseResult.jobs.length} job{bulkParseResult.jobs.length > 1 ? 's' : ''} ready to import
+                            </p>
+                            <div className="space-y-2">
+                              {bulkParseResult.jobs.map((job, i) => (
+                                <div key={i} className="p-3 bg-muted/50 border rounded-md">
+                                  <p className="font-medium text-sm">{job.title}</p>
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    {job.department} • {job.total_seats} seat{job.total_seats > 1 ? 's' : ''} • Last date: {job.last_date}
+                                  </p>
+                                  {job.required_education_levels && job.required_education_levels.length > 0 && (
+                                    <div className="flex flex-wrap gap-1 mt-2">
+                                      {job.required_education_levels.map((level: string, j: number) => (
+                                        <span key={j} className="text-xs px-1.5 py-0.5 bg-primary/10 text-primary rounded">
+                                          {educationLevels.find(l => l.value === level)?.label || level}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
-                      )}
-                      
-                      {bulkParseResult.missingEducationFields && bulkParseResult.missingEducationFields.length > 0 && (
-                        <div className="mb-3">
-                          <p className="text-sm font-medium text-destructive mb-1">
-                            🎓 Missing Education Fields — Add these via "Manage Education":
-                          </p>
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {bulkParseResult.missingEducationFields.map((field, i) => (
-                              <Badge key={i} variant="outline" className="text-xs border-destructive text-destructive">
-                                {field.name} → {educationLevels.find(l => l.value === field.suggestedLevel)?.label || field.suggestedLevel}
-                              </Badge>
-                            ))}
                           </div>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="mt-2 gap-2"
-                            onClick={() => {
-                              setShowEducationManager(true);
-                            }}
-                          >
-                            <GraduationCap className="h-3 w-3" />
-                            Open Education Manager
-                          </Button>
-                        </div>
-                      )}
-                      
-                      {bulkParseResult.jobs.length > 0 && (
-                        <div>
-                          <p className="text-sm font-medium text-success mb-2">
-                            ✓ {bulkParseResult.jobs.length} job{bulkParseResult.jobs.length > 1 ? 's' : ''} ready to import:
-                          </p>
-                          {bulkParseResult.jobs.map((job, i) => (
-                            <div key={i} className="text-xs p-2 bg-muted rounded mb-2">
-                              <p className="font-medium">{job.title}</p>
-                              <p className="text-muted-foreground">{job.department} • {job.total_seats} seats • Last: {job.last_date}</p>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      
-                      {bulkParseResult.jobs.length === 0 && bulkParseResult.errors.length === 0 && bulkParseResult.skippedJobs.length === 0 && (
-                        <p className="text-sm text-muted-foreground">No jobs found. Check your format.</p>
-                      )}
+                        )}
+                      </div>
                     </ScrollArea>
                   )}
                 </div>
