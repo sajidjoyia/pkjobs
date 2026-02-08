@@ -74,6 +74,7 @@ export type Database = {
           subject: string | null
           updated_at: string
           user_id: string
+          work_request_id: string | null
         }
         Insert: {
           admin_id?: string | null
@@ -84,6 +85,7 @@ export type Database = {
           subject?: string | null
           updated_at?: string
           user_id: string
+          work_request_id?: string | null
         }
         Update: {
           admin_id?: string | null
@@ -94,6 +96,7 @@ export type Database = {
           subject?: string | null
           updated_at?: string
           user_id?: string
+          work_request_id?: string | null
         }
         Relationships: [
           {
@@ -101,6 +104,13 @@ export type Database = {
             columns: ["application_id"]
             isOneToOne: false
             referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_work_request_id_fkey"
+            columns: ["work_request_id"]
+            isOneToOne: false
+            referencedRelation: "work_requests"
             referencedColumns: ["id"]
           },
         ]
@@ -356,6 +366,39 @@ export type Database = {
         }
         Relationships: []
       }
+      service_categories: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          default_fee: number | null
+          description: string | null
+          display_name: string
+          id: string
+          is_active: boolean
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          default_fee?: number | null
+          description?: string | null
+          display_name: string
+          id?: string
+          is_active?: boolean
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          default_fee?: number | null
+          description?: string | null
+          display_name?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+        }
+        Relationships: []
+      }
       user_documents: {
         Row: {
           created_at: string
@@ -438,6 +481,59 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      work_requests: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          custom_description: string
+          expert_id: string | null
+          id: string
+          notes: string | null
+          payment_amount: number | null
+          payment_date: string | null
+          receipt_url: string | null
+          status: Database["public"]["Enums"]["application_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          custom_description: string
+          expert_id?: string | null
+          id?: string
+          notes?: string | null
+          payment_amount?: number | null
+          payment_date?: string | null
+          receipt_url?: string | null
+          status?: Database["public"]["Enums"]["application_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          custom_description?: string
+          expert_id?: string | null
+          id?: string
+          notes?: string | null
+          payment_amount?: number | null
+          payment_date?: string | null
+          receipt_url?: string | null
+          status?: Database["public"]["Enums"]["application_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_requests_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

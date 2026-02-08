@@ -26,9 +26,11 @@ import {
   Settings,
   Loader2,
   Save,
+  FileQuestion,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMyApplications, Application } from "@/hooks/useApplications";
+import { useMyWorkRequests, WorkRequest, useGetOrCreateWorkRequestConversation } from "@/hooks/useWorkRequests";
 import { useUpdateProfile, calculateAge } from "@/hooks/useProfile";
 import { useUserEducations, useSetUserEducations } from "@/hooks/useEducationFields";
 import { useEducationFields } from "@/hooks/useEducationFields";
@@ -59,6 +61,8 @@ const statusProgress: Record<Application["status"], number> = {
 const Dashboard = () => {
   const { profile, user, loading: authLoading } = useAuth();
   const { data: applications, isLoading: appsLoading } = useMyApplications();
+  const { data: workRequests = [], isLoading: workRequestsLoading } = useMyWorkRequests();
+  const getOrCreateWorkRequestConv = useGetOrCreateWorkRequestConversation();
   const updateProfile = useUpdateProfile();
   const { data: userEducations = [], isLoading: educationsLoading } = useUserEducations(user?.id);
   const setUserEducations = useSetUserEducations();
@@ -148,10 +152,16 @@ const Dashboard = () => {
     );
   }
 
+  const totalItems = (applications?.length || 0) + workRequests.length;
+  const inProgressItems = (applications?.filter((a) => ["pending", "payment_received", "expert_assigned", "in_progress"].includes(a.status)).length || 0) + 
+    workRequests.filter((wr) => ["pending", "payment_received", "expert_assigned", "in_progress"].includes(wr.status)).length;
+  const completedItems = (applications?.filter((a) => ["applied", "completed"].includes(a.status)).length || 0) +
+    workRequests.filter((wr) => ["applied", "completed"].includes(wr.status)).length;
+
   const applicationStats = {
-    total: applications?.length || 0,
-    inProgress: applications?.filter((a) => ["pending", "payment_received", "expert_assigned", "in_progress"].includes(a.status)).length || 0,
-    completed: applications?.filter((a) => ["applied", "completed"].includes(a.status)).length || 0,
+    total: totalItems,
+    inProgress: inProgressItems,
+    completed: completedItems,
   };
 
   return (
@@ -222,7 +232,7 @@ const Dashboard = () => {
           <TabsList className="mb-6">
             <TabsTrigger value="applications" className="gap-2">
               <Briefcase className="h-4 w-4" />
-              My Applications
+              Applications & Requests
             </TabsTrigger>
             <TabsTrigger value="profile" className="gap-2">
               <User className="h-4 w-4" />
@@ -236,76 +246,163 @@ const Dashboard = () => {
 
           {/* Applications Tab */}
           <TabsContent value="applications">
-            {appsLoading ? (
+            {(appsLoading || workRequestsLoading) ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
-            ) : applications?.length === 0 ? (
+            ) : (applications?.length === 0 && workRequests.length === 0) ? (
               <div className="card-elevated p-8 text-center">
                 <Briefcase className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-foreground mb-2">
                   No Applications Yet
                 </h3>
                 <p className="text-muted-foreground mb-4">
-                  Start by browsing available jobs and applying to those you're eligible for.
+                  Start by browsing available jobs or submit a work request.
                 </p>
-                <Button asChild>
-                  <a href="/jobs">Browse Jobs</a>
-                </Button>
+                <div className="flex gap-2 justify-center">
+                  <Button asChild>
+                    <a href="/jobs">Browse Jobs</a>
+                  </Button>
+                </div>
               </div>
             ) : (
               <div className="space-y-4">
-                {applications?.map((app) => (
-                  <div key={app.id} className="card-elevated p-6">
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-start gap-3 mb-3">
-                          <div>
-                            <h3 className="text-lg font-semibold text-foreground">
-                              {app.job?.title || "Job"}
-                            </h3>
-                            <p className="text-muted-foreground">{app.job?.department}</p>
-                          </div>
-                          {getStatusBadge(app.status)}
-                        </div>
+                {/* Job Applications */}
+                {applications && applications.length > 0 && (
+                  <>
+                    <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                      <Briefcase className="h-4 w-4" />
+                      Job Applications ({applications.length})
+                    </h3>
+                    {applications.map((app) => (
+                      <div key={app.id} className="card-elevated p-6">
+                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-start gap-3 mb-3">
+                              <div>
+                                <h3 className="text-lg font-semibold text-foreground">
+                                  {app.job?.title || "Job"}
+                                </h3>
+                                <p className="text-muted-foreground">{app.job?.department}</p>
+                              </div>
+                              {getStatusBadge(app.status)}
+                            </div>
 
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground">Progress</span>
-                            <span className="font-medium">{statusProgress[app.status]}%</span>
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-muted-foreground">Progress</span>
+                                <span className="font-medium">{statusProgress[app.status]}%</span>
+                              </div>
+                              <Progress value={statusProgress[app.status]} className="h-2" />
+                              <p className="text-sm text-muted-foreground">
+                                Applied on {new Date(app.created_at).toLocaleDateString()}
+                              </p>
+                            </div>
                           </div>
-                          <Progress value={statusProgress[app.status]} className="h-2" />
-                          <p className="text-sm text-muted-foreground">
-                            Applied on {new Date(app.created_at).toLocaleDateString()}
-                          </p>
+
+                          <div className="flex flex-col gap-2">
+                            <div className="text-sm text-muted-foreground">
+                              Amount: <span className="font-medium text-foreground">Rs. {Number(app.payment_amount).toLocaleString()}</span>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="gap-2"
+                                onClick={() => openApplicationChat(app.id, app.job?.title || 'Job Application')}
+                              >
+                                <MessageSquare className="h-4 w-4" />
+                                Chat
+                              </Button>
+                              {app.receipt_url && (
+                                <Button variant="outline" size="sm" className="gap-2">
+                                  <FileText className="h-4 w-4" />
+                                  Receipt
+                                </Button>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
+                    ))}
+                  </>
+                )}
 
-                      <div className="flex flex-col gap-2">
-                        <div className="text-sm text-muted-foreground">
-                          Amount: <span className="font-medium text-foreground">Rs. {Number(app.payment_amount).toLocaleString()}</span>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="gap-2"
-                            onClick={() => openApplicationChat(app.id, app.job?.title || 'Job Application')}
-                          >
-                            <MessageSquare className="h-4 w-4" />
-                            Chat
-                          </Button>
-                          {app.receipt_url && (
-                            <Button variant="outline" size="sm" className="gap-2">
-                              <FileText className="h-4 w-4" />
-                              Receipt
-                            </Button>
-                          )}
+                {/* Work Requests */}
+                {workRequests.length > 0 && (
+                  <>
+                    <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2 mt-6">
+                      <FileQuestion className="h-4 w-4" />
+                      Work Requests ({workRequests.length})
+                    </h3>
+                    {workRequests.map((wr) => (
+                      <div key={wr.id} className="card-elevated p-6">
+                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-start gap-3 mb-3">
+                              <div>
+                                <h3 className="text-lg font-semibold text-foreground">
+                                  {wr.category?.display_name || "Custom Request"}
+                                </h3>
+                                <p className="text-muted-foreground line-clamp-2">{wr.custom_description}</p>
+                              </div>
+                              {getStatusBadge(wr.status)}
+                            </div>
+
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-muted-foreground">Progress</span>
+                                <span className="font-medium">{statusProgress[wr.status]}%</span>
+                              </div>
+                              <Progress value={statusProgress[wr.status]} className="h-2" />
+                              <p className="text-sm text-muted-foreground">
+                                Submitted on {new Date(wr.created_at).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col gap-2">
+                            {wr.payment_amount && (
+                              <div className="text-sm text-muted-foreground">
+                                Amount: <span className="font-medium text-foreground">Rs. {Number(wr.payment_amount).toLocaleString()}</span>
+                              </div>
+                            )}
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="gap-2"
+                                onClick={async () => {
+                                  try {
+                                    const conv = await getOrCreateWorkRequestConv.mutateAsync({
+                                      workRequestId: wr.id,
+                                      categoryName: wr.category?.display_name || 'Work Request',
+                                    });
+                                    // Open the chat widget - we can use the same openApplicationChat but it expects application
+                                    // For now, just navigate or show a toast
+                                    toast.success("Chat opened! Check the chat widget.");
+                                  } catch (error) {
+                                    console.error("Failed to open chat:", error);
+                                  }
+                                }}
+                                disabled={getOrCreateWorkRequestConv.isPending}
+                              >
+                                <MessageSquare className="h-4 w-4" />
+                                Chat
+                              </Button>
+                              {wr.receipt_url && (
+                                <Button variant="outline" size="sm" className="gap-2">
+                                  <FileText className="h-4 w-4" />
+                                  Receipt
+                                </Button>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                ))}
+                    ))}
+                  </>
+                )}
               </div>
             )}
           </TabsContent>

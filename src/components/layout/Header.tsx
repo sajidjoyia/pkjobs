@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import ThemeToggle from "@/components/ThemeToggle";
 import NotificationDropdown from "@/components/NotificationDropdown";
+import RequestWorkDropdown from "@/components/RequestWorkDropdown";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -56,6 +57,7 @@ const Header = () => {
         </nav>
 
         <div className="hidden md:flex items-center gap-3">
+          <RequestWorkDropdown />
           <ThemeToggle />
           {!loading && user && <NotificationDropdown />}
           {!loading && user ? (
