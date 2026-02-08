@@ -34,9 +34,12 @@ import {
   CheckCircle,
   MessageCircle,
   GraduationCap,
+  Tag,
+  FileQuestion,
 } from "lucide-react";
 import { useAllJobs, useCreateJob, useDeleteJob, useToggleJobStatus, CreateJobInput } from "@/hooks/useJobs";
 import { useAllApplications, useUpdateApplicationStatus } from "@/hooks/useApplications";
+import { useAllWorkRequests, useUpdateWorkRequestStatus } from "@/hooks/useWorkRequests";
 import { useAuth } from "@/hooks/useAuth";
 import { useAllEducationLevels } from "@/hooks/useEducationLevels";
 import { useEducationFields } from "@/hooks/useEducationFields";
@@ -49,6 +52,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Copy, FileUp } from "lucide-react";
 import EducationFieldsManager from "@/components/admin/EducationFieldsManager";
 import BulkImportValidationErrors from "@/components/admin/BulkImportValidationErrors";
+import ServiceCategoriesManager from "@/components/admin/ServiceCategoriesManager";
 
 const PROVINCE_OPTIONS = [
   { value: "Punjab", label: "Punjab" },
@@ -64,10 +68,12 @@ const Admin = () => {
   const { isAdmin } = useAuth();
   const { data: jobs, isLoading: jobsLoading } = useAllJobs();
   const { data: applications, isLoading: appsLoading } = useAllApplications();
+  const { data: workRequests = [], isLoading: workRequestsLoading } = useAllWorkRequests();
   const createJob = useCreateJob();
   const deleteJob = useDeleteJob();
   const toggleJobStatus = useToggleJobStatus();
   const updateApplicationStatus = useUpdateApplicationStatus();
+  const updateWorkRequestStatus = useUpdateWorkRequestStatus();
   const { data: educationLevels = [] } = useAllEducationLevels();
   const { data: educationFields = [] } = useEducationFields();
   const adminStartConversation = useAdminStartConversation();
@@ -76,6 +82,7 @@ const Admin = () => {
   const [activeTab, setActiveTab] = useState("jobs");
   const [showAddJob, setShowAddJob] = useState(false);
   const [showEducationManager, setShowEducationManager] = useState(false);
+  const [showServiceCategoriesManager, setShowServiceCategoriesManager] = useState(false);
   const [showBulkImport, setShowBulkImport] = useState(false);
   const [bulkJobText, setBulkJobText] = useState("");
   const [bulkParseResult, setBulkParseResult] = useState<{ jobs: any[]; errors: string[]; skippedJobs: { title: string; reasons: string[] }[]; missingEducationFields: { name: string; suggestedLevel: string }[] } | null>(null);
@@ -250,7 +257,21 @@ const Admin = () => {
               Manage jobs, users, and applications
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Dialog open={showServiceCategoriesManager} onOpenChange={setShowServiceCategoriesManager}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <Tag className="h-4 w-4" />
+                  Manage Services
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Manage Service Categories</DialogTitle>
+                </DialogHeader>
+                <ServiceCategoriesManager />
+              </DialogContent>
+            </Dialog>
             <Dialog open={showEducationManager} onOpenChange={setShowEducationManager}>
               <DialogTrigger asChild>
                 <Button variant="outline" className="gap-2">
@@ -695,6 +716,10 @@ Department: Ministry of Finance
               <FileText className="h-4 w-4" />
               Applications
             </TabsTrigger>
+            <TabsTrigger value="work-requests" className="gap-2">
+              <FileQuestion className="h-4 w-4" />
+              Work Requests
+            </TabsTrigger>
             <TabsTrigger value="chat" className="gap-2">
               <MessageCircle className="h-4 w-4" />
               Live Chat
@@ -862,6 +887,99 @@ Department: Ministry of Finance
                                     console.error('Failed to start conversation:', error);
                                   }
                                 }}
+                                title="Start Chat"
+                              >
+                                <MessageCircle className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon">
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Work Requests Tab */}
+          <TabsContent value="work-requests">
+            {workRequestsLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : workRequests.length === 0 ? (
+              <div className="card-elevated p-8 text-center">
+                <FileQuestion className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">No Work Requests Yet</h3>
+                <p className="text-muted-foreground">Work requests will appear here once users submit them.</p>
+              </div>
+            ) : (
+              <div className="card-elevated overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="text-left p-4 font-medium text-foreground">User</th>
+                        <th className="text-left p-4 font-medium text-foreground">Category</th>
+                        <th className="text-left p-4 font-medium text-foreground">Description</th>
+                        <th className="text-left p-4 font-medium text-foreground">Submitted</th>
+                        <th className="text-left p-4 font-medium text-foreground">Amount</th>
+                        <th className="text-left p-4 font-medium text-foreground">Status</th>
+                        <th className="text-right p-4 font-medium text-foreground">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {workRequests.map((wr) => (
+                        <tr key={wr.id} className="border-t border-border">
+                          <td className="p-4">
+                            <p className="font-medium text-foreground">{wr.profile?.full_name || 'Unknown'}</p>
+                          </td>
+                          <td className="p-4">
+                            <Badge variant="secondary">
+                              {wr.category?.display_name || 'Custom'}
+                            </Badge>
+                          </td>
+                          <td className="p-4 max-w-xs">
+                            <p className="text-sm text-muted-foreground line-clamp-2">
+                              {wr.custom_description}
+                            </p>
+                          </td>
+                          <td className="p-4 text-muted-foreground">
+                            {new Date(wr.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="p-4 text-muted-foreground">
+                            {wr.payment_amount ? `Rs. ${Number(wr.payment_amount).toLocaleString()}` : '—'}
+                          </td>
+                          <td className="p-4">
+                            <Select 
+                              value={wr.status}
+                              onValueChange={(value) => updateWorkRequestStatus.mutate({ 
+                                id: wr.id, 
+                                status: value as any 
+                              })}
+                            >
+                              <SelectTrigger className="w-[180px]">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="pending">Pending</SelectItem>
+                                <SelectItem value="payment_received">Payment Received</SelectItem>
+                                <SelectItem value="expert_assigned">Expert Assigned</SelectItem>
+                                <SelectItem value="in_progress">In Progress</SelectItem>
+                                <SelectItem value="applied">Applied</SelectItem>
+                                <SelectItem value="completed">Completed</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </td>
+                          <td className="p-4">
+                            <div className="flex justify-end gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
                                 title="Start Chat"
                               >
                                 <MessageCircle className="h-4 w-4" />
