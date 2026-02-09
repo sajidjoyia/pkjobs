@@ -166,6 +166,81 @@ export type Database = {
         }
         Relationships: []
       }
+      global_seo_settings: {
+        Row: {
+          created_at: string
+          default_meta_description: string | null
+          default_meta_keywords: string | null
+          default_meta_title: string | null
+          default_og_description: string | null
+          default_og_image_url: string | null
+          default_og_title: string | null
+          google_analytics_id: string | null
+          google_search_console_verification: string | null
+          id: string
+          logo_url: string | null
+          organization_name: string | null
+          site_description: string | null
+          site_title: string | null
+          social_facebook: string | null
+          social_instagram: string | null
+          social_linkedin: string | null
+          social_twitter: string | null
+          social_youtube: string | null
+          updated_at: string
+          website_name: string | null
+          website_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          default_meta_description?: string | null
+          default_meta_keywords?: string | null
+          default_meta_title?: string | null
+          default_og_description?: string | null
+          default_og_image_url?: string | null
+          default_og_title?: string | null
+          google_analytics_id?: string | null
+          google_search_console_verification?: string | null
+          id?: string
+          logo_url?: string | null
+          organization_name?: string | null
+          site_description?: string | null
+          site_title?: string | null
+          social_facebook?: string | null
+          social_instagram?: string | null
+          social_linkedin?: string | null
+          social_twitter?: string | null
+          social_youtube?: string | null
+          updated_at?: string
+          website_name?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          default_meta_description?: string | null
+          default_meta_keywords?: string | null
+          default_meta_title?: string | null
+          default_og_description?: string | null
+          default_og_image_url?: string | null
+          default_og_title?: string | null
+          google_analytics_id?: string | null
+          google_search_console_verification?: string | null
+          id?: string
+          logo_url?: string | null
+          organization_name?: string | null
+          site_description?: string | null
+          site_title?: string | null
+          social_facebook?: string | null
+          social_instagram?: string | null
+          social_linkedin?: string | null
+          social_twitter?: string | null
+          social_youtube?: string | null
+          updated_at?: string
+          website_name?: string | null
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       jobs: {
         Row: {
           bank_challan_fee: number
