@@ -36,6 +36,7 @@ import {
   GraduationCap,
   Tag,
   FileQuestion,
+  Settings,
 } from "lucide-react";
 import { useAllJobs, useCreateJob, useDeleteJob, useToggleJobStatus, CreateJobInput } from "@/hooks/useJobs";
 import { useAllApplications, useUpdateApplicationStatus } from "@/hooks/useApplications";
@@ -53,6 +54,7 @@ import { Copy, FileUp } from "lucide-react";
 import EducationFieldsManager from "@/components/admin/EducationFieldsManager";
 import BulkImportValidationErrors from "@/components/admin/BulkImportValidationErrors";
 import ServiceCategoriesManager from "@/components/admin/ServiceCategoriesManager";
+import SeoSettingsManager from "@/components/admin/SeoSettingsManager";
 
 const PROVINCE_OPTIONS = [
   { value: "Punjab", label: "Punjab" },
@@ -707,7 +709,7 @@ Department: Ministry of Finance
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6">
+          <TabsList className="mb-6 flex-wrap">
             <TabsTrigger value="jobs" className="gap-2">
               <Briefcase className="h-4 w-4" />
               Jobs
@@ -723,6 +725,10 @@ Department: Ministry of Finance
             <TabsTrigger value="chat" className="gap-2">
               <MessageCircle className="h-4 w-4" />
               Live Chat
+            </TabsTrigger>
+            <TabsTrigger value="seo" className="gap-2">
+              <Settings className="h-4 w-4" />
+              SEO Settings
             </TabsTrigger>
           </TabsList>
 
@@ -1001,6 +1007,13 @@ Department: Ministry of Finance
           {/* Chat Tab */}
           <TabsContent value="chat">
             <AdminChatPanel />
+          </TabsContent>
+
+          {/* SEO Settings Tab */}
+          <TabsContent value="seo">
+            <div className="card-elevated p-6">
+              <SeoSettingsManager />
+            </div>
           </TabsContent>
         </Tabs>
       </div>
