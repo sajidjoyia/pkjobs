@@ -45,7 +45,19 @@ const Jobs = () => {
 
   const { profile, user } = useAuth();
 
+  const isJobExpired = (lastDate: string) => {
+    return new Date(lastDate) < new Date(new Date().setHours(0, 0, 0, 0));
+  };
+
   const getEligibilityBadge = (job: Job) => {
+    if (isJobExpired(job.last_date)) {
+      return (
+        <Badge variant="outline" className="text-destructive border-destructive">
+          Date Passed
+        </Badge>
+      );
+    }
+    
     if (!user || !profile) return null;
     
     const { eligible } = isEligibleForJob(profile, job);
@@ -161,60 +173,65 @@ const Jobs = () => {
         {/* Job Cards */}
         {!isLoading && !error && (
           <div className="grid gap-4">
-            {jobs?.map((job) => (
-              <div key={job.id} className="card-elevated p-6">
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-start gap-3 mb-3">
-                      <div>
-                        <h3 className="text-xl font-semibold text-foreground">
-                          {job.title}
-                        </h3>
-                        <p className="text-muted-foreground">{job.department}</p>
+            {jobs?.map((job) => {
+              const expired = isJobExpired(job.last_date);
+              
+              return (
+                <div key={job.id} className={`card-elevated p-6 ${expired ? "opacity-75" : ""}`}>
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-start gap-3 mb-3">
+                        <div>
+                          <h3 className="text-xl font-semibold text-foreground">
+                            {job.title}
+                          </h3>
+                          <p className="text-muted-foreground">{job.department}</p>
+                        </div>
+                        <div className="flex gap-2 ml-auto lg:ml-0">
+                          <Badge variant="secondary">{job.total_seats} seats</Badge>
+                          {getEligibilityBadge(job)}
+                        </div>
                       </div>
-                      <div className="flex gap-2 ml-auto lg:ml-0">
-                        <Badge variant="secondary">{job.total_seats} seats</Badge>
-                        {getEligibilityBadge(job)}
+
+                      <div className="flex flex-wrap gap-4 text-sm">
+                        <div className="flex items-center gap-1.5 text-muted-foreground">
+                          <GraduationCap className="h-4 w-4" />
+                          {formatEducationLevels(job.required_education_levels)}
+                        </div>
+                        <div className="flex items-center gap-1.5 text-muted-foreground">
+                          <Users className="h-4 w-4" />
+                          {formatAgeRange(job.min_age, job.max_age)}
+                        </div>
+                        <div className="flex items-center gap-1.5 text-muted-foreground">
+                          <MapPin className="h-4 w-4" />
+                          {formatProvinces(job.provinces)}
+                        </div>
+                        <div className={`flex items-center gap-1.5 ${expired ? "text-destructive" : "text-muted-foreground"}`}>
+                          <Calendar className="h-4 w-4" />
+                          {expired ? "Deadline Passed: " : "Last Date: "}
+                          {new Date(job.last_date).toLocaleDateString()}
+                        </div>
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap gap-4 text-sm">
-                      <div className="flex items-center gap-1.5 text-muted-foreground">
-                        <GraduationCap className="h-4 w-4" />
-                        {formatEducationLevels(job.required_education_levels)}
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <p className="text-sm text-muted-foreground">Total Cost</p>
+                        <p className="text-xl font-bold text-primary">
+                          Rs. {Number(job.total_fee).toLocaleString()}
+                        </p>
                       </div>
-                      <div className="flex items-center gap-1.5 text-muted-foreground">
-                        <Users className="h-4 w-4" />
-                        {formatAgeRange(job.min_age, job.max_age)}
-                      </div>
-                      <div className="flex items-center gap-1.5 text-muted-foreground">
-                        <MapPin className="h-4 w-4" />
-                        {formatProvinces(job.provinces)}
-                      </div>
-                      <div className="flex items-center gap-1.5 text-muted-foreground">
-                        <Calendar className="h-4 w-4" />
-                        Last Date: {new Date(job.last_date).toLocaleDateString()}
-                      </div>
+                      <Link to={`/jobs/${job.id}`}>
+                        <Button variant={expired ? "outline" : "default"} className="gap-2">
+                          View Details
+                          <ArrowRight className="h-4 w-4" />
+                        </Button>
+                      </Link>
                     </div>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground">Total Cost</p>
-                      <p className="text-xl font-bold text-primary">
-                        Rs. {Number(job.total_fee).toLocaleString()}
-                      </p>
-                    </div>
-                    <Link to={`/jobs/${job.id}`}>
-                      <Button className="gap-2">
-                        View Details
-                        <ArrowRight className="h-4 w-4" />
-                      </Button>
-                    </Link>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
