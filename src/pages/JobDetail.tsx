@@ -16,6 +16,7 @@ import {
   FileText,
   Loader2,
   XCircle,
+  AlertTriangle,
 } from "lucide-react";
 import { useJob } from "@/hooks/useJobs";
 import { useAuth } from "@/hooks/useAuth";
@@ -67,6 +68,8 @@ const JobDetail = () => {
     );
   }
 
+  const isExpired = new Date(job.last_date) < new Date(new Date().setHours(0, 0, 0, 0));
+
   const eligibility = profile
     ? isEligibleForJob(profile, job)
     : { eligible: false, reasons: ["Please complete your profile to check eligibility"] };
@@ -80,6 +83,8 @@ const JobDetail = () => {
     if (provinces.length === 0) return "All Pakistan";
     return provinces.join(", ");
   };
+
+  const canApply = !isExpired && !hasApplied && user && eligibility.eligible;
 
   const handleApply = async () => {
     if (!user) {
@@ -134,9 +139,15 @@ const JobDetail = () => {
                   </h1>
                   <p className="text-lg text-muted-foreground">{job.department}</p>
                 </div>
-                <Badge className={eligibility.eligible ? "bg-success" : "bg-destructive"}>
-                  {eligibility.eligible ? "Eligible" : "Not Eligible"}
-                </Badge>
+                {isExpired ? (
+                  <Badge variant="outline" className="text-destructive border-destructive">
+                    Deadline Passed
+                  </Badge>
+                ) : (
+                  <Badge className={eligibility.eligible ? "bg-success" : "bg-destructive"}>
+                    {eligibility.eligible ? "Eligible" : "Not Eligible"}
+                  </Badge>
+                )}
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -148,10 +159,11 @@ const JobDetail = () => {
                   <Users className="h-4 w-4 text-primary" />
                   <span className="text-muted-foreground">{job.min_age}-{job.max_age} years</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
+                <div className={`flex items-center gap-2 text-sm ${isExpired ? "text-destructive" : ""}`}>
                   <Calendar className="h-4 w-4 text-primary" />
-                  <span className="text-muted-foreground">
-                    Due: {new Date(job.last_date).toLocaleDateString()}
+                  <span className={isExpired ? "text-destructive font-medium" : "text-muted-foreground"}>
+                    {isExpired ? "Deadline Passed: " : "Due: "}
+                    {new Date(job.last_date).toLocaleDateString()}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
@@ -277,7 +289,12 @@ const JobDetail = () => {
               </div>
 
               <div className="mt-6 space-y-3">
-                {hasApplied ? (
+                {isExpired ? (
+                  <Button className="w-full" size="lg" variant="outline" disabled>
+                    <AlertTriangle className="h-5 w-5 mr-2 text-destructive" />
+                    Application Deadline Passed
+                  </Button>
+                ) : hasApplied ? (
                   <Button className="w-full" size="lg" disabled>
                     <CheckCircle className="h-5 w-5 mr-2" />
                     Already Applied
@@ -287,7 +304,7 @@ const JobDetail = () => {
                     className="w-full" 
                     size="lg"
                     onClick={handleApply}
-                    disabled={createApplication.isPending || (!user || (user && !eligibility.eligible))}
+                    disabled={createApplication.isPending || !canApply}
                   >
                     {createApplication.isPending ? (
                       <Loader2 className="h-5 w-5 mr-2 animate-spin" />
@@ -297,9 +314,11 @@ const JobDetail = () => {
                     Apply Now - Rs. {Number(job.total_fee).toLocaleString()}
                   </Button>
                 )}
-                <p className="text-xs text-center text-muted-foreground">
-                  Expert will handle complete application process
-                </p>
+                {!isExpired && (
+                  <p className="text-xs text-center text-muted-foreground">
+                    Expert will handle complete application process
+                  </p>
+                )}
               </div>
 
               {/* Share Buttons */}
@@ -311,20 +330,37 @@ const JobDetail = () => {
               </div>
 
               {/* Warning */}
-              <div className="mt-6 p-4 rounded-lg bg-warning/10 border border-warning/20">
-                <div className="flex gap-3">
-                  <AlertCircle className="h-5 w-5 text-warning shrink-0" />
-                  <div>
-                    <p className="text-sm font-medium text-foreground">
-                      Application Deadline
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Apply before {new Date(job.last_date).toLocaleDateString()} to
-                      avoid missing this opportunity.
-                    </p>
+              {isExpired ? (
+                <div className="mt-6 p-4 rounded-lg bg-destructive/10 border border-destructive/20">
+                  <div className="flex gap-3">
+                    <XCircle className="h-5 w-5 text-destructive shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">
+                        Deadline Passed
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        The application deadline for this job was {new Date(job.last_date).toLocaleDateString()}. 
+                        This job is no longer accepting applications.
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="mt-6 p-4 rounded-lg bg-warning/10 border border-warning/20">
+                  <div className="flex gap-3">
+                    <AlertCircle className="h-5 w-5 text-warning shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">
+                        Application Deadline
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Apply before {new Date(job.last_date).toLocaleDateString()} to
+                        avoid missing this opportunity.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
