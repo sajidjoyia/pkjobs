@@ -21,7 +21,7 @@ import {
 import { useJob } from "@/hooks/useJobs";
 import { useAuth } from "@/hooks/useAuth";
 import { useCreateApplication, useCheckIfApplied } from "@/hooks/useApplications";
-import { isEligibleForJob } from "@/hooks/useProfile";
+import { isEligibleForJob, useUserEducations } from "@/hooks/useProfile";
 import { toast } from "sonner";
 import ShareButtons from "@/components/ShareButtons";
 
@@ -38,6 +38,7 @@ const JobDetail = () => {
   const navigate = useNavigate();
   const { data: job, isLoading, error } = useJob(id);
   const { user, profile } = useAuth();
+  const { data: userEducations } = useUserEducations(user?.id);
   const { data: hasApplied } = useCheckIfApplied(id);
   const createApplication = useCreateApplication();
 
@@ -71,7 +72,7 @@ const JobDetail = () => {
   const isExpired = new Date(job.last_date) < new Date(new Date().setHours(0, 0, 0, 0));
 
   const eligibility = profile
-    ? isEligibleForJob(profile, job)
+    ? isEligibleForJob(profile, job, userEducations)
     : { eligible: false, reasons: ["Please complete your profile to check eligibility"] };
 
   const formatEducationLevels = (levels: string[]) => {
