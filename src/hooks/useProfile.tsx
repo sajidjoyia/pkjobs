@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "./useAuth";
@@ -34,6 +34,30 @@ export const useUpdateProfile = () => {
     onError: (error: Error) => {
       toast.error(error.message);
     },
+  });
+};
+
+export interface UserEducationEntry {
+  id: string;
+  user_id: string;
+  education_level: string;
+  education_field_id: string | null;
+  created_at: string;
+}
+
+export const useUserEducations = (userId?: string) => {
+  return useQuery({
+    queryKey: ["user-educations", userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      const { data, error } = await supabase
+        .from("user_educations")
+        .select("*")
+        .eq("user_id", userId);
+      if (error) throw error;
+      return data as UserEducationEntry[];
+    },
+    enabled: !!userId,
   });
 };
 
@@ -74,14 +98,16 @@ export const isEligibleForJob = (
     max_age: number;
     gender_requirement: string | null;
     required_education_levels: string[] | null;
+    required_education_fields: string[] | null;
     provinces: string[] | null;
     domicile: string | null;
-  }
+  },
+  userEducations?: UserEducationEntry[]
 ): { eligible: boolean; reasons: string[] } => {
   const reasons: string[] = [];
 
-  // Normalize arrays to prevent null errors
   const requiredLevels = job.required_education_levels || [];
+  const requiredFields = job.required_education_fields || [];
   const jobProvinces = job.provinces || [];
 
   // Check age
@@ -97,16 +123,42 @@ export const isEligibleForJob = (
     reasons.push(`Gender requirement: ${job.gender_requirement} only`);
   }
 
-  // Check education - user needs to have at least one of the required education levels or higher
-  if (profile.education && requiredLevels.length > 0) {
-    const userEducationLevel = getEducationLevel(profile.education);
-    const minRequiredLevel = Math.min(...requiredLevels.map(getEducationLevel));
-    if (userEducationLevel < minRequiredLevel) {
-      reasons.push(`Education requirement: ${requiredLevels.join(", ")} or higher`);
+  // Check education level using user_educations table
+  if (requiredLevels.length > 0) {
+    if (userEducations && userEducations.length > 0) {
+      const hasMatchingLevel = userEducations.some(ue => 
+        requiredLevels.includes(ue.education_level)
+      );
+      if (!hasMatchingLevel) {
+        reasons.push(`Education level requirement: ${requiredLevels.join(", ")}`);
+      }
+    } else if (profile.education) {
+      // Fallback to profile.education if no user_educations entries
+      if (!requiredLevels.includes(profile.education)) {
+        const userLevel = getEducationLevel(profile.education);
+        const minRequired = Math.min(...requiredLevels.map(getEducationLevel));
+        if (userLevel < minRequired) {
+          reasons.push(`Education level requirement: ${requiredLevels.join(", ")}`);
+        }
+      }
     }
   }
 
-  // Check province/domicile - if job has province restrictions
+  // Check education specialization/fields
+  if (requiredFields.length > 0) {
+    if (userEducations && userEducations.length > 0) {
+      const hasMatchingField = userEducations.some(ue => 
+        ue.education_field_id && requiredFields.includes(ue.education_field_id)
+      );
+      if (!hasMatchingField) {
+        reasons.push(`Education specialization requirement not met`);
+      }
+    } else {
+      reasons.push(`Education specialization requirement not met (update your profile)`);
+    }
+  }
+
+  // Check province/domicile
   if (jobProvinces.length > 0 && profile.province) {
     const userProvince = profile.province.toLowerCase();
     const normalizedProvinces = jobProvinces.map(p => p.toLowerCase());

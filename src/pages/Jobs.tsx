@@ -19,10 +19,11 @@ import {
   ArrowRight,
   Filter,
   Loader2,
+  CheckCircle,
 } from "lucide-react";
 import { useJobs, Job } from "@/hooks/useJobs";
 import { useAuth } from "@/hooks/useAuth";
-import { isEligibleForJob } from "@/hooks/useProfile";
+import { isEligibleForJob, useUserEducations } from "@/hooks/useProfile";
 
 const educationLabels: Record<string, string> = {
   matric: "Matric / SSC",
@@ -36,6 +37,7 @@ const Jobs = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProvince, setSelectedProvince] = useState<string>("");
   const [selectedEducation, setSelectedEducation] = useState<string>("");
+  const [showEligibleOnly, setShowEligibleOnly] = useState(false);
 
   const { data: jobs, isLoading, error } = useJobs({
     search: searchQuery,
@@ -44,6 +46,7 @@ const Jobs = () => {
   });
 
   const { profile, user } = useAuth();
+  const { data: userEducations } = useUserEducations(user?.id);
 
   const isJobExpired = (lastDate: string) => {
     return new Date(lastDate) < new Date(new Date().setHours(0, 0, 0, 0));
@@ -60,13 +63,22 @@ const Jobs = () => {
     
     if (!user || !profile) return null;
     
-    const { eligible } = isEligibleForJob(profile, job);
+    const { eligible } = isEligibleForJob(profile, job, userEducations);
     return (
       <Badge className={eligible ? "bg-success" : "bg-destructive"}>
         {eligible ? "Eligible" : "Not Eligible"}
       </Badge>
     );
   };
+
+  // Filter jobs by eligibility if toggle is on
+  const filteredJobs = showEligibleOnly && user && profile
+    ? (jobs || []).filter(job => {
+        if (isJobExpired(job.last_date)) return false;
+        const { eligible } = isEligibleForJob(profile, job, userEducations);
+        return eligible;
+      })
+    : jobs;
 
   const formatAgeRange = (min: number, max: number) => `${min}-${max} years`;
 
@@ -142,17 +154,30 @@ const Jobs = () => {
                 setSearchQuery("");
                 setSelectedProvince("");
                 setSelectedEducation("");
+                setShowEligibleOnly(false);
               }}
             >
               Clear Filters
             </Button>
           </div>
+          {user && profile && (
+            <div className="mt-4">
+              <Button
+                variant={showEligibleOnly ? "default" : "outline"}
+                onClick={() => setShowEligibleOnly(!showEligibleOnly)}
+                className="gap-2"
+              >
+                <CheckCircle className="h-4 w-4" />
+                {showEligibleOnly ? "Showing Eligible Jobs" : "Show My Eligible Jobs"}
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Results */}
         <div className="mb-4">
           <p className="text-sm text-muted-foreground">
-            {isLoading ? "Loading..." : `Showing ${jobs?.length || 0} jobs`}
+            {isLoading ? "Loading..." : `Showing ${filteredJobs?.length || 0} jobs${showEligibleOnly ? " (eligible)" : ""}`}
           </p>
         </div>
 
@@ -173,7 +198,7 @@ const Jobs = () => {
         {/* Job Cards */}
         {!isLoading && !error && (
           <div className="grid gap-4">
-            {jobs?.map((job) => {
+            {filteredJobs?.map((job) => {
               const expired = isJobExpired(job.last_date);
               
               return (
@@ -235,10 +260,12 @@ const Jobs = () => {
           </div>
         )}
 
-        {!isLoading && !error && jobs?.length === 0 && (
+        {!isLoading && !error && filteredJobs?.length === 0 && (
           <div className="text-center py-12">
             <p className="text-muted-foreground">
-              No jobs found matching your criteria.
+              {showEligibleOnly 
+                ? "No eligible jobs found. Try updating your profile or clearing filters."
+                : "No jobs found matching your criteria."}
             </p>
           </div>
         )}
