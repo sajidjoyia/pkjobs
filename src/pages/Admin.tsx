@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
@@ -35,8 +36,9 @@ import {
   MessageCircle,
   GraduationCap,
   Tag,
-  FileQuestion,
   Settings,
+  FileUp,
+  FileQuestion,
 } from "lucide-react";
 import { useAllJobs, useCreateJob, useDeleteJob, useToggleJobStatus, CreateJobInput } from "@/hooks/useJobs";
 import { useAllApplications, useUpdateApplicationStatus } from "@/hooks/useApplications";
@@ -48,11 +50,9 @@ import { MultiSelect } from "@/components/ui/multi-select";
 import AdminChatPanel from "@/components/chat/AdminChatPanel";
 import { useAdminStartConversation } from "@/hooks/useChat";
 import { toast } from "@/hooks/use-toast";
-import { useBulkCreateJobs, parseJobsFromText, BULK_JOB_SAMPLE, ValidationOptions } from "@/hooks/useBulkJobImport";
+import { useBulkCreateJobs } from "@/hooks/useBulkJobImport";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Copy, FileUp } from "lucide-react";
 import EducationFieldsManager from "@/components/admin/EducationFieldsManager";
-import BulkImportValidationErrors from "@/components/admin/BulkImportValidationErrors";
 import ServiceCategoriesManager from "@/components/admin/ServiceCategoriesManager";
 import SeoSettingsManager from "@/components/admin/SeoSettingsManager";
 
@@ -87,7 +87,8 @@ const Admin = () => {
   const [showServiceCategoriesManager, setShowServiceCategoriesManager] = useState(false);
   const [showBulkImport, setShowBulkImport] = useState(false);
   const [bulkJobText, setBulkJobText] = useState("");
-  const [bulkParseResult, setBulkParseResult] = useState<{ jobs: any[]; errors: string[]; skippedJobs: { title: string; reasons: string[] }[]; missingEducationFields: { name: string; suggestedLevel: string }[] } | null>(null);
+  const [bulkParseResult, setBulkParseResult] = useState<{ jobs: any[]; errors: string[] } | null>(null);
+  const [isAIParsing, setIsAIParsing] = useState(false);
   const [selectedEducationFields, setSelectedEducationFields] = useState<string[]>([]);
   
   const [formData, setFormData] = useState({
@@ -192,37 +193,45 @@ const Admin = () => {
     await toggleJobStatus.mutateAsync({ id, is_active: !currentStatus });
   };
 
-  const handleParseBulkJobs = () => {
-    const validationOptions: ValidationOptions = {
-      educationLevels: educationLevels,
-      educationFields: educationFields,
-      provinces: PROVINCE_OPTIONS,
-    };
-    const result = parseJobsFromText(bulkJobText, validationOptions);
-    setBulkParseResult(result);
-    
-    // Show toast for skipped jobs
-    if (result.skippedJobs.length > 0) {
+  const handleParseBulkJobsAI = async () => {
+    if (!bulkJobText.trim()) return;
+    setIsAIParsing(true);
+    setBulkParseResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("parse-jobs-ai", {
+        body: {
+          rawText: bulkJobText,
+          educationLevels,
+          educationFields,
+          provinces: PROVINCE_OPTIONS,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setBulkParseResult({ jobs: data.jobs || [], errors: data.errors || [] });
+
+      if ((data.errors || []).length > 0) {
+        toast({
+          title: `${data.errors.length} issue(s) found`,
+          description: "Some jobs could not be parsed. Check the preview for details.",
+          variant: "destructive",
+        });
+      }
+    } catch (err: any) {
       toast({
-        title: `${result.skippedJobs.length} job(s) skipped`,
-        description: "Some jobs have invalid categories. Check the preview for details.",
+        title: "AI Parsing Failed",
+        description: err.message || "Failed to parse jobs. Please try again.",
         variant: "destructive",
       });
-    }
-    
-    // Show toast for missing education fields
-    if (result.missingEducationFields.length > 0) {
-      toast({
-        title: `${result.missingEducationFields.length} education field(s) missing`,
-        description: "Add the missing fields via 'Manage Education' to import all jobs.",
-        variant: "destructive",
-      });
+    } finally {
+      setIsAIParsing(false);
     }
   };
 
   const handleBulkImport = async () => {
     if (!bulkParseResult || bulkParseResult.jobs.length === 0) return;
-    
     try {
       await bulkCreateJobs.mutateAsync(bulkParseResult.jobs);
       setShowBulkImport(false);
@@ -231,14 +240,6 @@ const Admin = () => {
     } catch (error) {
       // Error handled in mutation
     }
-  };
-
-  const handleCopySample = () => {
-    navigator.clipboard.writeText(BULK_JOB_SAMPLE);
-    toast({
-      title: "Copied!",
-      description: "Sample format copied to clipboard",
-    });
   };
 
   // Stats
@@ -303,66 +304,51 @@ const Admin = () => {
               </DialogTrigger>
               <DialogContent className="max-w-4xl max-h-[90vh]">
                 <DialogHeader>
-                  <DialogTitle>Bulk Import Jobs</DialogTitle>
+                  <DialogTitle className="flex items-center gap-2">
+                    <span>AI Job Import</span>
+                    <span className="text-xs font-normal text-muted-foreground bg-primary/10 text-primary px-2 py-0.5 rounded-full">Powered by AI</span>
+                  </DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-muted-foreground">
-                      Paste job data below. Each job starts with "Title:" on a new line.
+                  <div className="bg-muted/50 rounded-lg p-4 text-sm">
+                    <p className="font-medium mb-1">Paste job data in any format</p>
+                    <p className="text-muted-foreground text-xs">
+                      AI will automatically extract job details — title, department, education levels, specializations, fees, age, gender, provinces, seats, and last date. No specific format required.
                     </p>
-                    <Button variant="outline" size="sm" onClick={handleCopySample} className="gap-2">
-                      <Copy className="h-3 w-3" />
-                      Copy Sample Format
-                    </Button>
-                  </div>
-                  
-                  <div className="bg-muted/50 rounded-lg p-4 text-xs font-mono">
-                    <p className="font-semibold mb-2">Sample Format:</p>
-                    <pre className="whitespace-pre-wrap text-muted-foreground">
-{`Title: Assistant Sub Inspector
-Department: Punjab Police
-Description: Assist in maintaining law and order
-Education Level: matric, intermediate
-Education Field: science, arts
-Min Age: 18
-Max Age: 30
-Gender: male (or female, any)
-Provinces: Punjab, Sindh
-Domicile: Punjab
-Total Seats: 500
-Last Date: 2026-03-15
-Bank Challan Fee: 500
-Post Office Fee: 200
-Photocopy Fee: 100
-Expert Fee: 1000
-
-Title: Junior Clerk
-Department: Ministry of Finance
-...`}
-                    </pre>
                   </div>
                   
                   <div className="space-y-2">
                     <Label>Paste Job Data</Label>
                     <Textarea
-                      placeholder="Paste your job data here..."
-                      rows={10}
+                      placeholder={`Paste any job listing text here. For example:\n\nAssistant Sub Inspector – Punjab Police\nQualification: Intermediate (Science)\nAge: 18-30 | Gender: Male\nSeats: 500 | Last Date: March 15, 2026\nProvinces: Punjab, Sindh\nFee: Bank Challan Rs. 500, Post Office Rs. 200\n\n--- Or paste multiple jobs at once ---`}
+                      rows={12}
                       value={bulkJobText}
                       onChange={(e) => {
                         setBulkJobText(e.target.value);
                         setBulkParseResult(null);
                       }}
-                      className="font-mono text-sm"
+                      className="text-sm"
                     />
                   </div>
                   
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
                     <Button 
-                      variant="outline" 
-                      onClick={handleParseBulkJobs}
-                      disabled={!bulkJobText.trim()}
+                      variant="outline"
+                      onClick={handleParseBulkJobsAI}
+                      disabled={!bulkJobText.trim() || isAIParsing}
+                      className="gap-2"
                     >
-                      Preview Jobs
+                      {isAIParsing ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          AI is parsing…
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="h-4 w-4" />
+                          Parse with AI
+                        </>
+                      )}
                     </Button>
                     {bulkParseResult && bulkParseResult.jobs.length > 0 && (
                       <Button 
@@ -383,21 +369,24 @@ Department: Ministry of Finance
                   {bulkParseResult && (
                     <ScrollArea className="h-80 rounded-lg border p-4">
                       <div className="space-y-4">
-                        {/* Validation Errors Component */}
-                        <BulkImportValidationErrors
-                          errors={bulkParseResult.errors}
-                          skippedJobs={bulkParseResult.skippedJobs}
-                          missingEducationFields={bulkParseResult.missingEducationFields || []}
-                          validJobsCount={bulkParseResult.jobs.length}
-                          educationLevels={educationLevels}
-                          onOpenEducationManager={() => setShowEducationManager(true)}
-                        />
+                        {/* Errors */}
+                        {bulkParseResult.errors.length > 0 && (
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium text-destructive flex items-center gap-2">
+                              <XCircle className="h-4 w-4" />
+                              {bulkParseResult.errors.length} issue(s) found
+                            </p>
+                            {bulkParseResult.errors.map((err, i) => (
+                              <p key={i} className="text-xs text-destructive bg-destructive/10 rounded px-3 py-2">{err}</p>
+                            ))}
+                          </div>
+                        )}
                         
                         {/* Valid Jobs List */}
                         {bulkParseResult.jobs.length > 0 && (
-                          <div className="pt-2 border-t">
+                          <div className={bulkParseResult.errors.length > 0 ? "pt-2 border-t" : ""}>
                             <p className="text-sm font-medium text-success mb-3 flex items-center gap-2">
-                              <span className="h-2 w-2 rounded-full bg-success" />
+                              <CheckCircle className="h-4 w-4" />
                               {bulkParseResult.jobs.length} job{bulkParseResult.jobs.length > 1 ? 's' : ''} ready to import
                             </p>
                             <div className="space-y-2">
@@ -406,20 +395,41 @@ Department: Ministry of Finance
                                   <p className="font-medium text-sm">{job.title}</p>
                                   <p className="text-xs text-muted-foreground mt-1">
                                     {job.department} • {job.total_seats} seat{job.total_seats > 1 ? 's' : ''} • Last date: {job.last_date}
+                                    {job.gender_requirement && ` • ${job.gender_requirement}`}
                                   </p>
-                                  {job.required_education_levels && job.required_education_levels.length > 0 && (
-                                    <div className="flex flex-wrap gap-1 mt-2">
-                                      {job.required_education_levels.map((level: string, j: number) => (
-                                        <span key={j} className="text-xs px-1.5 py-0.5 bg-primary/10 text-primary rounded">
-                                          {educationLevels.find(l => l.value === level)?.label || level}
+                                  <div className="flex flex-wrap gap-1 mt-2">
+                                    {(job.required_education_levels || []).map((level: string, j: number) => (
+                                      <span key={j} className="text-xs px-1.5 py-0.5 bg-primary/10 text-primary rounded">
+                                        {educationLevels.find(l => l.value === level)?.label || level}
+                                      </span>
+                                    ))}
+                                    {(job.required_education_fields || []).map((fieldId: string, j: number) => {
+                                      const field = educationFields.find(f => f.id === fieldId);
+                                      return field ? (
+                                        <span key={j} className="text-xs px-1.5 py-0.5 bg-secondary text-secondary-foreground rounded">
+                                          {field.display_name}
                                         </span>
-                                      ))}
-                                    </div>
+                                      ) : null;
+                                    })}
+                                    {(job.provinces || []).map((prov: string, j: number) => (
+                                      <span key={j} className="text-xs px-1.5 py-0.5 bg-muted border rounded">
+                                        {prov}
+                                      </span>
+                                    ))}
+                                  </div>
+                                  {(job.bank_challan_fee > 0 || job.expert_fee > 0) && (
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      Fees: Challan Rs.{job.bank_challan_fee} • PO Rs.{job.post_office_fee} • Expert Rs.{job.expert_fee}
+                                    </p>
                                   )}
                                 </div>
                               ))}
                             </div>
                           </div>
+                        )}
+
+                        {bulkParseResult.jobs.length === 0 && bulkParseResult.errors.length === 0 && (
+                          <p className="text-sm text-muted-foreground text-center py-4">No jobs found in the pasted text.</p>
                         )}
                       </div>
                     </ScrollArea>
