@@ -1,1 +1,4 @@
 project_id = "qrxgpjvhepznplmpctbw"
+
+[functions.parse-jobs-ai]
+verify_jwt = false
