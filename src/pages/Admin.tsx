@@ -55,6 +55,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import EducationFieldsManager from "@/components/admin/EducationFieldsManager";
 import ServiceCategoriesManager from "@/components/admin/ServiceCategoriesManager";
 import SeoSettingsManager from "@/components/admin/SeoSettingsManager";
+import BulkJobPreviewEditor, { type EditableJob } from "@/components/admin/BulkJobPreviewEditor";
 
 const PROVINCE_OPTIONS = [
   { value: "Punjab", label: "Punjab" },
@@ -108,6 +109,8 @@ const Admin = () => {
     post_office_fee: "",
     photocopy_fee: "",
     expert_fee: "",
+    advertisement_link: "",
+    advertisement_image: "",
   });
 
   // Get education fields for selected levels
@@ -154,6 +157,8 @@ const Admin = () => {
       post_office_fee: parseInt(formData.post_office_fee) || 0,
       photocopy_fee: parseInt(formData.photocopy_fee) || 0,
       expert_fee: parseInt(formData.expert_fee) || 0,
+      advertisement_link: formData.advertisement_link || undefined,
+      advertisement_image: formData.advertisement_image || undefined,
     };
 
     try {
@@ -176,6 +181,8 @@ const Admin = () => {
         post_office_fee: "",
         photocopy_fee: "",
         expert_fee: "",
+        advertisement_link: "",
+        advertisement_image: "",
       });
     } catch (error) {
       // Error handled in mutation
@@ -350,89 +357,19 @@ const Admin = () => {
                         </>
                       )}
                     </Button>
-                    {bulkParseResult && bulkParseResult.jobs.length > 0 && (
-                      <Button 
-                        onClick={handleBulkImport}
-                        disabled={bulkCreateJobs.isPending}
-                        className="gap-2"
-                      >
-                        {bulkCreateJobs.isPending ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Plus className="h-4 w-4" />
-                        )}
-                        Import {bulkParseResult.jobs.length} Job{bulkParseResult.jobs.length > 1 ? 's' : ''}
-                      </Button>
-                    )}
-                  </div>
+                   </div>
                   
                   {bulkParseResult && (
-                    <ScrollArea className="h-80 rounded-lg border p-4">
-                      <div className="space-y-4">
-                        {/* Errors */}
-                        {bulkParseResult.errors.length > 0 && (
-                          <div className="space-y-2">
-                            <p className="text-sm font-medium text-destructive flex items-center gap-2">
-                              <XCircle className="h-4 w-4" />
-                              {bulkParseResult.errors.length} issue(s) found
-                            </p>
-                            {bulkParseResult.errors.map((err, i) => (
-                              <p key={i} className="text-xs text-destructive bg-destructive/10 rounded px-3 py-2">{err}</p>
-                            ))}
-                          </div>
-                        )}
-                        
-                        {/* Valid Jobs List */}
-                        {bulkParseResult.jobs.length > 0 && (
-                          <div className={bulkParseResult.errors.length > 0 ? "pt-2 border-t" : ""}>
-                            <p className="text-sm font-medium text-success mb-3 flex items-center gap-2">
-                              <CheckCircle className="h-4 w-4" />
-                              {bulkParseResult.jobs.length} job{bulkParseResult.jobs.length > 1 ? 's' : ''} ready to import
-                            </p>
-                            <div className="space-y-2">
-                              {bulkParseResult.jobs.map((job, i) => (
-                                <div key={i} className="p-3 bg-muted/50 border rounded-md">
-                                  <p className="font-medium text-sm">{job.title}</p>
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    {job.department} • {job.total_seats} seat{job.total_seats > 1 ? 's' : ''} • Last date: {job.last_date}
-                                    {job.gender_requirement && ` • ${job.gender_requirement}`}
-                                  </p>
-                                  <div className="flex flex-wrap gap-1 mt-2">
-                                    {(job.required_education_levels || []).map((level: string, j: number) => (
-                                      <span key={j} className="text-xs px-1.5 py-0.5 bg-primary/10 text-primary rounded">
-                                        {educationLevels.find(l => l.value === level)?.label || level}
-                                      </span>
-                                    ))}
-                                    {(job.required_education_fields || []).map((fieldId: string, j: number) => {
-                                      const field = educationFields.find(f => f.id === fieldId);
-                                      return field ? (
-                                        <span key={j} className="text-xs px-1.5 py-0.5 bg-secondary text-secondary-foreground rounded">
-                                          {field.display_name}
-                                        </span>
-                                      ) : null;
-                                    })}
-                                    {(job.provinces || []).map((prov: string, j: number) => (
-                                      <span key={j} className="text-xs px-1.5 py-0.5 bg-muted border rounded">
-                                        {prov}
-                                      </span>
-                                    ))}
-                                  </div>
-                                  {(job.bank_challan_fee > 0 || job.expert_fee > 0) && (
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                      Fees: Challan Rs.{job.bank_challan_fee} • PO Rs.{job.post_office_fee} • Expert Rs.{job.expert_fee}
-                                    </p>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {bulkParseResult.jobs.length === 0 && bulkParseResult.errors.length === 0 && (
-                          <p className="text-sm text-muted-foreground text-center py-4">No jobs found in the pasted text.</p>
-                        )}
-                      </div>
-                    </ScrollArea>
+                    <BulkJobPreviewEditor
+                      jobs={bulkParseResult.jobs}
+                      errors={bulkParseResult.errors}
+                      educationLevels={educationLevels}
+                      educationFields={educationFields}
+                      provinceOptions={PROVINCE_OPTIONS}
+                      onJobsChange={(updated) => setBulkParseResult(prev => prev ? { ...prev, jobs: updated } : null)}
+                      onImport={handleBulkImport}
+                      isImporting={bulkCreateJobs.isPending}
+                    />
                   )}
                 </div>
               </DialogContent>
@@ -701,6 +638,33 @@ const Admin = () => {
                   <span className="text-xl font-bold text-primary">
                     Rs. {totalFees.toLocaleString()}
                   </span>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Advertisement */}
+              <div className="space-y-4">
+                <h3 className="font-medium text-foreground">Advertisement Details</h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="adLink">Advertisement Link</Label>
+                    <Input
+                      id="adLink"
+                      placeholder="https://example.com/job-ad"
+                      value={formData.advertisement_link}
+                      onChange={(e) => handleChange("advertisement_link", e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="adImage">Advertisement Image URL</Label>
+                    <Input
+                      id="adImage"
+                      placeholder="https://example.com/ad-image.jpg"
+                      value={formData.advertisement_image}
+                      onChange={(e) => handleChange("advertisement_image", e.target.value)}
+                    />
+                  </div>
                 </div>
               </div>
 

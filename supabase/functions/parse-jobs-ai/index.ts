@@ -49,6 +49,8 @@ RULES:
 - min_age defaults to 18, max_age defaults to 35 if not specified
 - total_seats defaults to 1 if not specified
 - domicile: string or null
+- advertisement_link: URL string or null (link to the original job advertisement)
+- advertisement_image: URL string or null (image of the job advertisement)
 
 Return ONLY a valid JSON array of objects. No explanation text, no markdown, no code fences. Just the raw JSON array.
 
@@ -70,7 +72,9 @@ Example output format:
     "bank_challan_fee": 500,
     "post_office_fee": 200,
     "photocopy_fee": 100,
-    "expert_fee": 1000
+    "expert_fee": 1000,
+    "advertisement_link": "https://example.com/ad",
+    "advertisement_image": null
   }
 ]`;
 
@@ -190,6 +194,8 @@ Example output format:
         post_office_fee: Number(job.post_office_fee) || 0,
         photocopy_fee: Number(job.photocopy_fee) || 0,
         expert_fee: Number(job.expert_fee) || 0,
+        advertisement_link: job.advertisement_link || undefined,
+        advertisement_image: job.advertisement_image || undefined,
       });
     }
 
