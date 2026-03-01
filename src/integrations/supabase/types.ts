@@ -243,6 +243,8 @@ export type Database = {
       }
       jobs: {
         Row: {
+          advertisement_image: string | null
+          advertisement_link: string | null
           bank_challan_fee: number
           created_at: string
           created_by: string | null
@@ -267,6 +269,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          advertisement_image?: string | null
+          advertisement_link?: string | null
           bank_challan_fee?: number
           created_at?: string
           created_by?: string | null
@@ -291,6 +295,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          advertisement_image?: string | null
+          advertisement_link?: string | null
           bank_challan_fee?: number
           created_at?: string
           created_by?: string | null
