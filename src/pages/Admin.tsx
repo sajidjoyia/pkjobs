@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
 import {
   Select,
@@ -309,67 +310,104 @@ const Admin = () => {
                   Add Multiple Jobs
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[90vh]">
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
                     <span>AI Job Import</span>
                     <span className="text-xs font-normal text-muted-foreground bg-primary/10 text-primary px-2 py-0.5 rounded-full">Powered by AI</span>
                   </DialogTitle>
                 </DialogHeader>
-                <div className="space-y-4">
-                  <div className="bg-muted/50 rounded-lg p-4 text-sm">
+                <div className="space-y-4 overflow-y-auto flex-1 min-h-0 pr-1">
+                  <div className="bg-muted/50 rounded-lg p-3 sm:p-4 text-sm">
                     <p className="font-medium mb-1">Paste job data in any format</p>
-                    <p className="text-muted-foreground text-xs">
-                      AI will automatically extract job details — title, department, education levels, specializations, fees, age, gender, provinces, seats, and last date. No specific format required.
+                    <p className="text-muted-foreground text-xs mb-2">
+                      AI will extract: title, department, description, education levels &amp; fields, age, gender, provinces, domicile, seats, last date, fees, and advertisement link/image.
                     </p>
+                    <Collapsible>
+                      <CollapsibleTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-6 text-xs gap-1 px-2">
+                          <FileQuestion className="h-3 w-3" />
+                          Show sample format
+                        </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <pre className="mt-2 p-3 bg-background border rounded text-[11px] leading-relaxed overflow-x-auto whitespace-pre-wrap text-muted-foreground max-h-48 overflow-y-auto">{`Assistant Sub Inspector – Punjab Police
+Qualification: Intermediate (Science)
+Age: 18-30 | Gender: Male | Seats: 500
+Last Date: March 15, 2026
+Provinces: Punjab, Sindh | Domicile: Punjab
+Bank Challan: Rs. 500 | Post Office: Rs. 200
+Photocopy Fee: Rs. 100 | Expert Fee: Rs. 1000
+Ad Link: https://punjabpolice.gov.pk/jobs/asi
+Ad Image: https://example.com/ad.jpg
+
+Junior Clerk – Ministry of Finance
+Qualification: Bachelor (Computer Science, Commerce)
+Age: 18-35 | Gender: Any | Seats: 200
+Last Date: April 1, 2026
+All Pakistan
+Bank Challan: Rs. 400 | Expert Fee: Rs. 800`}</pre>
+                      </CollapsibleContent>
+                    </Collapsible>
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label>Paste Job Data</Label>
-                    <Textarea
-                      placeholder={`Paste any job listing text here. For example:\n\nAssistant Sub Inspector – Punjab Police\nQualification: Intermediate (Science)\nAge: 18-30 | Gender: Male\nSeats: 500 | Last Date: March 15, 2026\nProvinces: Punjab, Sindh\nFee: Bank Challan Rs. 500, Post Office Rs. 200\n\n--- Or paste multiple jobs at once ---`}
-                      rows={12}
-                      value={bulkJobText}
-                      onChange={(e) => {
-                        setBulkJobText(e.target.value);
-                        setBulkParseResult(null);
-                      }}
-                      className="text-sm"
-                    />
-                  </div>
-                  
-                  <div className="flex gap-2 flex-wrap">
-                    <Button 
-                      variant="outline"
-                      onClick={handleParseBulkJobsAI}
-                      disabled={!bulkJobText.trim() || isAIParsing}
-                      className="gap-2"
-                    >
-                      {isAIParsing ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          AI is parsing…
-                        </>
-                      ) : (
-                        <>
-                          <Eye className="h-4 w-4" />
-                          Parse with AI
-                        </>
-                      )}
-                    </Button>
-                   </div>
+                  {!bulkParseResult && (
+                    <>
+                      <div className="space-y-2">
+                        <Label>Paste Job Data</Label>
+                        <Textarea
+                          placeholder="Paste any job listing text here — any format works. AI will extract all fields automatically."
+                          rows={10}
+                          value={bulkJobText}
+                          onChange={(e) => setBulkJobText(e.target.value)}
+                          className="text-sm"
+                        />
+                      </div>
+                      
+                      <div className="flex gap-2 flex-wrap">
+                        <Button 
+                          variant="outline"
+                          onClick={handleParseBulkJobsAI}
+                          disabled={!bulkJobText.trim() || isAIParsing}
+                          className="gap-2"
+                        >
+                          {isAIParsing ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              AI is parsing…
+                            </>
+                          ) : (
+                            <>
+                              <Eye className="h-4 w-4" />
+                              Parse with AI
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </>
+                  )}
                   
                   {bulkParseResult && (
-                    <BulkJobPreviewEditor
-                      jobs={bulkParseResult.jobs}
-                      errors={bulkParseResult.errors}
-                      educationLevels={educationLevels}
-                      educationFields={educationFields}
-                      provinceOptions={PROVINCE_OPTIONS}
-                      onJobsChange={(updated) => setBulkParseResult(prev => prev ? { ...prev, jobs: updated } : null)}
-                      onImport={handleBulkImport}
-                      isImporting={bulkCreateJobs.isPending}
-                    />
+                    <div className="space-y-3">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setBulkParseResult(null)}
+                        className="text-xs gap-1"
+                      >
+                        ← Back to paste
+                      </Button>
+                      <BulkJobPreviewEditor
+                        jobs={bulkParseResult.jobs}
+                        errors={bulkParseResult.errors}
+                        educationLevels={educationLevels}
+                        educationFields={educationFields}
+                        provinceOptions={PROVINCE_OPTIONS}
+                        onJobsChange={(updated) => setBulkParseResult(prev => prev ? { ...prev, jobs: updated } : null)}
+                        onImport={handleBulkImport}
+                        isImporting={bulkCreateJobs.isPending}
+                      />
+                    </div>
                   )}
                 </div>
               </DialogContent>
