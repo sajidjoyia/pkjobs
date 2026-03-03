@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -52,11 +53,9 @@ import AdminChatPanel from "@/components/chat/AdminChatPanel";
 import { useAdminStartConversation } from "@/hooks/useChat";
 import { toast } from "@/hooks/use-toast";
 import { useBulkCreateJobs } from "@/hooks/useBulkJobImport";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import EducationFieldsManager from "@/components/admin/EducationFieldsManager";
 import ServiceCategoriesManager from "@/components/admin/ServiceCategoriesManager";
 import SeoSettingsManager from "@/components/admin/SeoSettingsManager";
-import BulkJobPreviewEditor, { type EditableJob } from "@/components/admin/BulkJobPreviewEditor";
 
 const PROVINCE_OPTIONS = [
   { value: "Punjab", label: "Punjab" },
@@ -69,6 +68,7 @@ const PROVINCE_OPTIONS = [
 ];
 
 const Admin = () => {
+  const navigate = useNavigate();
   const { isAdmin } = useAuth();
   const { data: jobs, isLoading: jobsLoading } = useAllJobs();
   const { data: applications, isLoading: appsLoading } = useAllApplications();
@@ -81,16 +81,12 @@ const Admin = () => {
   const { data: educationLevels = [] } = useAllEducationLevels();
   const { data: educationFields = [] } = useEducationFields();
   const adminStartConversation = useAdminStartConversation();
-  const bulkCreateJobs = useBulkCreateJobs();
+  
 
   const [activeTab, setActiveTab] = useState("jobs");
   const [showAddJob, setShowAddJob] = useState(false);
   const [showEducationManager, setShowEducationManager] = useState(false);
   const [showServiceCategoriesManager, setShowServiceCategoriesManager] = useState(false);
-  const [showBulkImport, setShowBulkImport] = useState(false);
-  const [bulkJobText, setBulkJobText] = useState("");
-  const [bulkParseResult, setBulkParseResult] = useState<{ jobs: any[]; errors: string[] } | null>(null);
-  const [isAIParsing, setIsAIParsing] = useState(false);
   const [selectedEducationFields, setSelectedEducationFields] = useState<string[]>([]);
   
   const [formData, setFormData] = useState({
@@ -201,54 +197,6 @@ const Admin = () => {
     await toggleJobStatus.mutateAsync({ id, is_active: !currentStatus });
   };
 
-  const handleParseBulkJobsAI = async () => {
-    if (!bulkJobText.trim()) return;
-    setIsAIParsing(true);
-    setBulkParseResult(null);
-    try {
-      const { data, error } = await supabase.functions.invoke("parse-jobs-ai", {
-        body: {
-          rawText: bulkJobText,
-          educationLevels,
-          educationFields,
-          provinces: PROVINCE_OPTIONS,
-        },
-      });
-
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-
-      setBulkParseResult({ jobs: data.jobs || [], errors: data.errors || [] });
-
-      if ((data.errors || []).length > 0) {
-        toast({
-          title: `${data.errors.length} issue(s) found`,
-          description: "Some jobs could not be parsed. Check the preview for details.",
-          variant: "destructive",
-        });
-      }
-    } catch (err: any) {
-      toast({
-        title: "AI Parsing Failed",
-        description: err.message || "Failed to parse jobs. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsAIParsing(false);
-    }
-  };
-
-  const handleBulkImport = async () => {
-    if (!bulkParseResult || bulkParseResult.jobs.length === 0) return;
-    try {
-      await bulkCreateJobs.mutateAsync(bulkParseResult.jobs);
-      setShowBulkImport(false);
-      setBulkJobText("");
-      setBulkParseResult(null);
-    } catch (error) {
-      // Error handled in mutation
-    }
-  };
 
   // Stats
   const activeJobs = jobs?.filter((j) => j.is_active).length || 0;
@@ -297,121 +245,10 @@ const Admin = () => {
                 <EducationFieldsManager />
               </DialogContent>
             </Dialog>
-            <Dialog open={showBulkImport} onOpenChange={(open) => {
-              setShowBulkImport(open);
-              if (!open) {
-                setBulkJobText("");
-                setBulkParseResult(null);
-              }
-            }}>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="gap-2">
-                  <FileUp className="h-4 w-4" />
-                  Add Multiple Jobs
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">
-                    <span>AI Job Import</span>
-                    <span className="text-xs font-normal text-muted-foreground bg-primary/10 text-primary px-2 py-0.5 rounded-full">Powered by AI</span>
-                  </DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 overflow-y-auto flex-1 min-h-0 pr-1">
-                  <div className="bg-muted/50 rounded-lg p-3 sm:p-4 text-sm">
-                    <p className="font-medium mb-1">Paste job data in any format</p>
-                    <p className="text-muted-foreground text-xs mb-2">
-                      AI will extract: title, department, description, education levels &amp; fields, age, gender, provinces, domicile, seats, last date, fees, and advertisement link/image.
-                    </p>
-                    <Collapsible>
-                      <CollapsibleTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-6 text-xs gap-1 px-2">
-                          <FileQuestion className="h-3 w-3" />
-                          Show sample format
-                        </Button>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent>
-                        <pre className="mt-2 p-3 bg-background border rounded text-[11px] leading-relaxed overflow-x-auto whitespace-pre-wrap text-muted-foreground max-h-48 overflow-y-auto">{`Assistant Sub Inspector – Punjab Police
-Qualification: Intermediate (Science)
-Age: 18-30 | Gender: Male | Seats: 500
-Last Date: March 15, 2026
-Provinces: Punjab, Sindh | Domicile: Punjab
-Bank Challan: Rs. 500 | Post Office: Rs. 200
-Photocopy Fee: Rs. 100 | Expert Fee: Rs. 1000
-Ad Link: https://punjabpolice.gov.pk/jobs/asi
-Ad Image: https://example.com/ad.jpg
-
-Junior Clerk – Ministry of Finance
-Qualification: Bachelor (Computer Science, Commerce)
-Age: 18-35 | Gender: Any | Seats: 200
-Last Date: April 1, 2026
-All Pakistan
-Bank Challan: Rs. 400 | Expert Fee: Rs. 800`}</pre>
-                      </CollapsibleContent>
-                    </Collapsible>
-                  </div>
-                  
-                  {!bulkParseResult && (
-                    <>
-                      <div className="space-y-2">
-                        <Label>Paste Job Data</Label>
-                        <Textarea
-                          placeholder="Paste any job listing text here — any format works. AI will extract all fields automatically."
-                          rows={10}
-                          value={bulkJobText}
-                          onChange={(e) => setBulkJobText(e.target.value)}
-                          className="text-sm"
-                        />
-                      </div>
-                      
-                      <div className="flex gap-2 flex-wrap">
-                        <Button 
-                          variant="outline"
-                          onClick={handleParseBulkJobsAI}
-                          disabled={!bulkJobText.trim() || isAIParsing}
-                          className="gap-2"
-                        >
-                          {isAIParsing ? (
-                            <>
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                              AI is parsing…
-                            </>
-                          ) : (
-                            <>
-                              <Eye className="h-4 w-4" />
-                              Parse with AI
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    </>
-                  )}
-                  
-                  {bulkParseResult && (
-                    <div className="space-y-3">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setBulkParseResult(null)}
-                        className="text-xs gap-1"
-                      >
-                        ← Back to paste
-                      </Button>
-                      <BulkJobPreviewEditor
-                        jobs={bulkParseResult.jobs}
-                        errors={bulkParseResult.errors}
-                        educationLevels={educationLevels}
-                        educationFields={educationFields}
-                        provinceOptions={PROVINCE_OPTIONS}
-                        onJobsChange={(updated) => setBulkParseResult(prev => prev ? { ...prev, jobs: updated } : null)}
-                        onImport={handleBulkImport}
-                        isImporting={bulkCreateJobs.isPending}
-                      />
-                    </div>
-                  )}
-                </div>
-              </DialogContent>
-            </Dialog>
+            <Button variant="outline" className="gap-2" onClick={() => navigate("/admin/bulk-import")}>
+              <FileUp className="h-4 w-4" />
+              Add Multiple Jobs
+            </Button>
             <Button onClick={() => setShowAddJob(!showAddJob)} className="gap-2">
               <Plus className="h-4 w-4" />
               Add New Job
