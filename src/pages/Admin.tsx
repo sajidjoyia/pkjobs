@@ -473,6 +473,9 @@ const Admin = () => {
             <TabsTrigger value="jobs" className="gap-1.5 text-xs sm:text-sm">
               <Briefcase className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Jobs
             </TabsTrigger>
+            <TabsTrigger value="users" className="gap-1.5 text-xs sm:text-sm">
+              <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Users
+            </TabsTrigger>
             <TabsTrigger value="applications" className="gap-1.5 text-xs sm:text-sm">
               <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> <span className="hidden sm:inline">Applications</span><span className="sm:hidden">Apps</span>
             </TabsTrigger>
