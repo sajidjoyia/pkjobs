@@ -642,6 +642,13 @@ const Admin = () => {
             )}
           </TabsContent>
 
+          {/* Users Tab */}
+          <TabsContent value="users">
+            <div className="card-elevated p-4 sm:p-6">
+              <UserManagement />
+            </div>
+          </TabsContent>
+
           {/* Applications Tab */}
           <TabsContent value="applications">
             {appsLoading ? (

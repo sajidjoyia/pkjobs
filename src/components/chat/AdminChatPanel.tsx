@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import ChatMessageInput from './ChatMessageInput';
 import ChatMessageBubble from './ChatMessageBubble';
+import ChatUserProfile from './ChatUserProfile';
 
 const AdminChatPanel = () => {
   const { user } = useAuth();
