@@ -71,7 +71,7 @@ const useAllProfiles = () => {
 const useAdminUpdateProfile = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ userId, updates }: { userId: string; updates: Partial<AdminProfile> }) => {
+    mutationFn: async ({ userId, updates }: { userId: string; updates: Record<string, any> }) => {
       const { error } = await supabase
         .from("profiles")
         .update(updates)
