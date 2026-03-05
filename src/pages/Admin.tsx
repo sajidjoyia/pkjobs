@@ -59,7 +59,7 @@ import { useBulkCreateJobs } from "@/hooks/useBulkJobImport";
 import EducationFieldsManager from "@/components/admin/EducationFieldsManager";
 import ServiceCategoriesManager from "@/components/admin/ServiceCategoriesManager";
 import SeoSettingsManager from "@/components/admin/SeoSettingsManager";
-
+import UserManagement from "@/components/admin/UserManagement";
 const PROVINCE_OPTIONS = [
   { value: "Punjab", label: "Punjab" },
   { value: "Sindh", label: "Sindh" },
