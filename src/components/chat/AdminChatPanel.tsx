@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import ChatMessageInput from './ChatMessageInput';
 import ChatMessageBubble from './ChatMessageBubble';
+import ChatUserProfile from './ChatUserProfile';
 
 const AdminChatPanel = () => {
   const { user } = useAuth();
@@ -127,13 +128,21 @@ const AdminChatPanel = () => {
           ) : (
             <>
               {/* Chat Header */}
-              <div className="p-3 border-b bg-muted/30">
-                <div className="font-medium">
-                  {selectedConv?.profiles?.full_name || 'Unknown User'}
+              <div className="p-3 border-b bg-muted/30 flex items-center justify-between">
+                <div>
+                  <div className="font-medium">
+                    {selectedConv?.profiles?.full_name || 'Unknown User'}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {selectedConv?.subject || 'General Inquiry'}
+                  </div>
                 </div>
-                <div className="text-sm text-muted-foreground">
-                  {selectedConv?.subject || 'General Inquiry'}
-                </div>
+                {selectedConv && (
+                  <ChatUserProfile
+                    userId={selectedConv.user_id}
+                    userName={selectedConv.profiles?.full_name || 'Unknown User'}
+                  />
+                )}
               </div>
 
               {/* Messages */}
