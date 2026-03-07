@@ -139,7 +139,7 @@ export function MultiSelect({
               </button>
             </div>
           </div>
-          <ScrollArea className="flex-1 max-h-[40vh] border rounded-md">
+          <div className="flex-1 max-h-[40vh] border rounded-md overflow-y-auto">
             <div className="p-1">
               {filteredOptions.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-6">No results found</p>
@@ -171,7 +171,7 @@ export function MultiSelect({
                 })
               )}
             </div>
-          </ScrollArea>
+          </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
