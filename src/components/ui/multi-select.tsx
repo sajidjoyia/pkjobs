@@ -171,7 +171,7 @@ export function MultiSelect({
                 })
               )}
             </div>
-          </ScrollArea>
+          </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
