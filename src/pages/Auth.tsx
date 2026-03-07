@@ -56,6 +56,22 @@ const Auth = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    try {
+      const { error } = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (error) {
+        toast.error("Google sign-in failed. Please try again.");
+      }
+    } catch (err) {
+      toast.error("Google sign-in failed. Please try again.");
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
