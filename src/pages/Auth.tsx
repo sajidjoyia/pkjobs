@@ -9,28 +9,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Briefcase, Mail, Lock, User, Calendar, MapPin, GraduationCap, Loader2 } from "lucide-react";
+import { Briefcase, Mail, Lock, User, Calendar, MapPin, Loader2 } from "lucide-react";
 import { useSearchParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { z } from "zod";
 import { toast } from "sonner";
 import EducationSelector, { EducationEntry } from "@/components/education/EducationSelector";
 import { lovable } from "@/integrations/lovable/index";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Briefcase, Mail, Lock, User, Calendar, MapPin, GraduationCap, Loader2 } from "lucide-react";
-import { useSearchParams, Link, useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-import { z } from "zod";
-import { toast } from "sonner";
-import EducationSelector, { EducationEntry } from "@/components/education/EducationSelector";
 
 const emailSchema = z.string().trim().email("Invalid email address").max(255);
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters").max(100);
@@ -44,6 +29,7 @@ const Auth = () => {
   
   const [isLogin, setIsLogin] = useState(searchParams.get("mode") !== "register");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   
   const [formData, setFormData] = useState({
     name: "",
