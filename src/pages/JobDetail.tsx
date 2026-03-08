@@ -40,6 +40,7 @@ const JobDetail = () => {
   const { data: job, isLoading, error } = useJob(id);
   const { user, profile } = useAuth();
   const { data: userEducations } = useUserEducations(user?.id);
+  const { data: allEducationFields } = useEducationFields();
   const { data: hasApplied } = useCheckIfApplied(id);
   const createApplication = useCreateApplication();
 
