@@ -62,6 +62,14 @@ const Header = () => {
           {!loading && user && <NotificationDropdown />}
           {!loading && user ? (
             <>
+              {isExpert && (
+                <Link to="/expert">
+                  <Button variant="ghost" size="sm" className="gap-2">
+                    <UserCheck className="h-4 w-4" />
+                    Expert
+                  </Button>
+                </Link>
+              )}
               {isAdmin && (
                 <Link to="/admin">
                   <Button variant="ghost" size="sm" className="gap-2">
