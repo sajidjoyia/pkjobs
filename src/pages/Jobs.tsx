@@ -26,6 +26,7 @@ import {
 import { useJobs, Job } from "@/hooks/useJobs";
 import { useAuth } from "@/hooks/useAuth";
 import { isEligibleForJob, useUserEducations } from "@/hooks/useProfile";
+import { useEducationFields } from "@/hooks/useEducationFields";
 
 const educationLabels: Record<string, string> = {
   matric: "Matric / SSC",
@@ -53,6 +54,7 @@ const Jobs = () => {
 
   const { profile, user } = useAuth();
   const { data: userEducations } = useUserEducations(user?.id);
+  const { data: allEducationFields } = useEducationFields();
 
   const isJobExpired = (lastDate: string) => {
     return new Date(lastDate) < new Date(new Date().setHours(0, 0, 0, 0));
@@ -67,7 +69,7 @@ const Jobs = () => {
       );
     }
     if (!user || !profile) return null;
-    const { eligible } = isEligibleForJob(profile, job, userEducations);
+    const { eligible } = isEligibleForJob(profile, job, userEducations, allEducationFields);
     return (
       <Badge className={`text-xs ${eligible ? "bg-success" : "bg-destructive"}`}>
         {eligible ? "Eligible" : "Not Eligible"}
@@ -90,13 +92,13 @@ const Jobs = () => {
     if (showEligibleOnly && user && profile) {
       result = result.filter(job => {
         if (isJobExpired(job.last_date)) return false;
-        const { eligible } = isEligibleForJob(profile, job, userEducations);
+        const { eligible } = isEligibleForJob(profile, job, userEducations, allEducationFields);
         return eligible;
       });
     }
 
     return result;
-  }, [jobs, dateFilter, showEligibleOnly, user, profile, userEducations]);
+  }, [jobs, dateFilter, showEligibleOnly, user, profile, userEducations, allEducationFields]);
 
   // Pagination
   const totalPages = Math.ceil((filteredJobs?.length || 0) / JOBS_PER_PAGE);

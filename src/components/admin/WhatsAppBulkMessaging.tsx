@@ -141,13 +141,24 @@ const useEligibleUsers = (job: JobOption | null) => {
           )
             return false;
 
-          // Education check
+          // Education check - hierarchical: user qualifies if their level >= required level
+          const eduLevelRank = (level: string) => {
+            const ranks: Record<string, number> = { matric: 1, intermediate: 2, bachelor: 3, master: 4, phd: 5 };
+            return ranks[level] || 0;
+          };
           if (
             job.required_education_levels?.length &&
-            !u.education_levels.some((el) =>
-              job.required_education_levels!.includes(el)
-            )
-          )
+            u.education_levels.length > 0
+          ) {
+            const minRequiredRank = Math.min(...job.required_education_levels.map(eduLevelRank));
+            const userMaxRank = Math.max(...u.education_levels.map(eduLevelRank));
+            if (userMaxRank < minRequiredRank) return false;
+          } else if (
+            job.required_education_levels?.length &&
+            u.education_levels.length === 0
+          ) {
+            return false;
+          }
             return false;
 
           return true;
