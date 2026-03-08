@@ -89,6 +89,7 @@ const Admin = () => {
   const { data: educationLevels = [] } = useAllEducationLevels();
   const { data: educationFields = [] } = useEducationFields();
   const adminStartConversation = useAdminStartConversation();
+  const { data: expertUsers = [] } = useExpertUsers();
 
   const [activeTab, setActiveTab] = useState("jobs");
   const [showAddJob, setShowAddJob] = useState(false);
