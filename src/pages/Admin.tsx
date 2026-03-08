@@ -62,8 +62,9 @@ import SeoSettingsManager from "@/components/admin/SeoSettingsManager";
 import UserManagement from "@/components/admin/UserManagement";
 import AnalyticsDashboard from "@/components/admin/AnalyticsDashboard";
 const ExpertPerformance = lazy(() => import("@/components/admin/ExpertPerformance"));
+const WhatsAppBulkMessaging = lazy(() => import("@/components/admin/WhatsAppBulkMessaging"));
 import { useExpertUsers } from "@/hooks/useExperts";
-import { BarChart3, UserCheck } from "lucide-react";
+import { BarChart3, UserCheck, MessageSquare as MessageSquareIcon } from "lucide-react";
 const PROVINCE_OPTIONS = [
   { value: "Punjab", label: "Punjab" },
   { value: "Sindh", label: "Sindh" },
@@ -499,6 +500,9 @@ const Admin = () => {
             <TabsTrigger value="experts" className="gap-1.5 text-xs sm:text-sm">
               <UserCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Experts
             </TabsTrigger>
+            <TabsTrigger value="whatsapp" className="gap-1.5 text-xs sm:text-sm">
+              <MessageSquareIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> WhatsApp
+            </TabsTrigger>
           </TabsList>
 
           {/* Jobs Tab */}
@@ -888,6 +892,13 @@ const Admin = () => {
           <TabsContent value="experts">
             <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
               <ExpertPerformance />
+            </Suspense>
+          </TabsContent>
+
+          {/* WhatsApp Tab */}
+          <TabsContent value="whatsapp">
+            <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+              <WhatsAppBulkMessaging />
             </Suspense>
           </TabsContent>
         </Tabs>
