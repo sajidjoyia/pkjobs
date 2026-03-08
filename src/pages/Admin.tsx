@@ -678,6 +678,7 @@ const Admin = () => {
                         <th className="text-left p-4 font-medium text-foreground">Job</th>
                         <th className="text-left p-4 font-medium text-foreground hidden sm:table-cell">Applied</th>
                         <th className="text-left p-4 font-medium text-foreground hidden sm:table-cell">Amount</th>
+                        <th className="text-left p-4 font-medium text-foreground">Expert</th>
                         <th className="text-left p-4 font-medium text-foreground">Status</th>
                         <th className="text-right p-4 font-medium text-foreground">Actions</th>
                       </tr>
@@ -697,6 +698,31 @@ const Admin = () => {
                           </td>
                           <td className="p-4 text-muted-foreground text-sm hidden sm:table-cell">
                             Rs. {Number(app.payment_amount).toLocaleString()}
+                          </td>
+                          <td className="p-4">
+                            <Select
+                              value={app.expert_id || "unassigned"}
+                              onValueChange={(value) => {
+                                const expertId = value === "unassigned" ? undefined : value;
+                                updateApplicationStatus.mutate({
+                                  id: app.id,
+                                  status: expertId ? "expert_assigned" : app.status,
+                                  expert_id: expertId,
+                                });
+                              }}
+                            >
+                              <SelectTrigger className="w-[130px] sm:w-[160px] text-xs sm:text-sm">
+                                <SelectValue placeholder="Assign Expert" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="unassigned">Unassigned</SelectItem>
+                                {expertUsers.map((expert) => (
+                                  <SelectItem key={expert.user_id} value={expert.user_id}>
+                                    {expert.full_name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </td>
                           <td className="p-4">
                             <Select value={app.status} onValueChange={(value) => updateApplicationStatus.mutate({ id: app.id, status: value as any })}>
