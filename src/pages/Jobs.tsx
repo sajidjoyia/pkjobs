@@ -54,6 +54,7 @@ const Jobs = () => {
 
   const { profile, user } = useAuth();
   const { data: userEducations } = useUserEducations(user?.id);
+  const { data: allEducationFields } = useEducationFields();
 
   const isJobExpired = (lastDate: string) => {
     return new Date(lastDate) < new Date(new Date().setHours(0, 0, 0, 0));
