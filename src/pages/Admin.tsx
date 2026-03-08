@@ -850,7 +850,8 @@ const Admin = () => {
                             <div className="flex justify-end gap-1">
                               <Button variant="ghost" size="icon" title="Start Chat" onClick={async () => {
                                 try {
-                                  await adminStartConversation.mutateAsync({ userId: wr.user_id, workRequestId: wr.id, jobTitle: wr.custom_description?.slice(0, 50) || 'Work Request' });
+                                  const conv = await adminStartConversation.mutateAsync({ userId: wr.user_id, workRequestId: wr.id, jobTitle: wr.custom_description?.slice(0, 50) || 'Work Request' });
+                                  setSelectedConversationId(conv.id);
                                   setActiveTab("chat");
                                   toast({ title: "Conversation started", description: `Chat opened with ${wr.profile?.full_name || 'user'}` });
                                 } catch (error) { console.error('Failed to start conversation:', error); }
