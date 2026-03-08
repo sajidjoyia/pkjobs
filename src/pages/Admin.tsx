@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,7 +61,7 @@ import ServiceCategoriesManager from "@/components/admin/ServiceCategoriesManage
 import SeoSettingsManager from "@/components/admin/SeoSettingsManager";
 import UserManagement from "@/components/admin/UserManagement";
 import AnalyticsDashboard from "@/components/admin/AnalyticsDashboard";
-import ExpertPerformance from "@/components/admin/ExpertPerformance";
+const ExpertPerformance = lazy(() => import("@/components/admin/ExpertPerformance"));
 import { useExpertUsers } from "@/hooks/useExperts";
 import { BarChart3, UserCheck } from "lucide-react";
 const PROVINCE_OPTIONS = [
@@ -886,7 +886,9 @@ const Admin = () => {
 
           {/* Experts Tab */}
           <TabsContent value="experts">
-            <ExpertPerformance />
+            <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+              <ExpertPerformance />
+            </Suspense>
           </TabsContent>
         </Tabs>
       </div>
