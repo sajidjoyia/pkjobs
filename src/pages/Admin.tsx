@@ -882,6 +882,11 @@ const Admin = () => {
           <TabsContent value="analytics">
             <AnalyticsDashboard />
           </TabsContent>
+
+          {/* Experts Tab */}
+          <TabsContent value="experts">
+            <ExpertPerformance />
+          </TabsContent>
         </Tabs>
       </div>
     </div>
