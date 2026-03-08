@@ -61,6 +61,7 @@ import ServiceCategoriesManager from "@/components/admin/ServiceCategoriesManage
 import SeoSettingsManager from "@/components/admin/SeoSettingsManager";
 import UserManagement from "@/components/admin/UserManagement";
 import AnalyticsDashboard from "@/components/admin/AnalyticsDashboard";
+import ExpertPerformance from "@/components/admin/ExpertPerformance";
 import { useExpertUsers } from "@/hooks/useExperts";
 import { BarChart3, UserCheck } from "lucide-react";
 const PROVINCE_OPTIONS = [
@@ -495,6 +496,9 @@ const Admin = () => {
             <TabsTrigger value="analytics" className="gap-1.5 text-xs sm:text-sm">
               <BarChart3 className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> <span className="hidden sm:inline">Analytics</span><span className="sm:hidden">Stats</span>
             </TabsTrigger>
+            <TabsTrigger value="experts" className="gap-1.5 text-xs sm:text-sm">
+              <UserCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Experts
+            </TabsTrigger>
           </TabsList>
 
           {/* Jobs Tab */}
@@ -878,6 +882,11 @@ const Admin = () => {
           {/* Analytics Tab */}
           <TabsContent value="analytics">
             <AnalyticsDashboard />
+          </TabsContent>
+
+          {/* Experts Tab */}
+          <TabsContent value="experts">
+            <ExpertPerformance />
           </TabsContent>
         </Tabs>
       </div>
