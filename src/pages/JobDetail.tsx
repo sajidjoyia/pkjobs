@@ -22,6 +22,7 @@ import { useJob } from "@/hooks/useJobs";
 import { useAuth } from "@/hooks/useAuth";
 import { useCreateApplication, useCheckIfApplied } from "@/hooks/useApplications";
 import { isEligibleForJob, useUserEducations } from "@/hooks/useProfile";
+import { useEducationFields } from "@/hooks/useEducationFields";
 import { toast } from "sonner";
 import ShareButtons from "@/components/ShareButtons";
 
