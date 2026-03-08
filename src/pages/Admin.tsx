@@ -720,7 +720,9 @@ const Admin = () => {
                               }} title="Start Chat">
                                 <MessageCircle className="h-4 w-4" />
                               </Button>
-                              <Button variant="ghost" size="icon"><Eye className="h-4 w-4" /></Button>
+                              <Button variant="ghost" size="icon" onClick={() => navigate(`/jobs/${app.job_id}`)} title="View Job">
+                                <Eye className="h-4 w-4" />
+                              </Button>
                             </div>
                           </td>
                         </tr>
