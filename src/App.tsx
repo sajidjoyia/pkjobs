@@ -56,6 +56,11 @@ const App = () => (
                     <BulkJobImport />
                   </ProtectedRoute>
                 } />
+                <Route path="/expert" element={
+                  <ProtectedRoute requireExpert>
+                    <ExpertDashboard />
+                  </ProtectedRoute>
+                } />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Layout>

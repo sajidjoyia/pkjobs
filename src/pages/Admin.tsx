@@ -806,6 +806,11 @@ const Admin = () => {
               <SeoSettingsManager />
             </div>
           </TabsContent>
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics">
+            <AnalyticsDashboard />
+          </TabsContent>
         </Tabs>
       </div>
     </div>
