@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
   Briefcase,
   User,
   MessageSquare,
@@ -27,15 +33,18 @@ import {
   MapPin,
   Phone,
   Calendar,
-  GraduationCap,
   Eye,
+  Download,
+  FileImage,
+  File,
+  ChevronDown,
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useExpertAssignments, ExpertAssignment } from "@/hooks/useExpertAssignments";
 import { useUpdateApplicationStatus } from "@/hooks/useApplications";
 import { useUpdateWorkRequestStatus } from "@/hooks/useWorkRequests";
 import { openApplicationChat } from "@/components/chat/ChatWidget";
-import { calculateAge } from "@/hooks/useProfile";
 import { toast } from "sonner";
 
 const statusLabels: Record<string, string> = {
@@ -56,10 +65,48 @@ const statusProgress: Record<string, number> = {
   completed: 100,
 };
 
+interface UserDocument {
+  id: string;
+  user_id: string;
+  document_type: string;
+  file_name: string;
+  file_url: string;
+  created_at: string;
+}
+
+const useExpertDocuments = (userIds: string[]) => {
+  return useQuery({
+    queryKey: ["expert-user-documents", userIds],
+    queryFn: async () => {
+      if (!userIds.length) return new Map<string, UserDocument[]>();
+
+      const { data, error } = await supabase
+        .from("user_documents")
+        .select("*")
+        .in("user_id", userIds)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      const docMap = new Map<string, UserDocument[]>();
+      for (const doc of data || []) {
+        const existing = docMap.get(doc.user_id) || [];
+        existing.push(doc as UserDocument);
+        docMap.set(doc.user_id, existing);
+      }
+      return docMap;
+    },
+    enabled: userIds.length > 0,
+  });
+};
+
 const ExpertDashboard = () => {
-  const { user, profile } = useAuth();
+  const { profile } = useAuth();
   const { data: assignments = [], isLoading } = useExpertAssignments();
   const [activeTab, setActiveTab] = useState("assigned");
+
+  const userIds = [...new Set(assignments.map((a) => a.user_id))];
+  const { data: documentsMap = new Map() } = useExpertDocuments(userIds);
 
   const activeAssignments = assignments.filter(
     (a) => !["completed", "applied"].includes(a.status)
@@ -145,7 +192,11 @@ const ExpertDashboard = () => {
             ) : (
               <div className="space-y-4">
                 {activeAssignments.map((assignment) => (
-                  <AssignmentCard key={assignment.id} assignment={assignment} />
+                  <AssignmentCard
+                    key={assignment.id}
+                    assignment={assignment}
+                    documents={documentsMap.get(assignment.user_id) || []}
+                  />
                 ))}
               </div>
             )}
@@ -160,7 +211,11 @@ const ExpertDashboard = () => {
             ) : (
               <div className="space-y-4">
                 {completedAssignments.map((assignment) => (
-                  <AssignmentCard key={assignment.id} assignment={assignment} />
+                  <AssignmentCard
+                    key={assignment.id}
+                    assignment={assignment}
+                    documents={documentsMap.get(assignment.user_id) || []}
+                  />
                 ))}
               </div>
             )}
@@ -171,10 +226,24 @@ const ExpertDashboard = () => {
   );
 };
 
-const AssignmentCard = ({ assignment }: { assignment: ExpertAssignment }) => {
+const getDocIcon = (type: string) => {
+  if (type.includes("image") || type.includes("photo") || type.includes("cnic")) {
+    return <FileImage className="h-4 w-4 text-info" />;
+  }
+  return <File className="h-4 w-4 text-muted-foreground" />;
+};
+
+const AssignmentCard = ({
+  assignment,
+  documents,
+}: {
+  assignment: ExpertAssignment;
+  documents: UserDocument[];
+}) => {
   const updateAppStatus = useUpdateApplicationStatus();
   const updateWrStatus = useUpdateWorkRequestStatus();
   const [viewingProfile, setViewingProfile] = useState(false);
+  const [docsOpen, setDocsOpen] = useState(false);
 
   const statusColors: Record<string, string> = {
     pending: "bg-warning",
@@ -191,6 +260,10 @@ const AssignmentCard = ({ assignment }: { assignment: ExpertAssignment }) => {
     } else {
       updateWrStatus.mutate({ id: assignment.id, status: newStatus as any });
     }
+  };
+
+  const handleDownload = (doc: UserDocument) => {
+    window.open(doc.file_url, "_blank");
   };
 
   return (
@@ -249,6 +322,61 @@ const AssignmentCard = ({ assignment }: { assignment: ExpertAssignment }) => {
                   </Button>
                 </div>
               </div>
+            )}
+
+            {/* Documents Section */}
+            {documents.length > 0 && (
+              <Collapsible open={docsOpen} onOpenChange={setDocsOpen}>
+                <CollapsibleTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2 mb-2 w-full justify-between">
+                    <span className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      User Documents ({documents.length})
+                    </span>
+                    <ChevronDown className={`h-4 w-4 transition-transform ${docsOpen ? "rotate-180" : ""}`} />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="space-y-2 mb-3">
+                    {documents.map((doc) => (
+                      <div
+                        key={doc.id}
+                        className="flex items-center justify-between p-2.5 rounded-lg bg-muted/50 border border-border"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          {getDocIcon(doc.document_type)}
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">
+                              {doc.file_name}
+                            </p>
+                            <p className="text-xs text-muted-foreground capitalize">
+                              {doc.document_type.replace(/_/g, " ")}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex gap-1 shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => window.open(doc.file_url, "_blank")}
+                            title="View"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDownload(doc)}
+                            title="Download"
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
             )}
 
             {/* Progress */}
@@ -348,6 +476,31 @@ const AssignmentCard = ({ assignment }: { assignment: ExpertAssignment }) => {
                     <p><span className="text-muted-foreground">Department:</span> {assignment.job.department}</p>
                     <p><span className="text-muted-foreground">Last Date:</span> {new Date(assignment.job.last_date).toLocaleDateString()}</p>
                     <p><span className="text-muted-foreground">Total Fee:</span> Rs. {Number(assignment.job.total_fee).toLocaleString()}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Documents in profile dialog */}
+              {documents.length > 0 && (
+                <div className="border-t border-border pt-3 mt-3">
+                  <h4 className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
+                    <FileText className="h-4 w-4" /> Documents ({documents.length})
+                  </h4>
+                  <div className="space-y-2">
+                    {documents.map((doc) => (
+                      <div key={doc.id} className="flex items-center justify-between p-2 rounded bg-muted/50">
+                        <div className="flex items-center gap-2 min-w-0">
+                          {getDocIcon(doc.document_type)}
+                          <div className="min-w-0">
+                            <p className="text-xs font-medium truncate">{doc.file_name}</p>
+                            <p className="text-xs text-muted-foreground capitalize">{doc.document_type.replace(/_/g, " ")}</p>
+                          </div>
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={() => window.open(doc.file_url, "_blank")}>
+                          <Download className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
