@@ -893,6 +893,13 @@ const Admin = () => {
               <ExpertPerformance />
             </Suspense>
           </TabsContent>
+
+          {/* WhatsApp Tab */}
+          <TabsContent value="whatsapp">
+            <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+              <WhatsAppBulkMessaging />
+            </Suspense>
+          </TabsContent>
         </Tabs>
       </div>
     </div>
