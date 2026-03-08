@@ -29,6 +29,7 @@ export const useEducationFields = () => {
       const { data, error } = await supabase
         .from("education_fields")
         .select("*")
+        .order("sort_order", { ascending: true })
         .order("display_name", { ascending: true });
 
       if (error) throw error;
