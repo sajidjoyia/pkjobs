@@ -19,6 +19,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Users,
   Search,
   Edit,
@@ -30,12 +40,14 @@ import {
   User,
   Calendar,
   MapPin,
-  GraduationCap,
   Phone,
-  Mail,
+  Shield,
+  ShieldCheck,
+  ShieldX,
 } from "lucide-react";
 import { toast } from "sonner";
 import { calculateAge } from "@/hooks/useProfile";
+import { useUserRoles, useAssignExpertRole, useRemoveExpertRole } from "@/hooks/useExperts";
 
 interface AdminProfile {
   id: string;
@@ -90,7 +102,6 @@ const useAdminDeleteUser = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (userId: string) => {
-      // Delete profile (cascading from auth would be ideal, but we delete profile)
       const { error } = await supabase
         .from("profiles")
         .delete()
@@ -107,13 +118,17 @@ const useAdminDeleteUser = () => {
 
 const UserManagement = () => {
   const { data: profiles = [], isLoading } = useAllProfiles();
+  const { data: roleMap = new Map() } = useUserRoles();
   const updateProfile = useAdminUpdateProfile();
   const deleteUser = useAdminDeleteUser();
-  
+  const assignExpert = useAssignExpertRole();
+  const removeExpert = useRemoveExpertRole();
+
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [editingUser, setEditingUser] = useState<AdminProfile | null>(null);
   const [viewingUser, setViewingUser] = useState<AdminProfile | null>(null);
+  const [deletingUser, setDeletingUser] = useState<{ userId: string; name: string } | null>(null);
   const [editForm, setEditForm] = useState({
     full_name: "",
     date_of_birth: "",
@@ -132,6 +147,13 @@ const UserManagement = () => {
 
   const totalPages = Math.ceil(filtered.length / USERS_PER_PAGE);
   const paginated = filtered.slice((page - 1) * USERS_PER_PAGE, page * USERS_PER_PAGE);
+
+  const getUserRoles = (userId: string): string[] => {
+    return roleMap.get(userId) || ["user"];
+  };
+
+  const isExpert = (userId: string) => getUserRoles(userId).includes("expert");
+  const isAdmin = (userId: string) => getUserRoles(userId).includes("admin");
 
   const openEdit = (user: AdminProfile) => {
     setEditForm({
@@ -161,9 +183,18 @@ const UserManagement = () => {
     setEditingUser(null);
   };
 
-  const handleDelete = async (userId: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete ${name}'s profile?`)) return;
-    await deleteUser.mutateAsync(userId);
+  const handleDelete = async () => {
+    if (!deletingUser) return;
+    await deleteUser.mutateAsync(deletingUser.userId);
+    setDeletingUser(null);
+  };
+
+  const handleToggleExpert = async (userId: string) => {
+    if (isExpert(userId)) {
+      await removeExpert.mutateAsync(userId);
+    } else {
+      await assignExpert.mutateAsync(userId);
+    }
   };
 
   if (isLoading) {
@@ -202,44 +233,74 @@ const UserManagement = () => {
             <thead className="bg-muted/50">
               <tr>
                 <th className="text-left p-3 font-medium text-foreground text-sm">Name</th>
+                <th className="text-left p-3 font-medium text-foreground text-sm">Role</th>
                 <th className="text-left p-3 font-medium text-foreground text-sm">Gender</th>
                 <th className="text-left p-3 font-medium text-foreground text-sm">Age</th>
                 <th className="text-left p-3 font-medium text-foreground text-sm">Province</th>
-                <th className="text-left p-3 font-medium text-foreground text-sm">Domicile</th>
                 <th className="text-left p-3 font-medium text-foreground text-sm">Phone</th>
                 <th className="text-left p-3 font-medium text-foreground text-sm">Joined</th>
                 <th className="text-right p-3 font-medium text-foreground text-sm">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {paginated.map((user) => (
-                <tr key={user.id} className="border-t border-border hover:bg-muted/30">
-                  <td className="p-3 font-medium text-foreground text-sm">{user.full_name}</td>
-                  <td className="p-3 text-muted-foreground text-sm capitalize">{user.gender || "—"}</td>
-                  <td className="p-3 text-muted-foreground text-sm">
-                    {user.date_of_birth ? calculateAge(user.date_of_birth) : "—"}
-                  </td>
-                  <td className="p-3 text-muted-foreground text-sm">{user.province || "—"}</td>
-                  <td className="p-3 text-muted-foreground text-sm">{user.domicile || "—"}</td>
-                  <td className="p-3 text-muted-foreground text-sm">{user.phone || "—"}</td>
-                  <td className="p-3 text-muted-foreground text-sm">
-                    {new Date(user.created_at).toLocaleDateString()}
-                  </td>
-                  <td className="p-3">
-                    <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => setViewingUser(user)} title="View">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(user)} title="Edit">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(user.user_id, user.full_name)} title="Delete">
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {paginated.map((user) => {
+                const roles = getUserRoles(user.user_id);
+                return (
+                  <tr key={user.id} className="border-t border-border hover:bg-muted/30">
+                    <td className="p-3 font-medium text-foreground text-sm">{user.full_name}</td>
+                    <td className="p-3">
+                      <div className="flex gap-1 flex-wrap">
+                        {roles.map((r) => (
+                          <Badge key={r} variant={r === "admin" ? "default" : r === "expert" ? "secondary" : "outline"} className="text-xs">
+                            {r}
+                          </Badge>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="p-3 text-muted-foreground text-sm capitalize">{user.gender || "—"}</td>
+                    <td className="p-3 text-muted-foreground text-sm">
+                      {user.date_of_birth ? calculateAge(user.date_of_birth) : "—"}
+                    </td>
+                    <td className="p-3 text-muted-foreground text-sm">{user.province || "—"}</td>
+                    <td className="p-3 text-muted-foreground text-sm">{user.phone || "—"}</td>
+                    <td className="p-3 text-muted-foreground text-sm">
+                      {new Date(user.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="p-3">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleToggleExpert(user.user_id)}
+                          disabled={isAdmin(user.user_id) || assignExpert.isPending || removeExpert.isPending}
+                          title={isExpert(user.user_id) ? "Remove Expert Role" : "Make Expert"}
+                        >
+                          {isExpert(user.user_id) ? (
+                            <ShieldX className="h-4 w-4 text-warning" />
+                          ) : (
+                            <ShieldCheck className="h-4 w-4 text-success" />
+                          )}
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => setViewingUser(user)} title="View">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => openEdit(user)} title="Edit">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeletingUser({ userId: user.user_id, name: user.full_name })}
+                          disabled={isAdmin(user.user_id)}
+                          title="Delete"
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -247,35 +308,54 @@ const UserManagement = () => {
 
       {/* Mobile Cards */}
       <div className="md:hidden space-y-3">
-        {paginated.map((user) => (
-          <div key={user.id} className="card-elevated p-4">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0 flex-1">
-                <h4 className="font-medium text-foreground text-sm truncate">{user.full_name}</h4>
-                <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-xs text-muted-foreground">
-                  {user.gender && <span className="capitalize">{user.gender}</span>}
-                  {user.date_of_birth && <span>{calculateAge(user.date_of_birth)} yrs</span>}
-                  {user.province && <span>{user.province}</span>}
-                  {user.phone && <span>{user.phone}</span>}
+        {paginated.map((user) => {
+          const roles = getUserRoles(user.user_id);
+          return (
+            <div key={user.id} className="card-elevated p-4">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="font-medium text-foreground text-sm truncate">{user.full_name}</h4>
+                    {roles.map((r) => (
+                      <Badge key={r} variant={r === "admin" ? "default" : r === "expert" ? "secondary" : "outline"} className="text-[10px]">
+                        {r}
+                      </Badge>
+                    ))}
+                  </div>
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-xs text-muted-foreground">
+                    {user.gender && <span className="capitalize">{user.gender}</span>}
+                    {user.date_of_birth && <span>{calculateAge(user.date_of_birth)} yrs</span>}
+                    {user.province && <span>{user.province}</span>}
+                    {user.phone && <span>{user.phone}</span>}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Joined: {new Date(user.created_at).toLocaleDateString()}
+                  </p>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Joined: {new Date(user.created_at).toLocaleDateString()}
-                </p>
-              </div>
-              <div className="flex gap-1 shrink-0">
-                <Button variant="ghost" size="sm" onClick={() => setViewingUser(user)}>
-                  <Eye className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => openEdit(user)}>
-                  <Edit className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => handleDelete(user.user_id, user.full_name)}>
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
+                <div className="flex gap-1 shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleToggleExpert(user.user_id)}
+                    disabled={isAdmin(user.user_id)}
+                    title={isExpert(user.user_id) ? "Remove Expert" : "Make Expert"}
+                  >
+                    {isExpert(user.user_id) ? <ShieldX className="h-4 w-4 text-warning" /> : <ShieldCheck className="h-4 w-4 text-success" />}
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => setViewingUser(user)}>
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => openEdit(user)}>
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => setDeletingUser({ userId: user.user_id, name: user.full_name })} disabled={isAdmin(user.user_id)}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Pagination */}
@@ -293,6 +373,24 @@ const UserManagement = () => {
         </div>
       )}
 
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deletingUser} onOpenChange={() => setDeletingUser(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete User Profile</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>{deletingUser?.name}</strong>'s profile? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* View User Dialog */}
       <Dialog open={!!viewingUser} onOpenChange={() => setViewingUser(null)}>
         <DialogContent className="max-w-md">
@@ -303,7 +401,23 @@ const UserManagement = () => {
             <div className="space-y-3">
               <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
                 <User className="h-5 w-5 text-primary shrink-0" />
-                <div><p className="text-xs text-muted-foreground">Name</p><p className="font-medium text-sm">{viewingUser.full_name}</p></div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Name</p>
+                  <p className="font-medium text-sm">{viewingUser.full_name}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50">
+                <Shield className="h-4 w-4 text-primary shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Roles</p>
+                  <div className="flex gap-1 mt-1">
+                    {getUserRoles(viewingUser.user_id).map((r) => (
+                      <Badge key={r} variant={r === "admin" ? "default" : r === "expert" ? "secondary" : "outline"} className="text-xs">
+                        {r}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">

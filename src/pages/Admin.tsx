@@ -61,7 +61,8 @@ import ServiceCategoriesManager from "@/components/admin/ServiceCategoriesManage
 import SeoSettingsManager from "@/components/admin/SeoSettingsManager";
 import UserManagement from "@/components/admin/UserManagement";
 import AnalyticsDashboard from "@/components/admin/AnalyticsDashboard";
-import { BarChart3 } from "lucide-react";
+import { useExpertUsers } from "@/hooks/useExperts";
+import { BarChart3, UserCheck } from "lucide-react";
 const PROVINCE_OPTIONS = [
   { value: "Punjab", label: "Punjab" },
   { value: "Sindh", label: "Sindh" },
@@ -88,6 +89,7 @@ const Admin = () => {
   const { data: educationLevels = [] } = useAllEducationLevels();
   const { data: educationFields = [] } = useEducationFields();
   const adminStartConversation = useAdminStartConversation();
+  const { data: expertUsers = [] } = useExpertUsers();
 
   const [activeTab, setActiveTab] = useState("jobs");
   const [showAddJob, setShowAddJob] = useState(false);
@@ -676,6 +678,7 @@ const Admin = () => {
                         <th className="text-left p-4 font-medium text-foreground">Job</th>
                         <th className="text-left p-4 font-medium text-foreground hidden sm:table-cell">Applied</th>
                         <th className="text-left p-4 font-medium text-foreground hidden sm:table-cell">Amount</th>
+                        <th className="text-left p-4 font-medium text-foreground">Expert</th>
                         <th className="text-left p-4 font-medium text-foreground">Status</th>
                         <th className="text-right p-4 font-medium text-foreground">Actions</th>
                       </tr>
@@ -695,6 +698,31 @@ const Admin = () => {
                           </td>
                           <td className="p-4 text-muted-foreground text-sm hidden sm:table-cell">
                             Rs. {Number(app.payment_amount).toLocaleString()}
+                          </td>
+                          <td className="p-4">
+                            <Select
+                              value={app.expert_id || "unassigned"}
+                              onValueChange={(value) => {
+                                const expertId = value === "unassigned" ? undefined : value;
+                                updateApplicationStatus.mutate({
+                                  id: app.id,
+                                  status: expertId ? "expert_assigned" : app.status,
+                                  expert_id: expertId,
+                                });
+                              }}
+                            >
+                              <SelectTrigger className="w-[130px] sm:w-[160px] text-xs sm:text-sm">
+                                <SelectValue placeholder="Assign Expert" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="unassigned">Unassigned</SelectItem>
+                                {expertUsers.map((expert) => (
+                                  <SelectItem key={expert.user_id} value={expert.user_id}>
+                                    {expert.full_name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </td>
                           <td className="p-4">
                             <Select value={app.status} onValueChange={(value) => updateApplicationStatus.mutate({ id: app.id, status: value as any })}>
@@ -757,6 +785,7 @@ const Admin = () => {
                         <th className="text-left p-4 font-medium text-foreground">Description</th>
                         <th className="text-left p-4 font-medium text-foreground hidden sm:table-cell">Submitted</th>
                         <th className="text-left p-4 font-medium text-foreground hidden sm:table-cell">Amount</th>
+                        <th className="text-left p-4 font-medium text-foreground">Expert</th>
                         <th className="text-left p-4 font-medium text-foreground">Status</th>
                         <th className="text-right p-4 font-medium text-foreground">Actions</th>
                       </tr>
@@ -769,6 +798,31 @@ const Admin = () => {
                           <td className="p-4 max-w-xs"><p className="text-sm text-muted-foreground line-clamp-2">{wr.custom_description}</p></td>
                           <td className="p-4 text-muted-foreground text-sm hidden sm:table-cell">{new Date(wr.created_at).toLocaleDateString()}</td>
                           <td className="p-4 text-muted-foreground text-sm hidden sm:table-cell">{wr.payment_amount ? `Rs. ${Number(wr.payment_amount).toLocaleString()}` : '—'}</td>
+                          <td className="p-4">
+                            <Select
+                              value={wr.expert_id || "unassigned"}
+                              onValueChange={(value) => {
+                                const expertId = value === "unassigned" ? undefined : value;
+                                updateWorkRequestStatus.mutate({
+                                  id: wr.id,
+                                  status: expertId ? "expert_assigned" : wr.status,
+                                  expert_id: expertId,
+                                });
+                              }}
+                            >
+                              <SelectTrigger className="w-[130px] sm:w-[160px] text-xs sm:text-sm">
+                                <SelectValue placeholder="Assign Expert" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="unassigned">Unassigned</SelectItem>
+                                {expertUsers.map((expert) => (
+                                  <SelectItem key={expert.user_id} value={expert.user_id}>
+                                    {expert.full_name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </td>
                           <td className="p-4">
                             <Select value={wr.status} onValueChange={(value) => updateWorkRequestStatus.mutate({ id: wr.id, status: value as any })}>
                               <SelectTrigger className="w-[140px] sm:w-[180px] text-xs sm:text-sm"><SelectValue /></SelectTrigger>
