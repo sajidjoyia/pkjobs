@@ -7,6 +7,7 @@ export interface EducationField {
   education_level: string;
   name: string;
   display_name: string;
+  sort_order: number;
   created_at: string;
   created_by: string | null;
 }
