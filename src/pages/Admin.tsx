@@ -499,6 +499,9 @@ const Admin = () => {
             <TabsTrigger value="experts" className="gap-1.5 text-xs sm:text-sm">
               <UserCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Experts
             </TabsTrigger>
+            <TabsTrigger value="whatsapp" className="gap-1.5 text-xs sm:text-sm">
+              <MessageSquareIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> WhatsApp
+            </TabsTrigger>
           </TabsList>
 
           {/* Jobs Tab */}
