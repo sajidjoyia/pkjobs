@@ -1,11 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Briefcase, User, Shield, Info } from "lucide-react";
+import { Home, Briefcase, User, Shield, Info, UserCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
 const MobileBottomNav = () => {
   const location = useLocation();
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isExpert } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
 
