@@ -720,7 +720,9 @@ const Admin = () => {
                               }} title="Start Chat">
                                 <MessageCircle className="h-4 w-4" />
                               </Button>
-                              <Button variant="ghost" size="icon"><Eye className="h-4 w-4" /></Button>
+                              <Button variant="ghost" size="icon" onClick={() => navigate(`/jobs/${app.job_id}`)} title="View Job">
+                                <Eye className="h-4 w-4" />
+                              </Button>
                             </div>
                           </td>
                         </tr>
@@ -782,8 +784,20 @@ const Admin = () => {
                           </td>
                           <td className="p-4">
                             <div className="flex justify-end gap-1">
-                              <Button variant="ghost" size="icon" title="Start Chat"><MessageCircle className="h-4 w-4" /></Button>
-                              <Button variant="ghost" size="icon"><Eye className="h-4 w-4" /></Button>
+                              <Button variant="ghost" size="icon" title="Start Chat" onClick={async () => {
+                                try {
+                                  await adminStartConversation.mutateAsync({ userId: wr.user_id, workRequestId: wr.id, jobTitle: wr.custom_description?.slice(0, 50) || 'Work Request' });
+                                  setActiveTab("chat");
+                                  toast({ title: "Conversation started", description: `Chat opened with ${wr.profile?.full_name || 'user'}` });
+                                } catch (error) { console.error('Failed to start conversation:', error); }
+                              }}>
+                                <MessageCircle className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" title="View Details" onClick={() => {
+                                toast({ title: wr.profile?.full_name || 'Work Request', description: wr.custom_description });
+                              }}>
+                                <Eye className="h-4 w-4" />
+                              </Button>
                             </div>
                           </td>
                         </tr>
