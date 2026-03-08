@@ -94,6 +94,7 @@ const Admin = () => {
   const { data: expertUsers = [] } = useExpertUsers();
 
   const [activeTab, setActiveTab] = useState("jobs");
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [showAddJob, setShowAddJob] = useState(false);
   const [showEducationManager, setShowEducationManager] = useState(false);
   const [showServiceCategoriesManager, setShowServiceCategoriesManager] = useState(false);
@@ -749,7 +750,8 @@ const Admin = () => {
                             <div className="flex justify-end gap-1">
                               <Button variant="ghost" size="icon" onClick={async () => {
                                 try {
-                                  await adminStartConversation.mutateAsync({ userId: app.user_id, applicationId: app.id, jobTitle: app.job?.title || 'Job Application' });
+                                  const conv = await adminStartConversation.mutateAsync({ userId: app.user_id, applicationId: app.id, jobTitle: app.job?.title || 'Job Application' });
+                                  setSelectedConversationId(conv.id);
                                   setActiveTab("chat");
                                   toast({ title: "Conversation started", description: `Chat opened with ${app.profile?.full_name || 'user'}` });
                                 } catch (error) { console.error('Failed to start conversation:', error); }
@@ -848,7 +850,8 @@ const Admin = () => {
                             <div className="flex justify-end gap-1">
                               <Button variant="ghost" size="icon" title="Start Chat" onClick={async () => {
                                 try {
-                                  await adminStartConversation.mutateAsync({ userId: wr.user_id, workRequestId: wr.id, jobTitle: wr.custom_description?.slice(0, 50) || 'Work Request' });
+                                  const conv = await adminStartConversation.mutateAsync({ userId: wr.user_id, workRequestId: wr.id, jobTitle: wr.custom_description?.slice(0, 50) || 'Work Request' });
+                                  setSelectedConversationId(conv.id);
                                   setActiveTab("chat");
                                   toast({ title: "Conversation started", description: `Chat opened with ${wr.profile?.full_name || 'user'}` });
                                 } catch (error) { console.error('Failed to start conversation:', error); }
@@ -873,7 +876,7 @@ const Admin = () => {
 
           {/* Chat Tab */}
           <TabsContent value="chat">
-            <AdminChatPanel />
+            <AdminChatPanel initialConversationId={selectedConversationId} onConversationSelected={() => setSelectedConversationId(null)} />
           </TabsContent>
 
           {/* SEO Settings Tab */}

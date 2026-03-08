@@ -17,10 +17,23 @@ import ChatMessageInput from './ChatMessageInput';
 import ChatMessageBubble from './ChatMessageBubble';
 import ChatUserProfile from './ChatUserProfile';
 
-const AdminChatPanel = () => {
+interface AdminChatPanelProps {
+  initialConversationId?: string | null;
+  onConversationSelected?: () => void;
+}
+
+const AdminChatPanel = ({ initialConversationId, onConversationSelected }: AdminChatPanelProps) => {
   const { user } = useAuth();
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-select conversation when initialConversationId changes
+  useEffect(() => {
+    if (initialConversationId) {
+      setSelectedConversation(initialConversationId);
+      onConversationSelected?.();
+    }
+  }, [initialConversationId, onConversationSelected]);
 
   const { data: conversations = [], isLoading: loadingConversations } = useAllConversations();
   const { data: messages = [], isLoading: loadingMessages } = useMessages(selectedConversation);
