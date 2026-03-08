@@ -15,6 +15,7 @@ const MobileBottomNav = () => {
     ...(user
       ? [
           { href: "/dashboard", label: "Dashboard", icon: User },
+          ...(isExpert ? [{ href: "/expert", label: "Expert", icon: UserCheck }] : []),
           ...(isAdmin ? [{ href: "/admin", label: "Admin", icon: Shield }] : []),
         ]
       : [{ href: "/about", label: "About", icon: Info }]),
