@@ -46,6 +46,7 @@ import { useUpdateApplicationStatus } from "@/hooks/useApplications";
 import { useUpdateWorkRequestStatus } from "@/hooks/useWorkRequests";
 import { openApplicationChat } from "@/components/chat/ChatWidget";
 import { toast } from "sonner";
+import ExpertStatsCards from "@/components/expert/ExpertStatsCards";
 
 const statusLabels: Record<string, string> = {
   pending: "Pending",

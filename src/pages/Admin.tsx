@@ -61,6 +61,7 @@ import ServiceCategoriesManager from "@/components/admin/ServiceCategoriesManage
 import SeoSettingsManager from "@/components/admin/SeoSettingsManager";
 import UserManagement from "@/components/admin/UserManagement";
 import AnalyticsDashboard from "@/components/admin/AnalyticsDashboard";
+import ExpertPerformance from "@/components/admin/ExpertPerformance";
 import { useExpertUsers } from "@/hooks/useExperts";
 import { BarChart3, UserCheck } from "lucide-react";
 const PROVINCE_OPTIONS = [
