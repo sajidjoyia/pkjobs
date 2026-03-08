@@ -62,8 +62,9 @@ import SeoSettingsManager from "@/components/admin/SeoSettingsManager";
 import UserManagement from "@/components/admin/UserManagement";
 import AnalyticsDashboard from "@/components/admin/AnalyticsDashboard";
 const ExpertPerformance = lazy(() => import("@/components/admin/ExpertPerformance"));
+const WhatsAppBulkMessaging = lazy(() => import("@/components/admin/WhatsAppBulkMessaging"));
 import { useExpertUsers } from "@/hooks/useExperts";
-import { BarChart3, UserCheck } from "lucide-react";
+import { BarChart3, UserCheck, MessageSquare as MessageSquareIcon } from "lucide-react";
 const PROVINCE_OPTIONS = [
   { value: "Punjab", label: "Punjab" },
   { value: "Sindh", label: "Sindh" },
