@@ -147,6 +147,7 @@ export type Database = {
           education_level: string
           id: string
           name: string
+          sort_order: number
         }
         Insert: {
           created_at?: string
@@ -155,6 +156,7 @@ export type Database = {
           education_level: string
           id?: string
           name: string
+          sort_order?: number
         }
         Update: {
           created_at?: string
@@ -163,6 +165,7 @@ export type Database = {
           education_level?: string
           id?: string
           name?: string
+          sort_order?: number
         }
         Relationships: []
       }
