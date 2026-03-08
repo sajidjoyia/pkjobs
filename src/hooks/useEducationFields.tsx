@@ -47,6 +47,7 @@ export const useEducationFieldsByLevel = (level: string) => {
         .from("education_fields")
         .select("*")
         .eq("education_level", level)
+        .order("sort_order", { ascending: true })
         .order("display_name", { ascending: true });
 
       if (error) throw error;
