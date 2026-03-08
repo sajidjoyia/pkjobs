@@ -69,7 +69,7 @@ const Jobs = () => {
       );
     }
     if (!user || !profile) return null;
-    const { eligible } = isEligibleForJob(profile, job, userEducations);
+    const { eligible } = isEligibleForJob(profile, job, userEducations, allEducationFields);
     return (
       <Badge className={`text-xs ${eligible ? "bg-success" : "bg-destructive"}`}>
         {eligible ? "Eligible" : "Not Eligible"}
