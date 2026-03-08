@@ -94,6 +94,7 @@ const Admin = () => {
   const { data: expertUsers = [] } = useExpertUsers();
 
   const [activeTab, setActiveTab] = useState("jobs");
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [showAddJob, setShowAddJob] = useState(false);
   const [showEducationManager, setShowEducationManager] = useState(false);
   const [showServiceCategoriesManager, setShowServiceCategoriesManager] = useState(false);
