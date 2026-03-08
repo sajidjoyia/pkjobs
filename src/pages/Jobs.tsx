@@ -98,7 +98,7 @@ const Jobs = () => {
     }
 
     return result;
-  }, [jobs, dateFilter, showEligibleOnly, user, profile, userEducations]);
+  }, [jobs, dateFilter, showEligibleOnly, user, profile, userEducations, allEducationFields]);
 
   // Pagination
   const totalPages = Math.ceil((filteredJobs?.length || 0) / JOBS_PER_PAGE);

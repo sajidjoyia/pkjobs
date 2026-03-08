@@ -74,7 +74,7 @@ const JobDetail = () => {
   const isExpired = new Date(job.last_date) < new Date(new Date().setHours(0, 0, 0, 0));
 
   const eligibility = profile
-    ? isEligibleForJob(profile, job, userEducations)
+    ? isEligibleForJob(profile, job, userEducations, allEducationFields)
     : { eligible: false, reasons: ["Please complete your profile to check eligibility"] };
 
   const formatEducationLevels = (levels: string[]) => {
