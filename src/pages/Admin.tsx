@@ -876,7 +876,7 @@ const Admin = () => {
 
           {/* Chat Tab */}
           <TabsContent value="chat">
-            <AdminChatPanel />
+            <AdminChatPanel initialConversationId={selectedConversationId} onConversationSelected={() => setSelectedConversationId(null)} />
           </TabsContent>
 
           {/* SEO Settings Tab */}
