@@ -886,7 +886,9 @@ const Admin = () => {
 
           {/* Experts Tab */}
           <TabsContent value="experts">
-            <ExpertPerformance />
+            <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+              <ExpertPerformance />
+            </Suspense>
           </TabsContent>
         </Tabs>
       </div>
