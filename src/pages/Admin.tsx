@@ -785,6 +785,7 @@ const Admin = () => {
                         <th className="text-left p-4 font-medium text-foreground">Description</th>
                         <th className="text-left p-4 font-medium text-foreground hidden sm:table-cell">Submitted</th>
                         <th className="text-left p-4 font-medium text-foreground hidden sm:table-cell">Amount</th>
+                        <th className="text-left p-4 font-medium text-foreground">Expert</th>
                         <th className="text-left p-4 font-medium text-foreground">Status</th>
                         <th className="text-right p-4 font-medium text-foreground">Actions</th>
                       </tr>
@@ -797,6 +798,31 @@ const Admin = () => {
                           <td className="p-4 max-w-xs"><p className="text-sm text-muted-foreground line-clamp-2">{wr.custom_description}</p></td>
                           <td className="p-4 text-muted-foreground text-sm hidden sm:table-cell">{new Date(wr.created_at).toLocaleDateString()}</td>
                           <td className="p-4 text-muted-foreground text-sm hidden sm:table-cell">{wr.payment_amount ? `Rs. ${Number(wr.payment_amount).toLocaleString()}` : '—'}</td>
+                          <td className="p-4">
+                            <Select
+                              value={wr.expert_id || "unassigned"}
+                              onValueChange={(value) => {
+                                const expertId = value === "unassigned" ? undefined : value;
+                                updateWorkRequestStatus.mutate({
+                                  id: wr.id,
+                                  status: expertId ? "expert_assigned" : wr.status,
+                                  expert_id: expertId,
+                                });
+                              }}
+                            >
+                              <SelectTrigger className="w-[130px] sm:w-[160px] text-xs sm:text-sm">
+                                <SelectValue placeholder="Assign Expert" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="unassigned">Unassigned</SelectItem>
+                                {expertUsers.map((expert) => (
+                                  <SelectItem key={expert.user_id} value={expert.user_id}>
+                                    {expert.full_name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </td>
                           <td className="p-4">
                             <Select value={wr.status} onValueChange={(value) => updateWorkRequestStatus.mutate({ id: wr.id, status: value as any })}>
                               <SelectTrigger className="w-[140px] sm:w-[180px] text-xs sm:text-sm"><SelectValue /></SelectTrigger>
