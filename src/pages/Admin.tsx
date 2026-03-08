@@ -60,6 +60,8 @@ import EducationFieldsManager from "@/components/admin/EducationFieldsManager";
 import ServiceCategoriesManager from "@/components/admin/ServiceCategoriesManager";
 import SeoSettingsManager from "@/components/admin/SeoSettingsManager";
 import UserManagement from "@/components/admin/UserManagement";
+import AnalyticsDashboard from "@/components/admin/AnalyticsDashboard";
+import { BarChart3 } from "lucide-react";
 const PROVINCE_OPTIONS = [
   { value: "Punjab", label: "Punjab" },
   { value: "Sindh", label: "Sindh" },
