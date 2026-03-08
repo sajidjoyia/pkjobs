@@ -92,7 +92,7 @@ const Jobs = () => {
     if (showEligibleOnly && user && profile) {
       result = result.filter(job => {
         if (isJobExpired(job.last_date)) return false;
-        const { eligible } = isEligibleForJob(profile, job, userEducations);
+        const { eligible } = isEligibleForJob(profile, job, userEducations, allEducationFields);
         return eligible;
       });
     }
