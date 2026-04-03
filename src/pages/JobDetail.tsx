@@ -25,6 +25,12 @@ import { isEligibleForJob, useUserEducations } from "@/hooks/useProfile";
 import { useEducationFields } from "@/hooks/useEducationFields";
 import { toast } from "sonner";
 import ShareButtons from "@/components/ShareButtons";
+import { useState } from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const educationLabels: Record<string, string> = {
   matric: "Matric / SSC",
@@ -32,6 +38,69 @@ const educationLabels: Record<string, string> = {
   bachelor: "Bachelor's Degree",
   master: "Master's Degree",
   phd: "PhD / Doctorate",
+};
+
+const EducationEligibilityCard = ({ job, allEducationFields }: { job: any; allEducationFields: any[] | undefined }) => {
+  const [showAll, setShowAll] = useState(false);
+
+  const levels = (job.required_education_levels || []).map((l: string) => educationLabels[l] || l);
+  const fieldIds = job.required_education_fields || [];
+  const fields = allEducationFields
+    ? fieldIds.map((id: string) => allEducationFields.find((f) => f.id === id)?.display_name).filter(Boolean)
+    : [];
+
+  const visibleFields = showAll ? fields : fields.slice(0, 3);
+  const remaining = fields.length - 3;
+
+  return (
+    <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+      <GraduationCap className="h-5 w-5 text-primary mt-0.5" />
+      <div className="min-w-0">
+        <p className="text-sm text-muted-foreground">Education</p>
+        <p className="font-medium text-foreground">
+          {levels.length > 0 ? levels.join(", ") : "Any"}
+        </p>
+        {fields.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1.5">
+            {visibleFields.map((f: string, i: number) => (
+              <Badge key={i} variant="secondary" className="text-xs">
+                {f}
+              </Badge>
+            ))}
+            {!showAll && remaining > 0 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge
+                    variant="outline"
+                    className="text-xs cursor-pointer hover:bg-accent"
+                    onClick={() => setShowAll(true)}
+                  >
+                    +{remaining} more
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-xs">
+                  <div className="flex flex-wrap gap-1">
+                    {fields.slice(3).map((f: string, i: number) => (
+                      <span key={i} className="text-xs">{f}{i < fields.slice(3).length - 1 ? ", " : ""}</span>
+                    ))}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            )}
+            {showAll && fields.length > 3 && (
+              <Badge
+                variant="outline"
+                className="text-xs cursor-pointer hover:bg-accent"
+                onClick={() => setShowAll(false)}
+              >
+                Show less
+              </Badge>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 const JobDetail = () => {
@@ -76,11 +145,6 @@ const JobDetail = () => {
   const eligibility = profile
     ? isEligibleForJob(profile, job, userEducations, allEducationFields)
     : { eligible: false, reasons: ["Please complete your profile to check eligibility"] };
-
-  const formatEducationLevels = (levels: string[]) => {
-    if (levels.length === 0) return "Any";
-    return levels.map(l => educationLabels[l] || l).join(", ");
-  };
 
   const formatProvinces = (provinces: string[]) => {
     if (provinces.length === 0) return "All Pakistan";
