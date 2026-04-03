@@ -194,15 +194,7 @@ const JobDetail = () => {
                 Eligibility Criteria
               </h2>
               <div className="grid md:grid-cols-2 gap-4">
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                  <GraduationCap className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Education</p>
-                    <p className="font-medium text-foreground">
-                      {formatEducationLevels(job.required_education_levels)}
-                    </p>
-                  </div>
-                </div>
+              <EducationEligibilityCard job={job} allEducationFields={allEducationFields} />
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
                   <Users className="h-5 w-5 text-primary" />
                   <div>
