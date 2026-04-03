@@ -9,6 +9,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { Separator } from "@/components/ui/separator";
 import {
   ArrowLeft,
   Loader2,
@@ -16,6 +17,9 @@ import {
   FileQuestion,
   FileUp,
   Plus,
+  ClipboardPaste,
+  Copy,
+  CheckCircle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAllEducationLevels } from "@/hooks/useEducationLevels";
