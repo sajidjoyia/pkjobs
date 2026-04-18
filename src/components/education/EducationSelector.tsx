@@ -98,8 +98,60 @@ const EducationSelector = ({
     );
   }
 
+  // Build ordered swipeable strip from defined order + any extra custom levels
+  const addedLevels = new Set(value.map((v) => v.education_level));
+  const orderedLevels = [
+    ...EDUCATION_ORDER.filter((lv) => allLevels.some((l) => l.value === lv)),
+    ...allLevels.map((l) => l.value).filter((v) => !EDUCATION_ORDER.includes(v)),
+  ];
+  const nextSuggested = orderedLevels.find((lv) => !addedLevels.has(lv));
+
   return (
     <div className={`space-y-4 ${className}`}>
+      {/* Helpful description */}
+      <div className="flex gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
+        <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+        <div className="text-xs text-foreground/80 space-y-1">
+          <p className="font-medium text-foreground">Add all your qualifications, one by one.</p>
+          <p className="text-muted-foreground">
+            Start from the lowest (e.g. Matric), then add Intermediate, Bachelor's, and so on. This helps us match you with the right jobs.
+          </p>
+        </div>
+      </div>
+
+      {/* Swipeable level progress strip */}
+      <div className="-mx-1 overflow-x-auto scrollbar-hide">
+        <div className="flex items-center gap-2 px-1 pb-2 min-w-max">
+          {orderedLevels.map((lv, idx) => {
+            const label = allLevels.find((l) => l.value === lv)?.label || lv;
+            const isAdded = addedLevels.has(lv);
+            const isNext = lv === nextSuggested;
+            return (
+              <div key={lv} className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => !isAdded && setSelectedLevel(lv)}
+                  disabled={isAdded}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                    isAdded
+                      ? "bg-primary/10 border-primary/30 text-primary"
+                      : isNext
+                      ? "bg-primary text-primary-foreground border-primary animate-pulse"
+                      : "bg-background border-border text-muted-foreground hover:border-primary/50"
+                  }`}
+                >
+                  {isAdded ? <Check className="h-3 w-3" /> : <span className="text-[10px] opacity-70">{idx + 1}</span>}
+                  <span className="whitespace-nowrap">{label}</span>
+                </button>
+                {idx < orderedLevels.length - 1 && (
+                  <ChevronRight className="h-3 w-3 text-muted-foreground/40 shrink-0" />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Current entries */}
       {value.length > 0 && (
         <div className="flex flex-wrap gap-2">
