@@ -1,7 +1,9 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/hooks/useAuth";
@@ -27,7 +29,20 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const BulkJobImport = lazy(() => import("./pages/BulkJobImport"));
 const ExpertDashboard = lazy(() => import("./pages/ExpertDashboard"));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 min — avoid refetch on every mount
+      gcTime: 1000 * 60 * 60 * 24, // 24h — keep in memory/cache
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
+
+const persister = typeof window !== "undefined"
+  ? createSyncStoragePersister({ storage: window.localStorage, key: "pkjobs-rq-cache" })
+  : undefined;
 
 const PageLoader = () => (
   <div className="min-h-[60vh] flex items-center justify-center">
@@ -36,7 +51,10 @@ const PageLoader = () => (
 );
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
+  <PersistQueryClientProvider
+    client={queryClient}
+    persistOptions={{ persister: persister!, maxAge: 1000 * 60 * 60 * 24, buster: "v1" }}
+  >
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <TooltipProvider>
         <Toaster />
@@ -82,7 +100,7 @@ const App = () => (
         </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>
-  </QueryClientProvider>
+  </PersistQueryClientProvider>
 );
 
 export default App;
