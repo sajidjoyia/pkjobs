@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -41,6 +41,8 @@ const EducationSelector = ({
 
   const [selectedLevel, setSelectedLevel] = useState("");
   const [selectedField, setSelectedField] = useState("");
+  const stripRef = useRef<HTMLDivElement>(null);
+  const itemRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   // Get fields for selected level
   const fieldsForLevel = allFields.filter(
@@ -89,6 +91,15 @@ const EducationSelector = ({
     setSelectedField("");
   }, [selectedLevel]);
 
+  // Auto-scroll the strip to the active level (selected, or next suggested)
+  useEffect(() => {
+    const target = selectedLevel || (value.length > 0 ? value[value.length - 1].education_level : "");
+    const el = target ? itemRefs.current[target] : null;
+    if (el && stripRef.current) {
+      el.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    }
+  }, [selectedLevel, value]);
+
   if (levelsLoading || fieldsLoading) {
     return (
       <div className="flex items-center gap-2 py-4">
@@ -120,16 +131,21 @@ const EducationSelector = ({
       </div>
 
       {/* Swipeable level progress strip */}
-      <div className="-mx-1 overflow-x-auto scrollbar-hide">
+      <div
+        ref={stripRef}
+        className="-mx-1 overflow-x-auto scrollbar-hide scroll-smooth snap-x snap-mandatory overscroll-x-contain touch-pan-x"
+        style={{ WebkitOverflowScrolling: "touch" }}
+      >
         <div className="flex items-center gap-2 px-1 pb-2 min-w-max">
           {orderedLevels.map((lv, idx) => {
             const label = allLevels.find((l) => l.value === lv)?.label || lv;
             const isAdded = addedLevels.has(lv);
             const isNext = lv === nextSuggested;
             return (
-              <div key={lv} className="flex items-center gap-2 shrink-0">
+              <div key={lv} className="flex items-center gap-2 shrink-0 snap-center">
                 <button
                   type="button"
+                  ref={(el) => (itemRefs.current[lv] = el)}
                   onClick={() => !isAdded && setSelectedLevel(lv)}
                   disabled={isAdded}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
