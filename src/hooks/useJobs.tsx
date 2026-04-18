@@ -72,9 +72,15 @@ export const useJobs = (filters?: {
         .order("created_at", { ascending: false });
 
       if (filters?.search) {
-        query = query.or(
-          `title.ilike.%${filters.search}%,department.ilike.%${filters.search}%`
-        );
+        const safe = filters.search
+          .replace(/[\\%_*]/g, "\\$&")
+          .replace(/[,()]/g, " ")
+          .trim();
+        if (safe) {
+          query = query.or(
+            `title.ilike.%${safe}%,department.ilike.%${safe}%`
+          );
+        }
       }
 
       if (filters?.province && filters.province !== "all") {
