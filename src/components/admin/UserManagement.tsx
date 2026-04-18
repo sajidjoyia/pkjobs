@@ -340,25 +340,31 @@ const UserManagement = () => {
                     Joined: {new Date(user.created_at).toLocaleDateString()}
                   </p>
                 </div>
-                <div className="flex gap-1 shrink-0">
+                <div className="flex flex-col gap-1.5 shrink-0">
                   <Button
-                    variant="ghost"
+                    variant={isExpert(user.user_id) ? "outline" : "secondary"}
                     size="sm"
                     onClick={() => handleToggleExpert(user.user_id)}
                     disabled={isAdmin(user.user_id)}
-                    title={isExpert(user.user_id) ? "Remove Expert" : "Make Expert"}
+                    className="h-7 px-2 text-[10px] gap-1"
                   >
-                    {isExpert(user.user_id) ? <ShieldX className="h-4 w-4 text-warning" /> : <ShieldCheck className="h-4 w-4 text-success" />}
+                    {isExpert(user.user_id) ? (
+                      <><ShieldX className="h-3 w-3 text-warning" /> Remove Expert</>
+                    ) : (
+                      <><ShieldCheck className="h-3 w-3 text-success" /> Make Expert</>
+                    )}
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => setViewingUser(user)}>
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => openEdit(user)}>
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => setDeletingUser({ userId: user.user_id, name: user.full_name })} disabled={isAdmin(user.user_id)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="sm" onClick={() => setViewingUser(user)}>
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => openEdit(user)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => setDeletingUser({ userId: user.user_id, name: user.full_name })} disabled={isAdmin(user.user_id)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
