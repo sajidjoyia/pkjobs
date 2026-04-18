@@ -91,6 +91,15 @@ const EducationSelector = ({
     setSelectedField("");
   }, [selectedLevel]);
 
+  // Auto-scroll the strip to the active level (selected, or next suggested)
+  useEffect(() => {
+    const target = selectedLevel || (value.length > 0 ? value[value.length - 1].education_level : "");
+    const el = target ? itemRefs.current[target] : null;
+    if (el && stripRef.current) {
+      el.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    }
+  }, [selectedLevel, value]);
+
   if (levelsLoading || fieldsLoading) {
     return (
       <div className="flex items-center gap-2 py-4">
