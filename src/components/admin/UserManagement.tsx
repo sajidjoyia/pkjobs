@@ -208,7 +208,7 @@ const UserManagement = () => {
   return (
     <div>
       {/* Header & Search */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
         <div className="flex items-center gap-2">
           <Users className="h-5 w-5 text-primary" />
           <h3 className="font-semibold text-foreground">
@@ -224,6 +224,14 @@ const UserManagement = () => {
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           />
         </div>
+      </div>
+
+      {/* Expert management hint */}
+      <div className="flex items-start gap-2 p-2.5 mb-4 rounded-lg bg-accent/50 border border-accent text-xs text-accent-foreground">
+        <ShieldCheck className="h-4 w-4 shrink-0 mt-0.5" />
+        <p>
+          Use the <strong>green shield</strong> button to <strong>make a user an Expert</strong>, or the <strong>amber shield</strong> to remove the role. Experts handle assigned applications & work requests.
+        </p>
       </div>
 
       {/* Desktop Table */}
