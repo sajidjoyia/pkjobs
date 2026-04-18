@@ -9,9 +9,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, X, GraduationCap, Loader2 } from "lucide-react";
+import { Plus, X, GraduationCap, Loader2, Info, ChevronRight, Check } from "lucide-react";
 import { useEducationFields } from "@/hooks/useEducationFields";
 import { useAllEducationLevels } from "@/hooks/useEducationLevels";
+
+// Recommended order for adding education (lowest to highest)
+const EDUCATION_ORDER = ["middle", "matric", "intermediate", "dae", "dit", "associate_degree", "bachelor", "postgrad_diploma", "master", "phd"];
 
 export interface EducationEntry {
   education_level: string;
