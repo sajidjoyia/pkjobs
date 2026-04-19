@@ -328,7 +328,7 @@ const Admin = () => {
               <FileUp className="h-4 w-4" />
               <span className="hidden sm:inline">Add Multiple</span> Jobs
             </Button>
-            <Button size="sm" onClick={() => setShowAddJob(!showAddJob)} className="gap-1.5">
+            <Button size="sm" onClick={() => { if (showAddJob) { handleCancelForm(); } else { setEditingJobId(null); setFormData(emptyForm); setShowAddJob(true); } }} className="gap-1.5">
               <Plus className="h-4 w-4" />
               Add Job
             </Button>
@@ -386,7 +386,7 @@ const Admin = () => {
         {/* Add Job Form */}
         {showAddJob && (
           <div className="card-elevated p-4 sm:p-6 mb-6 sm:mb-8">
-            <h2 className="text-lg font-semibold text-foreground mb-6">Add New Government Job</h2>
+            <h2 className="text-lg font-semibold text-foreground mb-6">{editingJobId ? "Edit Job" : "Add New Government Job"}</h2>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
                 {/* Basic Info */}
@@ -506,14 +506,25 @@ const Admin = () => {
                     <Input placeholder="https://example.com/ad-image.jpg" value={formData.advertisement_image} onChange={(e) => handleChange("advertisement_image", e.target.value)} />
                   </div>
                 </div>
+                <div className="flex items-center gap-2 mt-2 p-3 rounded-lg bg-muted/40">
+                  <Checkbox
+                    id="testPrep"
+                    checked={formData.test_preparation_available}
+                    onCheckedChange={(checked) => handleChange("test_preparation_available", !!checked)}
+                  />
+                  <Label htmlFor="testPrep" className="cursor-pointer">
+                    Test Preparation Available
+                  </Label>
+                  <span className="text-xs text-muted-foreground ml-auto">Shows global test prep banner on this job</span>
+                </div>
               </div>
 
               <div className="flex gap-3">
-                <Button type="submit" disabled={createJob.isPending}>
-                  {createJob.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  Add Job
+                <Button type="submit" disabled={createJob.isPending || updateJob.isPending}>
+                  {(createJob.isPending || updateJob.isPending) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  {editingJobId ? "Save Changes" : "Add Job"}
                 </Button>
-                <Button type="button" variant="outline" onClick={() => setShowAddJob(false)}>Cancel</Button>
+                <Button type="button" variant="outline" onClick={handleCancelForm}>Cancel</Button>
               </div>
             </form>
           </div>
