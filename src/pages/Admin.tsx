@@ -638,6 +638,9 @@ const Admin = () => {
                               </td>
                               <td className="p-4">
                                 <div className="flex justify-end gap-1">
+                                  <Button variant="ghost" size="icon" onClick={() => handleStartEdit(job)} title="Edit job">
+                                    <Edit className="h-4 w-4 text-info" />
+                                  </Button>
                                   <Button variant="ghost" size="icon" onClick={() => handleToggleStatus(job.id, job.is_active)}>
                                     {job.is_active ? <XCircle className="h-4 w-4 text-warning" /> : <CheckCircle className="h-4 w-4 text-success" />}
                                   </Button>
@@ -682,6 +685,9 @@ const Admin = () => {
                               <span>Rs. {Number(job.total_fee).toLocaleString()}</span>
                             </div>
                             <div className="flex justify-end gap-1 mt-2">
+                              <Button variant="ghost" size="sm" onClick={() => handleStartEdit(job)} title="Edit job">
+                                <Edit className="h-4 w-4 text-info" />
+                              </Button>
                               <Button variant="ghost" size="sm" onClick={() => handleToggleStatus(job.id, job.is_active)}>
                                 {job.is_active ? <XCircle className="h-4 w-4 text-warning" /> : <CheckCircle className="h-4 w-4 text-success" />}
                               </Button>
