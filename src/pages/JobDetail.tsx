@@ -25,7 +25,9 @@ import { isEligibleForJob, useUserEducations } from "@/hooks/useProfile";
 import { useEducationFields } from "@/hooks/useEducationFields";
 import { toast } from "sonner";
 import ShareButtons from "@/components/ShareButtons";
+import TestPrepBanner from "@/components/TestPrepBanner";
 import { useState } from "react";
+import { ExternalLink } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -194,7 +196,9 @@ const JobDetail = () => {
           Back to Jobs
         </Link>
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        <TestPrepBanner enabled={!!(job as any).test_preparation_available} />
+
+        <div className="grid lg:grid-cols-3 gap-8 mt-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Header */}
@@ -370,20 +374,34 @@ const JobDetail = () => {
                     ) : (
                       <Banknote className="h-5 w-5 mr-2" />
                     )}
-                    Apply Now - Rs. {Number(job.total_fee).toLocaleString()}
+                    Apply for Me - Rs. {Number(job.total_fee).toLocaleString()}
                   </Button>
                 )}
                 {!isExpired && (
                   <p className="text-xs text-center text-muted-foreground">
-                    Expert will handle complete application process
+                    We'll take care of everything for you
                   </p>
+                )}
+                {!isExpired && job.advertisement_link && (
+                  <a
+                    href={job.advertisement_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block"
+                  >
+                    <Button variant="outline" className="w-full" size="lg">
+                      <ExternalLink className="h-5 w-5 mr-2" />
+                      Apply on Your Own
+                    </Button>
+                  </a>
                 )}
               </div>
 
               {/* Share Buttons */}
               <div className="mt-6 pt-4 border-t border-border">
                 <ShareButtons 
-                  title={job.title} 
+                  title={job.title}
+                  url={`${window.location.origin}/jobs/${job.id}`}
                   description={`${job.department} - ${job.total_seats} seats available. Apply before ${new Date(job.last_date).toLocaleDateString()}`}
                 />
               </div>
