@@ -45,7 +45,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { useAllJobs, useCreateJob, useDeleteJob, useToggleJobStatus, CreateJobInput } from "@/hooks/useJobs";
+import { useAllJobs, useCreateJob, useUpdateJob, useDeleteJob, useToggleJobStatus, CreateJobInput } from "@/hooks/useJobs";
 import { useAllApplications, useUpdateApplicationStatus } from "@/hooks/useApplications";
 import { useAllWorkRequests, useUpdateWorkRequestStatus } from "@/hooks/useWorkRequests";
 import { useAuth } from "@/hooks/useAuth";
@@ -84,6 +84,7 @@ const Admin = () => {
   const { data: applications, isLoading: appsLoading } = useAllApplications();
   const { data: workRequests = [], isLoading: workRequestsLoading } = useAllWorkRequests();
   const createJob = useCreateJob();
+  const updateJob = useUpdateJob();
   const deleteJob = useDeleteJob();
   const toggleJobStatus = useToggleJobStatus();
   const updateApplicationStatus = useUpdateApplicationStatus();
@@ -96,6 +97,7 @@ const Admin = () => {
   const [activeTab, setActiveTab] = useState("jobs");
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [showAddJob, setShowAddJob] = useState(false);
+  const [editingJobId, setEditingJobId] = useState<string | null>(null);
   const [showEducationManager, setShowEducationManager] = useState(false);
   const [showServiceCategoriesManager, setShowServiceCategoriesManager] = useState(false);
   const [selectedEducationFields, setSelectedEducationFields] = useState<string[]>([]);
@@ -126,6 +128,7 @@ const Admin = () => {
     expert_fee: "",
     advertisement_link: "",
     advertisement_image: "",
+    test_preparation_available: false,
   });
 
   // Get education fields for selected levels
