@@ -190,6 +190,7 @@ export type Database = {
           social_linkedin: string | null
           social_twitter: string | null
           social_youtube: string | null
+          test_prep_banner_html: string | null
           updated_at: string
           website_name: string | null
           website_url: string | null
@@ -214,6 +215,7 @@ export type Database = {
           social_linkedin?: string | null
           social_twitter?: string | null
           social_youtube?: string | null
+          test_prep_banner_html?: string | null
           updated_at?: string
           website_name?: string | null
           website_url?: string | null
@@ -238,6 +240,7 @@ export type Database = {
           social_linkedin?: string | null
           social_twitter?: string | null
           social_youtube?: string | null
+          test_prep_banner_html?: string | null
           updated_at?: string
           website_name?: string | null
           website_url?: string | null
@@ -266,6 +269,7 @@ export type Database = {
           provinces: string[] | null
           required_education_fields: string[] | null
           required_education_levels: string[] | null
+          test_preparation_available: boolean
           title: string
           total_fee: number | null
           total_seats: number
@@ -292,6 +296,7 @@ export type Database = {
           provinces?: string[] | null
           required_education_fields?: string[] | null
           required_education_levels?: string[] | null
+          test_preparation_available?: boolean
           title: string
           total_fee?: number | null
           total_seats?: number
@@ -318,6 +323,7 @@ export type Database = {
           provinces?: string[] | null
           required_education_fields?: string[] | null
           required_education_levels?: string[] | null
+          test_preparation_available?: boolean
           title?: string
           total_fee?: number | null
           total_seats?: number

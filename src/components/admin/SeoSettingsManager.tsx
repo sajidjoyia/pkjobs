@@ -38,6 +38,7 @@ const SeoSettingsManager = () => {
         social_youtube: settings.social_youtube,
         google_search_console_verification: settings.google_search_console_verification,
         google_analytics_id: settings.google_analytics_id,
+        test_prep_banner_html: settings.test_prep_banner_html,
       });
     }
   }, [settings]);
@@ -138,6 +139,43 @@ const SeoSettingsManager = () => {
               onChange={(e) => handleChange("website_url", e.target.value)}
             />
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Test Preparation Banner */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building2 className="h-5 w-5" />
+            Test Preparation Banner
+          </CardTitle>
+          <CardDescription>
+            Shown on every job page where "Test Preparation Available" is enabled. Supports HTML & inline CSS.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Banner HTML / CSS</Label>
+            <Textarea
+              placeholder={`<div style="font-weight:600">📚 Test prep available! <a href="/contact" style="color:#16a34a;text-decoration:underline">Enroll now</a></div>`}
+              value={formData.test_prep_banner_html || ""}
+              onChange={(e) => handleChange("test_prep_banner_html" as any, e.target.value)}
+              rows={6}
+              className="font-mono text-xs"
+            />
+            <p className="text-xs text-muted-foreground">
+              You can include HTML tags and inline <code>style=&quot;...&quot;</code> attributes.
+            </p>
+          </div>
+          {formData.test_prep_banner_html && (
+            <div className="space-y-2">
+              <Label>Preview</Label>
+              <div
+                className="p-4 rounded-lg border-l-4 border-primary bg-primary/5"
+                dangerouslySetInnerHTML={{ __html: formData.test_prep_banner_html }}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
 

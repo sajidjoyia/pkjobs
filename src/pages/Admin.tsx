@@ -45,7 +45,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { useAllJobs, useCreateJob, useDeleteJob, useToggleJobStatus, CreateJobInput } from "@/hooks/useJobs";
+import { useAllJobs, useCreateJob, useUpdateJob, useDeleteJob, useToggleJobStatus, CreateJobInput } from "@/hooks/useJobs";
 import { useAllApplications, useUpdateApplicationStatus } from "@/hooks/useApplications";
 import { useAllWorkRequests, useUpdateWorkRequestStatus } from "@/hooks/useWorkRequests";
 import { useAuth } from "@/hooks/useAuth";
@@ -84,6 +84,7 @@ const Admin = () => {
   const { data: applications, isLoading: appsLoading } = useAllApplications();
   const { data: workRequests = [], isLoading: workRequestsLoading } = useAllWorkRequests();
   const createJob = useCreateJob();
+  const updateJob = useUpdateJob();
   const deleteJob = useDeleteJob();
   const toggleJobStatus = useToggleJobStatus();
   const updateApplicationStatus = useUpdateApplicationStatus();
@@ -96,6 +97,7 @@ const Admin = () => {
   const [activeTab, setActiveTab] = useState("jobs");
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [showAddJob, setShowAddJob] = useState(false);
+  const [editingJobId, setEditingJobId] = useState<string | null>(null);
   const [showEducationManager, setShowEducationManager] = useState(false);
   const [showServiceCategoriesManager, setShowServiceCategoriesManager] = useState(false);
   const [selectedEducationFields, setSelectedEducationFields] = useState<string[]>([]);
@@ -126,6 +128,7 @@ const Admin = () => {
     expert_fee: "",
     advertisement_link: "",
     advertisement_image: "",
+    test_preparation_available: false,
   });
 
   // Get education fields for selected levels
@@ -144,8 +147,51 @@ const Admin = () => {
     (parseInt(formData.photocopy_fee) || 0) +
     (parseInt(formData.expert_fee) || 0);
 
-  const handleChange = (field: string, value: string | string[]) => {
+  const handleChange = (field: string, value: string | string[] | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const emptyForm = {
+    title: "", department: "", description: "",
+    required_education_levels: [] as string[], required_education_fields: [] as string[],
+    min_age: "18", max_age: "35", gender_requirement: "",
+    provinces: [] as string[], domicile: "", total_seats: "1", last_date: "",
+    bank_challan_fee: "", post_office_fee: "", photocopy_fee: "", expert_fee: "",
+    advertisement_link: "", advertisement_image: "",
+    test_preparation_available: false,
+  };
+
+  const handleStartEdit = (job: any) => {
+    setEditingJobId(job.id);
+    setShowAddJob(true);
+    setFormData({
+      title: job.title || "",
+      department: job.department || "",
+      description: job.description || "",
+      required_education_levels: job.required_education_levels || [],
+      required_education_fields: job.required_education_fields || [],
+      min_age: String(job.min_age ?? 18),
+      max_age: String(job.max_age ?? 35),
+      gender_requirement: job.gender_requirement || "any",
+      provinces: job.provinces || [],
+      domicile: job.domicile || "",
+      total_seats: String(job.total_seats ?? 1),
+      last_date: job.last_date || "",
+      bank_challan_fee: String(job.bank_challan_fee ?? ""),
+      post_office_fee: String(job.post_office_fee ?? ""),
+      photocopy_fee: String(job.photocopy_fee ?? ""),
+      expert_fee: String(job.expert_fee ?? ""),
+      advertisement_link: job.advertisement_link || "",
+      advertisement_image: job.advertisement_image || "",
+      test_preparation_available: !!job.test_preparation_available,
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleCancelForm = () => {
+    setShowAddJob(false);
+    setEditingJobId(null);
+    setFormData(emptyForm);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -171,19 +217,18 @@ const Admin = () => {
       expert_fee: parseInt(formData.expert_fee) || 0,
       advertisement_link: formData.advertisement_link || undefined,
       advertisement_image: formData.advertisement_image || undefined,
+      test_preparation_available: formData.test_preparation_available,
     };
 
     try {
-      await createJob.mutateAsync(jobData);
+      if (editingJobId) {
+        await updateJob.mutateAsync({ id: editingJobId, updates: jobData });
+      } else {
+        await createJob.mutateAsync(jobData);
+      }
       setShowAddJob(false);
-      setFormData({
-        title: "", department: "", description: "",
-        required_education_levels: [], required_education_fields: [],
-        min_age: "18", max_age: "35", gender_requirement: "",
-        provinces: [], domicile: "", total_seats: "1", last_date: "",
-        bank_challan_fee: "", post_office_fee: "", photocopy_fee: "", expert_fee: "",
-        advertisement_link: "", advertisement_image: "",
-      });
+      setEditingJobId(null);
+      setFormData(emptyForm);
     } catch (error) {}
   };
 
@@ -283,7 +328,7 @@ const Admin = () => {
               <FileUp className="h-4 w-4" />
               <span className="hidden sm:inline">Add Multiple</span> Jobs
             </Button>
-            <Button size="sm" onClick={() => setShowAddJob(!showAddJob)} className="gap-1.5">
+            <Button size="sm" onClick={() => { if (showAddJob) { handleCancelForm(); } else { setEditingJobId(null); setFormData(emptyForm); setShowAddJob(true); } }} className="gap-1.5">
               <Plus className="h-4 w-4" />
               Add Job
             </Button>
@@ -341,7 +386,7 @@ const Admin = () => {
         {/* Add Job Form */}
         {showAddJob && (
           <div className="card-elevated p-4 sm:p-6 mb-6 sm:mb-8">
-            <h2 className="text-lg font-semibold text-foreground mb-6">Add New Government Job</h2>
+            <h2 className="text-lg font-semibold text-foreground mb-6">{editingJobId ? "Edit Job" : "Add New Government Job"}</h2>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
                 {/* Basic Info */}
@@ -461,14 +506,25 @@ const Admin = () => {
                     <Input placeholder="https://example.com/ad-image.jpg" value={formData.advertisement_image} onChange={(e) => handleChange("advertisement_image", e.target.value)} />
                   </div>
                 </div>
+                <div className="flex items-center gap-2 mt-2 p-3 rounded-lg bg-muted/40">
+                  <Checkbox
+                    id="testPrep"
+                    checked={formData.test_preparation_available}
+                    onCheckedChange={(checked) => handleChange("test_preparation_available", !!checked)}
+                  />
+                  <Label htmlFor="testPrep" className="cursor-pointer">
+                    Test Preparation Available
+                  </Label>
+                  <span className="text-xs text-muted-foreground ml-auto">Shows global test prep banner on this job</span>
+                </div>
               </div>
 
               <div className="flex gap-3">
-                <Button type="submit" disabled={createJob.isPending}>
-                  {createJob.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  Add Job
+                <Button type="submit" disabled={createJob.isPending || updateJob.isPending}>
+                  {(createJob.isPending || updateJob.isPending) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  {editingJobId ? "Save Changes" : "Add Job"}
                 </Button>
-                <Button type="button" variant="outline" onClick={() => setShowAddJob(false)}>Cancel</Button>
+                <Button type="button" variant="outline" onClick={handleCancelForm}>Cancel</Button>
               </div>
             </form>
           </div>
@@ -582,6 +638,9 @@ const Admin = () => {
                               </td>
                               <td className="p-4">
                                 <div className="flex justify-end gap-1">
+                                  <Button variant="ghost" size="icon" onClick={() => handleStartEdit(job)} title="Edit job">
+                                    <Edit className="h-4 w-4 text-info" />
+                                  </Button>
                                   <Button variant="ghost" size="icon" onClick={() => handleToggleStatus(job.id, job.is_active)}>
                                     {job.is_active ? <XCircle className="h-4 w-4 text-warning" /> : <CheckCircle className="h-4 w-4 text-success" />}
                                   </Button>
@@ -626,6 +685,9 @@ const Admin = () => {
                               <span>Rs. {Number(job.total_fee).toLocaleString()}</span>
                             </div>
                             <div className="flex justify-end gap-1 mt-2">
+                              <Button variant="ghost" size="sm" onClick={() => handleStartEdit(job)} title="Edit job">
+                                <Edit className="h-4 w-4 text-info" />
+                              </Button>
                               <Button variant="ghost" size="sm" onClick={() => handleToggleStatus(job.id, job.is_active)}>
                                 {job.is_active ? <XCircle className="h-4 w-4 text-warning" /> : <CheckCircle className="h-4 w-4 text-success" />}
                               </Button>
