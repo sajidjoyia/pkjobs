@@ -147,8 +147,51 @@ const Admin = () => {
     (parseInt(formData.photocopy_fee) || 0) +
     (parseInt(formData.expert_fee) || 0);
 
-  const handleChange = (field: string, value: string | string[]) => {
+  const handleChange = (field: string, value: string | string[] | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const emptyForm = {
+    title: "", department: "", description: "",
+    required_education_levels: [] as string[], required_education_fields: [] as string[],
+    min_age: "18", max_age: "35", gender_requirement: "",
+    provinces: [] as string[], domicile: "", total_seats: "1", last_date: "",
+    bank_challan_fee: "", post_office_fee: "", photocopy_fee: "", expert_fee: "",
+    advertisement_link: "", advertisement_image: "",
+    test_preparation_available: false,
+  };
+
+  const handleStartEdit = (job: any) => {
+    setEditingJobId(job.id);
+    setShowAddJob(true);
+    setFormData({
+      title: job.title || "",
+      department: job.department || "",
+      description: job.description || "",
+      required_education_levels: job.required_education_levels || [],
+      required_education_fields: job.required_education_fields || [],
+      min_age: String(job.min_age ?? 18),
+      max_age: String(job.max_age ?? 35),
+      gender_requirement: job.gender_requirement || "any",
+      provinces: job.provinces || [],
+      domicile: job.domicile || "",
+      total_seats: String(job.total_seats ?? 1),
+      last_date: job.last_date || "",
+      bank_challan_fee: String(job.bank_challan_fee ?? ""),
+      post_office_fee: String(job.post_office_fee ?? ""),
+      photocopy_fee: String(job.photocopy_fee ?? ""),
+      expert_fee: String(job.expert_fee ?? ""),
+      advertisement_link: job.advertisement_link || "",
+      advertisement_image: job.advertisement_image || "",
+      test_preparation_available: !!job.test_preparation_available,
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleCancelForm = () => {
+    setShowAddJob(false);
+    setEditingJobId(null);
+    setFormData(emptyForm);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -174,19 +217,18 @@ const Admin = () => {
       expert_fee: parseInt(formData.expert_fee) || 0,
       advertisement_link: formData.advertisement_link || undefined,
       advertisement_image: formData.advertisement_image || undefined,
+      test_preparation_available: formData.test_preparation_available,
     };
 
     try {
-      await createJob.mutateAsync(jobData);
+      if (editingJobId) {
+        await updateJob.mutateAsync({ id: editingJobId, updates: jobData });
+      } else {
+        await createJob.mutateAsync(jobData);
+      }
       setShowAddJob(false);
-      setFormData({
-        title: "", department: "", description: "",
-        required_education_levels: [], required_education_fields: [],
-        min_age: "18", max_age: "35", gender_requirement: "",
-        provinces: [], domicile: "", total_seats: "1", last_date: "",
-        bank_challan_fee: "", post_office_fee: "", photocopy_fee: "", expert_fee: "",
-        advertisement_link: "", advertisement_image: "",
-      });
+      setEditingJobId(null);
+      setFormData(emptyForm);
     } catch (error) {}
   };
 
