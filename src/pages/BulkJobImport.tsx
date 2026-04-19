@@ -136,28 +136,119 @@ const BulkJobImport = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const isValidUrl = (val: string) => {
+    if (!val) return false;
+    try {
+      const u = new URL(val);
+      return u.protocol === "http:" || u.protocol === "https:";
+    } catch {
+      return false;
+    }
+  };
+
+  const allProvinceValues = PROVINCE_OPTIONS.map((p) => p.value);
+  const validLevelValues = new Set(educationLevels.map((l) => l.value.toLowerCase()));
+
   const handleParseManualJson = () => {
     if (!manualJsonText.trim()) return;
     try {
       const parsed = JSON.parse(manualJsonText);
       const jobsArray = Array.isArray(parsed) ? parsed : [parsed];
       const errors: string[] = [];
-      
+
       const validJobs: EditableJob[] = jobsArray.map((job: any, idx: number) => {
         if (!job.title) errors.push(`Job #${idx + 1}: missing title`);
         if (!job.department) errors.push(`Job #${idx + 1}: missing department`);
         if (!job.last_date) errors.push(`Job #${idx + 1}: missing last_date`);
-        
+
+        // Normalize education levels: lowercase + match available values
+        const rawLevels: string[] = Array.isArray(job.required_education_levels)
+          ? job.required_education_levels
+          : [];
+        const normalizedLevels = rawLevels
+          .map((lv) => String(lv).trim().toLowerCase().replace(/\s+/g, "_"))
+          .filter((lv) => validLevelValues.has(lv));
+
+        // Education fields: accept IDs OR names; if empty + levels set → auto-select ALL fields for those levels
+        const rawFields: string[] = Array.isArray(job.required_education_fields)
+          ? job.required_education_fields
+          : [];
+        let normalizedFields: string[] = [];
+        if (rawFields.length > 0) {
+          normalizedFields = rawFields
+            .map((f) => {
+              const s = String(f).trim();
+              const byId = educationFields.find((ef) => ef.id === s);
+              if (byId) return byId.id;
+              const byName = educationFields.find(
+                (ef) =>
+                  ef.name.toLowerCase() === s.toLowerCase() ||
+                  ef.display_name.toLowerCase() === s.toLowerCase()
+              );
+              return byName?.id;
+            })
+            .filter((x): x is string => !!x);
+        } else if (normalizedLevels.length > 0) {
+          // Auto-select all fields available for the chosen levels
+          normalizedFields = educationFields
+            .filter((ef) => normalizedLevels.includes(ef.education_level))
+            .map((ef) => ef.id);
+        }
+
+        // Provinces: empty → select all
+        const rawProvinces: string[] = Array.isArray(job.provinces) ? job.provinces : [];
+        let normalizedProvinces = rawProvinces
+          .map((p) => {
+            const match = PROVINCE_OPTIONS.find(
+              (po) => po.value.toLowerCase() === String(p).trim().toLowerCase()
+            );
+            return match?.value;
+          })
+          .filter((x): x is string => !!x);
+        if (normalizedProvinces.length === 0) {
+          normalizedProvinces = [...allProvinceValues];
+        }
+
+        // Gender: empty/missing → null (= "Any")
+        let gender: "male" | "female" | "other" | null = null;
+        if (job.gender_requirement) {
+          const g = String(job.gender_requirement).toLowerCase();
+          if (["male", "female", "other"].includes(g)) gender = g as any;
+        }
+
+        // Advertisement image: must be a full URL, otherwise drop & warn
+        let adImage = "";
+        if (job.advertisement_image) {
+          if (isValidUrl(String(job.advertisement_image))) {
+            adImage = String(job.advertisement_image);
+          } else {
+            errors.push(
+              `Job #${idx + 1}: advertisement_image must be a full URL (https://...) — value ignored`
+            );
+          }
+        }
+
+        let adLink = "";
+        if (job.advertisement_link) {
+          if (isValidUrl(String(job.advertisement_link))) {
+            adLink = String(job.advertisement_link);
+          } else {
+            errors.push(
+              `Job #${idx + 1}: advertisement_link must be a full URL (https://...) — value ignored`
+            );
+          }
+        }
+
         return {
           title: job.title || `Untitled Job ${idx + 1}`,
           department: job.department || "Unknown Department",
           description: job.description || "",
-          required_education_levels: job.required_education_levels || [],
-          required_education_fields: job.required_education_fields || [],
+          required_education_levels: normalizedLevels,
+          required_education_fields: normalizedFields,
           min_age: job.min_age ?? 18,
           max_age: job.max_age ?? 35,
-          gender_requirement: job.gender_requirement || null,
-          provinces: job.provinces || [],
+          gender_requirement: gender,
+          provinces: normalizedProvinces,
           domicile: job.domicile || "",
           total_seats: job.total_seats ?? 1,
           last_date: job.last_date || new Date().toISOString().split("T")[0],
@@ -165,8 +256,8 @@ const BulkJobImport = () => {
           post_office_fee: job.post_office_fee ?? 0,
           photocopy_fee: job.photocopy_fee ?? 0,
           expert_fee: job.expert_fee ?? 0,
-          advertisement_link: job.advertisement_link || "",
-          advertisement_image: job.advertisement_image || "",
+          advertisement_link: adLink,
+          advertisement_image: adImage,
         };
       });
 
@@ -387,10 +478,11 @@ Bank Challan: Rs. 400 | Expert Fee: Rs. 800`}
                   </pre>
                   <div className="mt-2 p-3 bg-background border rounded text-xs text-muted-foreground space-y-1">
                     <p><strong>Field Guide:</strong></p>
-                    <p>• <code>required_education_levels</code>: {`["matric", "intermediate", "bachelor", "master", "phd"]`}</p>
-                    <p>• <code>required_education_fields</code>: Use field IDs from admin Education Fields page, or leave empty <code>[]</code></p>
-                    <p>• <code>gender_requirement</code>: <code>"male"</code>, <code>"female"</code>, <code>"other"</code>, or <code>null</code> for any</p>
-                    <p>• <code>provinces</code>: {`["Punjab", "Sindh", "Khyber Pakhtunkhwa", "Balochistan", "Islamabad", "AJK", "Gilgit-Baltistan"]`}</p>
+                    <p>• <code>required_education_levels</code>: {`["matric", "intermediate", "bachelor", "master", "phd"]`} (or any custom level name)</p>
+                    <p>• <code>required_education_fields</code>: Field IDs or field names. <strong>Leave empty <code>[]</code></strong> to auto-select ALL fields for the chosen levels.</p>
+                    <p>• <code>gender_requirement</code>: <code>"male"</code>, <code>"female"</code>, <code>"other"</code>. Leave empty/<code>null</code> → defaults to <strong>Any</strong>.</p>
+                    <p>• <code>provinces</code>: {`["Punjab", "Sindh", "Khyber Pakhtunkhwa", "Balochistan", "Islamabad", "AJK", "Gilgit-Baltistan"]`}. Leave empty <code>[]</code> → <strong>all provinces</strong> selected.</p>
+                    <p>• <code>advertisement_image</code> &amp; <code>advertisement_link</code>: Must be a <strong>full URL</strong> starting with <code>https://</code> (e.g. <code>https://example.com/ad.jpg</code>).</p>
                     <p>• <code>last_date</code>: Format <code>YYYY-MM-DD</code></p>
                     <p>• All fee fields are numbers (no "Rs." prefix)</p>
                     <p>• Add multiple jobs as array items: <code>[{`{job1}, {job2}`}]</code></p>
