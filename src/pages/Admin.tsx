@@ -825,8 +825,16 @@ const Admin = () => {
                               }} title="Start Chat">
                                 <MessageCircle className="h-4 w-4" />
                               </Button>
-                              <Button variant="ghost" size="icon" onClick={() => navigate(`/jobs/${app.job_id}`)} title="View Job">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => { setViewingApp(app); setViewingAppType("application"); }}
+                                title="View Applicant Details (profile, education, documents)"
+                              >
                                 <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => navigate(`/jobs/${app.job_id}`)} title="View Job Posting">
+                                <Briefcase className="h-4 w-4" />
                               </Button>
                             </div>
                           </td>
@@ -925,9 +933,12 @@ const Admin = () => {
                               }}>
                                 <MessageCircle className="h-4 w-4" />
                               </Button>
-                              <Button variant="ghost" size="icon" title="View Details" onClick={() => {
-                                toast({ title: wr.profile?.full_name || 'Work Request', description: wr.custom_description });
-                              }}>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                title="View Applicant Details (profile, education, documents)"
+                                onClick={() => { setViewingApp(wr); setViewingAppType("work_request"); }}
+                              >
                                 <Eye className="h-4 w-4" />
                               </Button>
                             </div>
