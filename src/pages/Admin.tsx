@@ -110,6 +110,10 @@ const Admin = () => {
   // Pagination state for admin jobs
   const [jobsPage, setJobsPage] = useState(1);
 
+  // Applicant details dialog
+  const [viewingApp, setViewingApp] = useState<any | null>(null);
+  const [viewingAppType, setViewingAppType] = useState<"application" | "work_request">("application");
+
   const [formData, setFormData] = useState({
     title: "",
     department: "",
