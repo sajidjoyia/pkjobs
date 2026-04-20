@@ -40,6 +40,7 @@ import { useAllEducationLevels } from "@/hooks/useEducationLevels";
 import { openApplicationChat } from "@/components/chat/ChatWidget";
 import { toast } from "sonner";
 import EducationSelector, { EducationEntry } from "@/components/education/EducationSelector";
+import RefreshButton from "@/components/RefreshButton";
 
 const statusLabels: Record<Application["status"], string> = {
   pending: "Pending",
