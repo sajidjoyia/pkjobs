@@ -78,8 +78,8 @@ interface UserDocument {
 const useExpertDocuments = (userIds: string[]) => {
   return useQuery({
     queryKey: ["expert-user-documents", userIds],
-    queryFn: async () => {
-      if (!userIds.length) return new Map<string, UserDocument[]>();
+    queryFn: async (): Promise<Record<string, UserDocument[]>> => {
+      if (!userIds.length) return {};
 
       const { data, error } = await supabase
         .from("user_documents")
@@ -89,11 +89,11 @@ const useExpertDocuments = (userIds: string[]) => {
 
       if (error) throw error;
 
-      const docMap = new Map<string, UserDocument[]>();
+      const docMap: Record<string, UserDocument[]> = {};
       for (const doc of data || []) {
-        const existing = docMap.get(doc.user_id) || [];
-        existing.push(doc as UserDocument);
-        docMap.set(doc.user_id, existing);
+        const list = docMap[doc.user_id] || [];
+        list.push(doc as UserDocument);
+        docMap[doc.user_id] = list;
       }
       return docMap;
     },
@@ -107,7 +107,7 @@ const ExpertDashboard = () => {
   const [activeTab, setActiveTab] = useState("assigned");
 
   const userIds = [...new Set(assignments.map((a) => a.user_id))];
-  const { data: documentsMap = new Map() } = useExpertDocuments(userIds);
+  const { data: documentsMap = {} } = useExpertDocuments(userIds);
 
   const activeAssignments = assignments.filter(
     (a) => !["completed", "applied"].includes(a.status)
