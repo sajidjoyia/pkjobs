@@ -170,25 +170,14 @@ const Dashboard = () => {
     completed: completedItems,
   };
 
-  return <DashboardContent />;
+  return <DashboardInner />;
 };
 
-const DashboardContent = () => {
-  const qc = useQueryClient();
-  const ptr = usePullToRefresh({
-    onRefresh: () =>
-      Promise.all([
-        qc.invalidateQueries({ queryKey: ["my-applications"] }),
-        qc.invalidateQueries({ queryKey: ["my-work-requests"] }),
-        qc.invalidateQueries({ queryKey: ["profile"] }),
-        qc.invalidateQueries({ queryKey: ["user-educations"] }),
-      ]).then(() => undefined),
-  });
-  return (
-    <div className="py-8">
-      <PullToRefreshIndicator {...ptr} />
-      <div className="container">
-        {/* Header */}
+export default Dashboard;
+
+const DashboardInner = () => {
+  return null;
+};
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
             Welcome back, {profile?.full_name?.split(" ")[0] || user?.email?.split("@")[0]}!
