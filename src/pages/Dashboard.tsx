@@ -27,6 +27,8 @@ import {
   Loader2,
   Save,
   FileQuestion,
+  AlertCircle,
+  ArrowRight,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMyApplications, Application } from "@/hooks/useApplications";
