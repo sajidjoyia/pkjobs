@@ -27,6 +27,7 @@ import { useJobs, Job } from "@/hooks/useJobs";
 import { useAuth } from "@/hooks/useAuth";
 import { isEligibleForJob, useUserEducations } from "@/hooks/useProfile";
 import { useEducationFields } from "@/hooks/useEducationFields";
+import RefreshButton from "@/components/RefreshButton";
 
 const educationLabels: Record<string, string> = {
   matric: "Matric / SSC",
@@ -141,9 +142,12 @@ const Jobs = () => {
     <div className="py-6 sm:py-8">
       <div className="container px-4 sm:px-6">
         {/* Header */}
-        <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Government Jobs</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">Browse and apply for government positions across Pakistan</p>
+        <div className="mb-6 sm:mb-8 flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Government Jobs</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">Browse and apply for government positions across Pakistan</p>
+          </div>
+          <RefreshButton queryKeys={[["jobs"]]} label="Refresh" />
         </div>
 
         {/* Filters */}

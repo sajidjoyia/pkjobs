@@ -47,6 +47,7 @@ import { useUpdateWorkRequestStatus } from "@/hooks/useWorkRequests";
 import { openApplicationChat } from "@/components/chat/ChatWidget";
 import { toast } from "sonner";
 import ExpertStatsCards from "@/components/expert/ExpertStatsCards";
+import RefreshButton from "@/components/RefreshButton";
 
 const statusLabels: Record<string, string> = {
   pending: "Pending",
@@ -78,8 +79,8 @@ interface UserDocument {
 const useExpertDocuments = (userIds: string[]) => {
   return useQuery({
     queryKey: ["expert-user-documents", userIds],
-    queryFn: async () => {
-      if (!userIds.length) return new Map<string, UserDocument[]>();
+    queryFn: async (): Promise<Record<string, UserDocument[]>> => {
+      if (!userIds.length) return {};
 
       const { data, error } = await supabase
         .from("user_documents")
@@ -89,11 +90,11 @@ const useExpertDocuments = (userIds: string[]) => {
 
       if (error) throw error;
 
-      const docMap = new Map<string, UserDocument[]>();
+      const docMap: Record<string, UserDocument[]> = {};
       for (const doc of data || []) {
-        const existing = docMap.get(doc.user_id) || [];
-        existing.push(doc as UserDocument);
-        docMap.set(doc.user_id, existing);
+        const list = docMap[doc.user_id] || [];
+        list.push(doc as UserDocument);
+        docMap[doc.user_id] = list;
       }
       return docMap;
     },
@@ -107,7 +108,7 @@ const ExpertDashboard = () => {
   const [activeTab, setActiveTab] = useState("assigned");
 
   const userIds = [...new Set(assignments.map((a) => a.user_id))];
-  const { data: documentsMap = new Map() } = useExpertDocuments(userIds);
+  const { data: documentsMap = {} } = useExpertDocuments(userIds);
 
   const activeAssignments = assignments.filter(
     (a) => !["completed", "applied"].includes(a.status)
@@ -127,13 +128,19 @@ const ExpertDashboard = () => {
   return (
     <div className="py-4 sm:py-8">
       <div className="container px-4 sm:px-6">
-        <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">
-            Expert Dashboard
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Welcome, {profile?.full_name || "Expert"}. Manage your assigned applications.
-          </p>
+        <div className="mb-6 sm:mb-8 flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">
+              Expert Dashboard
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Welcome, {profile?.full_name || "Expert"}. Manage your assigned applications.
+            </p>
+          </div>
+          <RefreshButton
+            queryKeys={[["expert-assignments"], ["expert-user-documents"]]}
+            label="Refresh"
+          />
         </div>
 
         {/* Stats */}
@@ -162,7 +169,7 @@ const ExpertDashboard = () => {
                   <AssignmentCard
                     key={assignment.id}
                     assignment={assignment}
-                    documents={documentsMap.get(assignment.user_id) || []}
+                    documents={documentsMap[assignment.user_id] || []}
                   />
                 ))}
               </div>
@@ -181,7 +188,7 @@ const ExpertDashboard = () => {
                   <AssignmentCard
                     key={assignment.id}
                     assignment={assignment}
-                    documents={documentsMap.get(assignment.user_id) || []}
+                    documents={documentsMap[assignment.user_id] || []}
                   />
                 ))}
               </div>
