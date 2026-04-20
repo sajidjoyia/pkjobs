@@ -65,6 +65,7 @@ const ExpertPerformance = lazy(() => import("@/components/admin/ExpertPerformanc
 const WhatsAppBulkMessaging = lazy(() => import("@/components/admin/WhatsAppBulkMessaging"));
 import { useExpertUsers } from "@/hooks/useExperts";
 import { BarChart3, UserCheck, MessageSquare as MessageSquareIcon } from "lucide-react";
+import ApplicationDetailsDialog from "@/components/admin/ApplicationDetailsDialog";
 const PROVINCE_OPTIONS = [
   { value: "Punjab", label: "Punjab" },
   { value: "Sindh", label: "Sindh" },
