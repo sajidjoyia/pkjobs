@@ -47,6 +47,7 @@ import { useUpdateWorkRequestStatus } from "@/hooks/useWorkRequests";
 import { openApplicationChat } from "@/components/chat/ChatWidget";
 import { toast } from "sonner";
 import ExpertStatsCards from "@/components/expert/ExpertStatsCards";
+import RefreshButton from "@/components/RefreshButton";
 
 const statusLabels: Record<string, string> = {
   pending: "Pending",
@@ -127,13 +128,19 @@ const ExpertDashboard = () => {
   return (
     <div className="py-4 sm:py-8">
       <div className="container px-4 sm:px-6">
-        <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">
-            Expert Dashboard
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Welcome, {profile?.full_name || "Expert"}. Manage your assigned applications.
-          </p>
+        <div className="mb-6 sm:mb-8 flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">
+              Expert Dashboard
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Welcome, {profile?.full_name || "Expert"}. Manage your assigned applications.
+            </p>
+          </div>
+          <RefreshButton
+            queryKeys={[["expert-assignments"], ["expert-user-documents"]]}
+            label="Refresh"
+          />
         </div>
 
         {/* Stats */}
