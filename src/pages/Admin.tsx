@@ -65,6 +65,7 @@ const ExpertPerformance = lazy(() => import("@/components/admin/ExpertPerformanc
 const WhatsAppBulkMessaging = lazy(() => import("@/components/admin/WhatsAppBulkMessaging"));
 import { useExpertUsers } from "@/hooks/useExperts";
 import { BarChart3, UserCheck, MessageSquare as MessageSquareIcon } from "lucide-react";
+import ApplicationDetailsDialog from "@/components/admin/ApplicationDetailsDialog";
 const PROVINCE_OPTIONS = [
   { value: "Punjab", label: "Punjab" },
   { value: "Sindh", label: "Sindh" },
@@ -108,6 +109,10 @@ const Admin = () => {
 
   // Pagination state for admin jobs
   const [jobsPage, setJobsPage] = useState(1);
+
+  // Applicant details dialog
+  const [viewingApp, setViewingApp] = useState<any | null>(null);
+  const [viewingAppType, setViewingAppType] = useState<"application" | "work_request">("application");
 
   const [formData, setFormData] = useState({
     title: "",
@@ -820,8 +825,16 @@ const Admin = () => {
                               }} title="Start Chat">
                                 <MessageCircle className="h-4 w-4" />
                               </Button>
-                              <Button variant="ghost" size="icon" onClick={() => navigate(`/jobs/${app.job_id}`)} title="View Job">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => { setViewingApp(app); setViewingAppType("application"); }}
+                                title="View Applicant Details (profile, education, documents)"
+                              >
                                 <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => navigate(`/jobs/${app.job_id}`)} title="View Job Posting">
+                                <Briefcase className="h-4 w-4" />
                               </Button>
                             </div>
                           </td>
@@ -920,9 +933,12 @@ const Admin = () => {
                               }}>
                                 <MessageCircle className="h-4 w-4" />
                               </Button>
-                              <Button variant="ghost" size="icon" title="View Details" onClick={() => {
-                                toast({ title: wr.profile?.full_name || 'Work Request', description: wr.custom_description });
-                              }}>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                title="View Applicant Details (profile, education, documents)"
+                                onClick={() => { setViewingApp(wr); setViewingAppType("work_request"); }}
+                              >
                                 <Eye className="h-4 w-4" />
                               </Button>
                             </div>
@@ -968,6 +984,13 @@ const Admin = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      <ApplicationDetailsDialog
+        open={!!viewingApp}
+        onOpenChange={(o) => { if (!o) setViewingApp(null); }}
+        application={viewingApp}
+        type={viewingAppType}
+      />
     </div>
   );
 };

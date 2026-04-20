@@ -48,6 +48,9 @@ import { openApplicationChat } from "@/components/chat/ChatWidget";
 import { toast } from "sonner";
 import ExpertStatsCards from "@/components/expert/ExpertStatsCards";
 import RefreshButton from "@/components/RefreshButton";
+import { useQueryClient } from "@tanstack/react-query";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 
 const statusLabels: Record<string, string> = {
   pending: "Pending",
@@ -125,8 +128,18 @@ const ExpertDashboard = () => {
     );
   }
 
+  const qc = useQueryClient();
+  const ptr = usePullToRefresh({
+    onRefresh: () =>
+      Promise.all([
+        qc.invalidateQueries({ queryKey: ["expert-assignments"] }),
+        qc.invalidateQueries({ queryKey: ["expert-user-documents"] }),
+      ]).then(() => undefined),
+  });
+
   return (
     <div className="py-4 sm:py-8">
+      <PullToRefreshIndicator {...ptr} />
       <div className="container px-4 sm:px-6">
         <div className="mb-6 sm:mb-8 flex items-start justify-between gap-3">
           <div>

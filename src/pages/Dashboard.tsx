@@ -41,6 +41,9 @@ import { openApplicationChat } from "@/components/chat/ChatWidget";
 import { toast } from "sonner";
 import EducationSelector, { EducationEntry } from "@/components/education/EducationSelector";
 import RefreshButton from "@/components/RefreshButton";
+import { useQueryClient } from "@tanstack/react-query";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 
 const statusLabels: Record<Application["status"], string> = {
   pending: "Pending",
@@ -167,8 +170,20 @@ const Dashboard = () => {
     completed: completedItems,
   };
 
+  const qc = useQueryClient();
+  const ptr = usePullToRefresh({
+    onRefresh: () =>
+      Promise.all([
+        qc.invalidateQueries({ queryKey: ["my-applications"] }),
+        qc.invalidateQueries({ queryKey: ["my-work-requests"] }),
+        qc.invalidateQueries({ queryKey: ["profile"] }),
+        qc.invalidateQueries({ queryKey: ["user-educations"] }),
+      ]).then(() => undefined),
+  });
+
   return (
     <div className="py-8">
+      <PullToRefreshIndicator {...ptr} />
       <div className="container">
         {/* Header */}
         <div className="mb-8">
