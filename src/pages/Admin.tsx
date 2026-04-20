@@ -984,6 +984,13 @@ const Admin = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      <ApplicationDetailsDialog
+        open={!!viewingApp}
+        onOpenChange={(o) => { if (!o) setViewingApp(null); }}
+        application={viewingApp}
+        type={viewingAppType}
+      />
     </div>
   );
 };
