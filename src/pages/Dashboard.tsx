@@ -179,6 +179,55 @@ const Dashboard = () => {
           </p>
         </div>
 
+        {/* Profile completion prompt */}
+        {profile && (() => {
+          const missing: { key: string; label: string }[] = [];
+          if (!profile.date_of_birth) missing.push({ key: "dob", label: "Date of birth" });
+          if (!profile.gender) missing.push({ key: "gender", label: "Gender" });
+          if (userEducations.length === 0) missing.push({ key: "edu", label: "Education" });
+          if (!profile.province) missing.push({ key: "province", label: "Province" });
+          if (!profile.domicile) missing.push({ key: "domicile", label: "Domicile" });
+
+          if (missing.length === 0) return null;
+
+          return (
+            <div className="mb-6 rounded-lg border border-warning/40 bg-warning/10 p-4 sm:p-5">
+              <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+                <div className="h-10 w-10 rounded-lg bg-warning/20 flex items-center justify-center flex-shrink-0">
+                  <AlertCircle className="h-5 w-5 text-warning" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-base font-semibold text-foreground mb-1">
+                    Complete your profile for better job matches
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    We use these details to check your eligibility for government jobs. Please add:
+                  </p>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {missing.map((m) => (
+                      <Badge key={m.key} variant="outline" className="border-warning/50 text-foreground">
+                        {m.label}
+                      </Badge>
+                    ))}
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setActiveTab("profile");
+                      setIsEditing(true);
+                      setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 50);
+                    }}
+                    className="gap-2"
+                  >
+                    Complete Profile
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className="stat-card">
