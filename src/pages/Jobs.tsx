@@ -27,6 +27,7 @@ import { useJobs, Job } from "@/hooks/useJobs";
 import { useAuth } from "@/hooks/useAuth";
 import { isEligibleForJob, useUserEducations } from "@/hooks/useProfile";
 import { useEducationFields } from "@/hooks/useEducationFields";
+import RefreshButton from "@/components/RefreshButton";
 
 const educationLabels: Record<string, string> = {
   matric: "Matric / SSC",
