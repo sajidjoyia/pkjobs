@@ -28,6 +28,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { isEligibleForJob, useUserEducations } from "@/hooks/useProfile";
 import { useEducationFields } from "@/hooks/useEducationFields";
 import RefreshButton from "@/components/RefreshButton";
+import { useQueryClient } from "@tanstack/react-query";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 
 const educationLabels: Record<string, string> = {
   matric: "Matric / SSC",
@@ -56,6 +59,10 @@ const Jobs = () => {
   const { profile, user } = useAuth();
   const { data: userEducations } = useUserEducations(user?.id);
   const { data: allEducationFields } = useEducationFields();
+  const qc = useQueryClient();
+  const ptr = usePullToRefresh({
+    onRefresh: () => qc.invalidateQueries({ queryKey: ["jobs"] }),
+  });
 
   const isJobExpired = (lastDate: string) => {
     return new Date(lastDate) < new Date(new Date().setHours(0, 0, 0, 0));
@@ -140,6 +147,7 @@ const Jobs = () => {
 
   return (
     <div className="py-6 sm:py-8">
+      <PullToRefreshIndicator {...ptr} />
       <div className="container px-4 sm:px-6">
         {/* Header */}
         <div className="mb-6 sm:mb-8 flex items-start justify-between gap-3">
