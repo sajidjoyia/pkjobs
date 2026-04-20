@@ -170,9 +170,23 @@ const Dashboard = () => {
     completed: completedItems,
   };
 
+  return <DashboardContent />;
+};
+
+const DashboardContent = () => {
+  const qc = useQueryClient();
+  const ptr = usePullToRefresh({
+    onRefresh: () =>
+      Promise.all([
+        qc.invalidateQueries({ queryKey: ["my-applications"] }),
+        qc.invalidateQueries({ queryKey: ["my-work-requests"] }),
+        qc.invalidateQueries({ queryKey: ["profile"] }),
+        qc.invalidateQueries({ queryKey: ["user-educations"] }),
+      ]).then(() => undefined),
+  });
   return (
     <div className="py-8">
-      <PullToRefreshWrapper />
+      <PullToRefreshIndicator {...ptr} />
       <div className="container">
         {/* Header */}
         <div className="mb-8">
