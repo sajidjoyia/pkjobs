@@ -162,7 +162,7 @@ const ExpertDashboard = () => {
                   <AssignmentCard
                     key={assignment.id}
                     assignment={assignment}
-                    documents={documentsMap.get(assignment.user_id) || []}
+                    documents={documentsMap[assignment.user_id] || []}
                   />
                 ))}
               </div>
@@ -181,7 +181,7 @@ const ExpertDashboard = () => {
                   <AssignmentCard
                     key={assignment.id}
                     assignment={assignment}
-                    documents={documentsMap.get(assignment.user_id) || []}
+                    documents={documentsMap[assignment.user_id] || []}
                   />
                 ))}
               </div>
