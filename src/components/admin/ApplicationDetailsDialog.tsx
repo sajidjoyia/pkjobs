@@ -22,6 +22,7 @@ import {
   Briefcase,
   Loader2,
   Image as ImageIcon,
+  MessageSquare,
 } from "lucide-react";
 
 interface AppLike {
@@ -50,6 +51,10 @@ interface Props {
   application: AppLike | null;
   /** "application" or "work_request" */
   type?: "application" | "work_request";
+  /** Optional callback to start a chat with this applicant. When provided, a "Start Chat" button is shown. */
+  onStartChat?: (application: AppLike) => void;
+  /** Loading state for the start-chat action. */
+  startingChat?: boolean;
 }
 
 const getDocIcon = (type: string) => {
@@ -74,7 +79,7 @@ const isImageDoc = (doc: { document_type: string; file_name: string; file_url: s
   );
 };
 
-const ApplicationDetailsDialog = ({ open, onOpenChange, application, type = "application" }: Props) => {
+const ApplicationDetailsDialog = ({ open, onOpenChange, application, type = "application", onStartChat, startingChat }: Props) => {
   const userId = application?.user_id;
 
   const { data, isLoading } = useQuery({
