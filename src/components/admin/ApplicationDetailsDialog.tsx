@@ -23,6 +23,7 @@ import {
   Loader2,
   Image as ImageIcon,
   MessageSquare,
+  CheckCircle2,
 } from "lucide-react";
 
 interface AppLike {
@@ -55,6 +56,8 @@ interface Props {
   onStartChat?: (application: AppLike) => void;
   /** Loading state for the start-chat action. */
   startingChat?: boolean;
+  /** Lifecycle status for the chat creation: idle (not started), starting (in flight), ready (created). */
+  chatStatus?: "idle" | "starting" | "ready";
 }
 
 const getDocIcon = (type: string) => {
@@ -79,7 +82,7 @@ const isImageDoc = (doc: { document_type: string; file_name: string; file_url: s
   );
 };
 
-const ApplicationDetailsDialog = ({ open, onOpenChange, application, type = "application", onStartChat, startingChat }: Props) => {
+const ApplicationDetailsDialog = ({ open, onOpenChange, application, type = "application", onStartChat, startingChat, chatStatus = "idle" }: Props) => {
   const userId = application?.user_id;
 
   const { data, isLoading } = useQuery({
@@ -136,20 +139,38 @@ const ApplicationDetailsDialog = ({ open, onOpenChange, application, type = "app
               Applicant Details
             </span>
             {onStartChat && application && (
-              <Button
-                size="sm"
-                variant="default"
-                className="gap-1.5"
-                onClick={() => onStartChat(application)}
-                disabled={startingChat}
-              >
-                {startingChat ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <MessageSquare className="h-4 w-4" />
+              <div className="flex items-center gap-2">
+                {chatStatus !== "idle" && (
+                  <Badge
+                    variant={chatStatus === "ready" ? "default" : "secondary"}
+                    className="gap-1 text-[10px] uppercase tracking-wide"
+                  >
+                    {chatStatus === "ready" ? (
+                      <>
+                        <CheckCircle2 className="h-3 w-3" /> Chat ready
+                      </>
+                    ) : (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin" /> Chat in progress
+                      </>
+                    )}
+                  </Badge>
                 )}
-                Start Chat
-              </Button>
+                <Button
+                  size="sm"
+                  variant="default"
+                  className="gap-1.5"
+                  onClick={() => onStartChat(application)}
+                  disabled={startingChat || chatStatus === "starting"}
+                >
+                  {startingChat || chatStatus === "starting" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <MessageSquare className="h-4 w-4" />
+                  )}
+                  {chatStatus === "ready" ? "Open Chat" : "Start Chat"}
+                </Button>
+              </div>
             )}
           </DialogTitle>
         </DialogHeader>

@@ -113,6 +113,7 @@ const Admin = () => {
   // Applicant details dialog
   const [viewingApp, setViewingApp] = useState<any | null>(null);
   const [viewingAppType, setViewingAppType] = useState<"application" | "work_request">("application");
+  const [chatStatus, setChatStatus] = useState<"idle" | "starting" | "ready">("idle");
 
   const [formData, setFormData] = useState({
     title: "",
@@ -987,11 +988,13 @@ const Admin = () => {
 
       <ApplicationDetailsDialog
         open={!!viewingApp}
-        onOpenChange={(o) => { if (!o) setViewingApp(null); }}
+        onOpenChange={(o) => { if (!o) { setViewingApp(null); setChatStatus("idle"); } }}
         application={viewingApp}
         type={viewingAppType}
         startingChat={adminStartConversation.isPending}
+        chatStatus={chatStatus}
         onStartChat={async (app) => {
+          setChatStatus("starting");
           try {
             const conv = viewingAppType === "application"
               ? await adminStartConversation.mutateAsync({
@@ -1004,9 +1007,15 @@ const Admin = () => {
                   workRequestId: app.id,
                   jobTitle: app.custom_description?.slice(0, 50) || 'Work Request',
                 });
+            setChatStatus("ready");
             setSelectedConversationId(conv.id);
-            setViewingApp(null);
+            // Brief pause so the user sees the "Chat ready" indicator before the dialog closes.
+            setTimeout(() => {
+              setViewingApp(null);
+              setChatStatus("idle");
+            }, 700);
           } catch (e) {
+            setChatStatus("idle");
             toast({ title: "Could not start chat", variant: "destructive" });
           }
         }}
