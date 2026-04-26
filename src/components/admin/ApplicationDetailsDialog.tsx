@@ -130,9 +130,27 @@ const ApplicationDetailsDialog = ({ open, onOpenChange, application, type = "app
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <User className="h-5 w-5 text-primary" />
-            Applicant Details
+          <DialogTitle className="flex items-center justify-between gap-2 pr-6">
+            <span className="flex items-center gap-2">
+              <User className="h-5 w-5 text-primary" />
+              Applicant Details
+            </span>
+            {onStartChat && application && (
+              <Button
+                size="sm"
+                variant="default"
+                className="gap-1.5"
+                onClick={() => onStartChat(application)}
+                disabled={startingChat}
+              >
+                {startingChat ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <MessageSquare className="h-4 w-4" />
+                )}
+                Start Chat
+              </Button>
+            )}
           </DialogTitle>
         </DialogHeader>
 
