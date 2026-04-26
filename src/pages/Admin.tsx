@@ -990,6 +990,26 @@ const Admin = () => {
         onOpenChange={(o) => { if (!o) setViewingApp(null); }}
         application={viewingApp}
         type={viewingAppType}
+        startingChat={adminStartConversation.isPending}
+        onStartChat={async (app) => {
+          try {
+            const conv = viewingAppType === "application"
+              ? await adminStartConversation.mutateAsync({
+                  userId: app.user_id,
+                  applicationId: app.id,
+                  jobTitle: app.job?.title || 'Job Application',
+                })
+              : await adminStartConversation.mutateAsync({
+                  userId: app.user_id,
+                  workRequestId: app.id,
+                  jobTitle: app.custom_description?.slice(0, 50) || 'Work Request',
+                });
+            setSelectedConversationId(conv.id);
+            setViewingApp(null);
+          } catch (e) {
+            toast({ title: "Could not start chat", variant: "destructive" });
+          }
+        }}
       />
     </div>
   );

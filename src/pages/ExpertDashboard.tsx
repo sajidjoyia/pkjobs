@@ -11,12 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import ApplicationDetailsDialog from "@/components/admin/ApplicationDetailsDialog";
 import {
   Collapsible,
   CollapsibleContent,
@@ -422,79 +417,23 @@ const AssignmentCard = ({
         </div>
       </div>
 
-      {/* Profile Detail Dialog */}
-      <Dialog open={viewingProfile} onOpenChange={setViewingProfile}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Applicant Profile</DialogTitle>
-          </DialogHeader>
-          {assignment.profile && (
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                <User className="h-5 w-5 text-primary shrink-0" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Name</p>
-                  <p className="font-medium text-sm">{assignment.profile.full_name}</p>
-                </div>
-              </div>
-              {assignment.profile.phone && (
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                  <Phone className="h-4 w-4 text-primary shrink-0" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Phone</p>
-                    <p className="font-medium text-sm">{assignment.profile.phone}</p>
-                  </div>
-                </div>
-              )}
-              {assignment.profile.province && (
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                  <MapPin className="h-4 w-4 text-primary shrink-0" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Province</p>
-                    <p className="font-medium text-sm">{assignment.profile.province}</p>
-                  </div>
-                </div>
-              )}
-              {assignment.type === "application" && assignment.job && (
-                <div className="border-t border-border pt-3 mt-3">
-                  <h4 className="text-sm font-medium text-foreground mb-2">Job Details</h4>
-                  <div className="space-y-2 text-sm">
-                    <p><span className="text-muted-foreground">Title:</span> {assignment.job.title}</p>
-                    <p><span className="text-muted-foreground">Department:</span> {assignment.job.department}</p>
-                    <p><span className="text-muted-foreground">Last Date:</span> {new Date(assignment.job.last_date).toLocaleDateString()}</p>
-                    <p><span className="text-muted-foreground">Total Fee:</span> Rs. {Number(assignment.job.total_fee).toLocaleString()}</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Documents in profile dialog */}
-              {documents.length > 0 && (
-                <div className="border-t border-border pt-3 mt-3">
-                  <h4 className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
-                    <FileText className="h-4 w-4" /> Documents ({documents.length})
-                  </h4>
-                  <div className="space-y-2">
-                    {documents.map((doc) => (
-                      <div key={doc.id} className="flex items-center justify-between p-2 rounded bg-muted/50">
-                        <div className="flex items-center gap-2 min-w-0">
-                          {getDocIcon(doc.document_type)}
-                          <div className="min-w-0">
-                            <p className="text-xs font-medium truncate">{doc.file_name}</p>
-                            <p className="text-xs text-muted-foreground capitalize">{doc.document_type.replace(/_/g, " ")}</p>
-                          </div>
-                        </div>
-                        <Button variant="ghost" size="icon" onClick={() => window.open(doc.file_url, "_blank")}>
-                          <Download className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Full Applicant Details Dialog */}
+      <ApplicationDetailsDialog
+        open={viewingProfile}
+        onOpenChange={setViewingProfile}
+        application={{
+          id: assignment.id,
+          user_id: assignment.user_id,
+          status: assignment.status,
+          payment_amount: assignment.payment_amount,
+          notes: assignment.notes,
+          created_at: assignment.created_at,
+          job: assignment.job,
+          category: assignment.category,
+          custom_description: assignment.custom_description,
+        }}
+        type={assignment.type}
+      />
     </>
   );
 };
