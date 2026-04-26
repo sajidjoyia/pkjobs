@@ -64,12 +64,17 @@ const ChatMessageInput = ({ onSend, disabled, placeholder = "Type a message..." 
 
     if (uploadError) throw uploadError;
 
-    const { data } = supabase.storage
+    // Bucket is private — generate a long-lived signed URL (10 years) so the
+    // message attachment remains viewable to participants. RLS on storage.objects
+    // still restricts who can actually fetch the file via the API.
+    const { data: signed, error: signedErr } = await supabase.storage
       .from('chat-attachments')
-      .getPublicUrl(fileName);
+      .createSignedUrl(fileName, 60 * 60 * 24 * 365 * 10);
+
+    if (signedErr || !signed) throw signedErr ?? new Error('Failed to sign URL');
 
     return {
-      url: data.publicUrl,
+      url: signed.signedUrl,
       name: file.name,
       type: file.type,
     };
