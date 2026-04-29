@@ -2,6 +2,7 @@ import { FileText, Image, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
+import { useSignedAttachmentUrl } from '@/hooks/useSignedAttachmentUrl';
 
 interface ChatMessageBubbleProps {
   content: string;
@@ -22,10 +23,11 @@ const ChatMessageBubble = ({
 }: ChatMessageBubbleProps) => {
   const isImage = attachmentType?.startsWith('image/');
   const isPdf = attachmentType === 'application/pdf';
+  const resolvedUrl = useSignedAttachmentUrl(attachmentUrl);
 
   const handleDownload = () => {
-    if (attachmentUrl) {
-      window.open(attachmentUrl, '_blank');
+    if (resolvedUrl) {
+      window.open(resolvedUrl, '_blank');
     }
   };
 
