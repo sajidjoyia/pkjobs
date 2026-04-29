@@ -29,7 +29,9 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const BulkJobImport = lazy(() => import("./pages/BulkJobImport"));
 const ExpertDashboard = lazy(() => import("./pages/ExpertDashboard"));
 
-const queryClient = new QueryClient({
+export const RQ_PERSIST_KEY = "pkjobs-rq-cache";
+
+export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // 5 min — avoid refetch on every mount
@@ -41,7 +43,7 @@ const queryClient = new QueryClient({
 });
 
 const persister = typeof window !== "undefined"
-  ? createSyncStoragePersister({ storage: window.localStorage, key: "pkjobs-rq-cache" })
+  ? createSyncStoragePersister({ storage: window.localStorage, key: RQ_PERSIST_KEY })
   : undefined;
 
 const PageLoader = () => (
