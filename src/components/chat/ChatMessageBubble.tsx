@@ -44,12 +44,16 @@ const ChatMessageBubble = ({
       {attachmentUrl && (
         <div className="mb-2">
           {isImage ? (
-            <a href={attachmentUrl} target="_blank" rel="noopener noreferrer">
-              <img
-                src={attachmentUrl}
-                alt={attachmentName || 'Attachment'}
-                className="max-w-full rounded-md max-h-48 object-cover"
-              />
+            <a href={resolvedUrl ?? undefined} target="_blank" rel="noopener noreferrer">
+              {resolvedUrl ? (
+                <img
+                  src={resolvedUrl}
+                  alt={attachmentName || 'Attachment'}
+                  className="max-w-full rounded-md max-h-48 object-cover"
+                />
+              ) : (
+                <div className="h-32 w-48 rounded-md bg-muted-foreground/10 animate-pulse" />
+              )}
             </a>
           ) : isPdf ? (
             <div 
@@ -73,7 +77,7 @@ const ChatMessageBubble = ({
             </div>
           ) : (
             <a 
-              href={attachmentUrl} 
+              href={resolvedUrl ?? undefined} 
               target="_blank" 
               rel="noopener noreferrer"
               className={cn(
