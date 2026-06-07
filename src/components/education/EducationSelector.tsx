@@ -279,48 +279,35 @@ const EducationSelector = ({
             <Label className="text-xs text-muted-foreground">
               Education Level
             </Label>
-            <Select value={selectedLevel} onValueChange={setSelectedLevel}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select level" />
-              </SelectTrigger>
-              <SelectContent>
-                {allLevels.map((level) => (
-                  <SelectItem key={level.value} value={level.value}>
-                    {level.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SearchableSelect
+              options={allLevels.map((l) => ({ value: l.value, label: l.label }))}
+              value={selectedLevel}
+              onChange={setSelectedLevel}
+              placeholder="Select level"
+              searchPlaceholder="Search education levels..."
+              emptyText="No matching levels"
+            />
           </div>
 
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">
               Field / Specialization
             </Label>
-            <Select
+            <SearchableSelect
+              options={fieldsForLevel.map((f) => ({ value: f.id, label: f.display_name }))}
               value={selectedField}
-              onValueChange={setSelectedField}
+              onChange={setSelectedField}
               disabled={!selectedLevel || fieldsForLevel.length === 0}
-            >
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={
-                    !selectedLevel
-                      ? "Select level first"
-                      : fieldsForLevel.length === 0
-                      ? "No fields available"
-                      : "Select field (optional)"
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {fieldsForLevel.map((field) => (
-                  <SelectItem key={field.id} value={field.id}>
-                    {field.display_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              placeholder={
+                !selectedLevel
+                  ? "Select level first"
+                  : fieldsForLevel.length === 0
+                  ? "No fields available"
+                  : "Search & select field (optional)"
+              }
+              searchPlaceholder="Search fields..."
+              emptyText="No matching fields"
+            />
           </div>
 
           <div className="flex items-end">
