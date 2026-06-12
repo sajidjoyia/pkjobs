@@ -489,6 +489,16 @@ const Dashboard = () => {
 
           {/* Profile Tab */}
           <TabsContent value="profile">
+            {!profile?.phone && (
+              <div className="mb-4 rounded-lg border border-warning/40 bg-warning/10 p-3 flex items-start gap-2 text-sm">
+                <AlertCircle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+                <p className="text-foreground">
+                  <span className="font-medium">Phone number is required.</span> We use it to
+                  coordinate your application status and contact you about job updates. Please
+                  add it below.
+                </p>
+              </div>
+            )}
             <div className="card-elevated p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold text-foreground">
@@ -581,12 +591,17 @@ const Dashboard = () => {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label>Phone</Label>
+                      <Label>
+                        Phone <span className="text-destructive">*</span>
+                      </Label>
                       <Input
                         value={editForm.phone}
                         onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
                         placeholder="+92 300 1234567"
                       />
+                      <p className="text-xs text-muted-foreground">
+                        Required &mdash; used to contact you about your applications.
+                      </p>
                     </div>
                   </div>
                   <div className="space-y-4">
