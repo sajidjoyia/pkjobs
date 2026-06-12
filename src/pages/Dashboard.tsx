@@ -44,6 +44,12 @@ import RefreshButton from "@/components/RefreshButton";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
+import MyDocuments from "@/components/dashboard/MyDocuments";
+import {
+  ServiceDisclaimerBanner,
+  ServiceDisclaimerDialog,
+  useServiceDisclaimer,
+} from "@/components/dashboard/ServiceDisclaimer";
 
 const statusLabels: Record<Application["status"], string> = {
   pending: "Pending",
@@ -704,41 +710,7 @@ const Dashboard = () => {
 
           {/* Documents Tab */}
           <TabsContent value="documents">
-            <div className="card-elevated p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-foreground">
-                  My Documents
-                </h2>
-                <Button className="gap-2">
-                  <Upload className="h-4 w-4" />
-                  Upload Document
-                </Button>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                {["CNIC", "Matric Certificate", "Intermediate Certificate", "Domicile"].map(
-                  (doc) => (
-                    <div
-                      key={doc}
-                      className="flex items-center justify-between p-4 rounded-lg border border-dashed border-border"
-                    >
-                      <div className="flex items-center gap-3">
-                        <FileText className="h-5 w-5 text-muted-foreground" />
-                        <span className="text-muted-foreground">{doc}</span>
-                      </div>
-                      <Button variant="ghost" size="sm">
-                        Upload
-                      </Button>
-                    </div>
-                  )
-                )}
-              </div>
-
-              <p className="mt-4 text-sm text-muted-foreground">
-                Documents are optional but help our AI auto-fill your information
-                and speed up the application process.
-              </p>
-            </div>
+            <MyDocuments />
           </TabsContent>
         </Tabs>
       </div>
