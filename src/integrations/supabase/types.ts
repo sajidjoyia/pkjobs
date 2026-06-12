@@ -181,6 +181,7 @@ export type Database = {
           google_analytics_id: string | null
           google_search_console_verification: string | null
           id: string
+          jobs_ad_html: string | null
           logo_url: string | null
           organization_name: string | null
           site_description: string | null
@@ -206,6 +207,7 @@ export type Database = {
           google_analytics_id?: string | null
           google_search_console_verification?: string | null
           id?: string
+          jobs_ad_html?: string | null
           logo_url?: string | null
           organization_name?: string | null
           site_description?: string | null
@@ -231,6 +233,7 @@ export type Database = {
           google_analytics_id?: string | null
           google_search_console_verification?: string | null
           id?: string
+          jobs_ad_html?: string | null
           logo_url?: string | null
           organization_name?: string | null
           site_description?: string | null
