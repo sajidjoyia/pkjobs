@@ -31,6 +31,7 @@ import RefreshButton from "@/components/RefreshButton";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
+import AdminAdSlot from "@/components/AdminAdSlot";
 
 const educationLabels: Record<string, string> = {
   matric: "Matric / SSC",
@@ -149,6 +150,9 @@ const Jobs = () => {
     <div className="py-6 sm:py-8">
       <PullToRefreshIndicator {...ptr} />
       <div className="container px-4 sm:px-6">
+        {/* Admin-controlled advertisement */}
+        <AdminAdSlot slot="jobs" />
+
         {/* Header */}
         <div className="mb-6 sm:mb-8 flex items-start justify-between gap-3">
           <div>
