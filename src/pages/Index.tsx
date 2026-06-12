@@ -77,7 +77,8 @@ const HeroSection = () => {
                 width={1600}
                 height={900}
                 loading="eager"
-                fetchPriority="high"
+                // @ts-expect-error - lowercase per HTML spec to avoid React DOM warning
+                fetchpriority="high"
                 decoding="async"
                 className="w-full h-auto object-cover"
               />
