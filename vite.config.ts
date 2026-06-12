@@ -23,24 +23,9 @@ export default defineConfig(({ mode }) => ({
     cssCodeSplit: true,
     sourcemap: false,
     chunkSizeWarningLimit: 1200,
-    rollupOptions: {
-      output: {
-        // Split heavy vendor libraries into their own chunks so the main bundle
-        // stays small and pages load faster on first visit.
-        manualChunks: (id) => {
-          if (!id.includes("node_modules")) return;
-          if (id.includes("react-router")) return "router";
-          if (id.includes("@tanstack/react-query")) return "react-query";
-          if (id.includes("@supabase")) return "supabase";
-          if (id.includes("@radix-ui")) return "radix";
-          if (id.includes("recharts") || id.includes("d3-")) return "charts";
-          if (id.includes("lucide-react")) return "icons";
-          if (id.includes("date-fns")) return "date-fns";
-          if (id.includes("framer-motion") || id.includes("motion")) return "motion";
-          if (id.includes("react-dom") || id.includes("react/")) return "react";
-          return "vendor";
-        },
-      },
-    },
+    // NOTE: custom manualChunks caused React to load AFTER libraries that depend
+    // on it (Radix → "Cannot read properties of undefined (reading 'forwardRef')").
+    // Let Vite/Rollup decide chunk boundaries automatically — it correctly hoists
+    // React into a shared chunk loaded before its consumers.
   },
 }));
