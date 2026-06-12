@@ -81,6 +81,7 @@ const Dashboard = () => {
   const { data: allEducationLevels = [] } = useAllEducationLevels();
   const { data: allEducationFields = [] } = useEducationFields();
   
+  const disclaimer = useServiceDisclaimer();
   const [activeTab, setActiveTab] = useState("applications");
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -200,6 +201,12 @@ const Dashboard = () => {
             Track your applications and manage your profile
           </p>
         </div>
+
+        {/* Service disclaimer banner */}
+        <ServiceDisclaimerBanner onOpenDialog={() => disclaimer.setOpen(true)} />
+        <ServiceDisclaimerDialog open={disclaimer.open} onOpenChange={disclaimer.setOpen} />
+
+
 
         {/* Profile completion prompt */}
         {profile && (() => {
