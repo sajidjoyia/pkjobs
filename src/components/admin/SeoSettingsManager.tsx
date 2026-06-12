@@ -39,6 +39,7 @@ const SeoSettingsManager = () => {
         google_search_console_verification: settings.google_search_console_verification,
         google_analytics_id: settings.google_analytics_id,
         test_prep_banner_html: settings.test_prep_banner_html,
+        jobs_ad_html: settings.jobs_ad_html,
       });
     }
   }, [settings]);
@@ -173,6 +174,43 @@ const SeoSettingsManager = () => {
               <div
                 className="p-4 rounded-lg border-l-4 border-primary bg-primary/5"
                 dangerouslySetInnerHTML={{ __html: formData.test_prep_banner_html }}
+              />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Jobs Page Advertisement */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building2 className="h-5 w-5" />
+            Jobs Page Advertisement
+          </CardTitle>
+          <CardDescription>
+            Shown at the top of the Jobs listing page. Supports HTML &amp; inline CSS. Leave empty to hide.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Ad HTML / CSS</Label>
+            <Textarea
+              placeholder={`<div style="display:flex;gap:12px;align-items:center"><strong>📘 Free PPSC test prep guide</strong> <a href="/contact" style="color:#16a34a;text-decoration:underline">Get it now</a></div>`}
+              value={formData.jobs_ad_html || ""}
+              onChange={(e) => handleChange("jobs_ad_html" as any, e.target.value)}
+              rows={6}
+              className="font-mono text-xs"
+            />
+            <p className="text-xs text-muted-foreground">
+              You can include HTML tags and inline <code>style=&quot;...&quot;</code> attributes.
+            </p>
+          </div>
+          {formData.jobs_ad_html && (
+            <div className="space-y-2">
+              <Label>Preview</Label>
+              <div
+                className="p-4 rounded-lg border-l-4 border-accent bg-accent/5"
+                dangerouslySetInnerHTML={{ __html: formData.jobs_ad_html }}
               />
             </div>
           )}

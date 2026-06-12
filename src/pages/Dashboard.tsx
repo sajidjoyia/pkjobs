@@ -44,6 +44,12 @@ import RefreshButton from "@/components/RefreshButton";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
+import MyDocuments from "@/components/dashboard/MyDocuments";
+import {
+  ServiceDisclaimerBanner,
+  ServiceDisclaimerDialog,
+  useServiceDisclaimer,
+} from "@/components/dashboard/ServiceDisclaimer";
 
 const statusLabels: Record<Application["status"], string> = {
   pending: "Pending",
@@ -75,6 +81,7 @@ const Dashboard = () => {
   const { data: allEducationLevels = [] } = useAllEducationLevels();
   const { data: allEducationFields = [] } = useEducationFields();
   
+  const disclaimer = useServiceDisclaimer();
   const [activeTab, setActiveTab] = useState("applications");
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -194,6 +201,12 @@ const Dashboard = () => {
             Track your applications and manage your profile
           </p>
         </div>
+
+        {/* Service disclaimer banner */}
+        <ServiceDisclaimerBanner onOpenDialog={() => disclaimer.setOpen(true)} />
+        <ServiceDisclaimerDialog open={disclaimer.open} onOpenChange={disclaimer.setOpen} />
+
+
 
         {/* Profile completion prompt */}
         {profile && (() => {
@@ -476,6 +489,16 @@ const Dashboard = () => {
 
           {/* Profile Tab */}
           <TabsContent value="profile">
+            {!profile?.phone && (
+              <div className="mb-4 rounded-lg border border-warning/40 bg-warning/10 p-3 flex items-start gap-2 text-sm">
+                <AlertCircle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
+                <p className="text-foreground">
+                  <span className="font-medium">Phone number is required.</span> We use it to
+                  coordinate your application status and contact you about job updates. Please
+                  add it below.
+                </p>
+              </div>
+            )}
             <div className="card-elevated p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold text-foreground">
@@ -568,12 +591,17 @@ const Dashboard = () => {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label>Phone</Label>
+                      <Label>
+                        Phone <span className="text-destructive">*</span>
+                      </Label>
                       <Input
                         value={editForm.phone}
                         onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
                         placeholder="+92 300 1234567"
                       />
+                      <p className="text-xs text-muted-foreground">
+                        Required &mdash; used to contact you about your applications.
+                      </p>
                     </div>
                   </div>
                   <div className="space-y-4">
@@ -704,41 +732,7 @@ const Dashboard = () => {
 
           {/* Documents Tab */}
           <TabsContent value="documents">
-            <div className="card-elevated p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-foreground">
-                  My Documents
-                </h2>
-                <Button className="gap-2">
-                  <Upload className="h-4 w-4" />
-                  Upload Document
-                </Button>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                {["CNIC", "Matric Certificate", "Intermediate Certificate", "Domicile"].map(
-                  (doc) => (
-                    <div
-                      key={doc}
-                      className="flex items-center justify-between p-4 rounded-lg border border-dashed border-border"
-                    >
-                      <div className="flex items-center gap-3">
-                        <FileText className="h-5 w-5 text-muted-foreground" />
-                        <span className="text-muted-foreground">{doc}</span>
-                      </div>
-                      <Button variant="ghost" size="sm">
-                        Upload
-                      </Button>
-                    </div>
-                  )
-                )}
-              </div>
-
-              <p className="mt-4 text-sm text-muted-foreground">
-                Documents are optional but help our AI auto-fill your information
-                and speed up the application process.
-              </p>
-            </div>
+            <MyDocuments />
           </TabsContent>
         </Tabs>
       </div>
