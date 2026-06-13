@@ -91,6 +91,7 @@ const Dashboard = () => {
     province: profile?.province || "",
     domicile: profile?.domicile || "",
     phone: profile?.phone || "",
+    gmail: (profile as any)?.gmail || "",
   });
   const [editEducations, setEditEducations] = useState<EducationEntry[]>([]);
 
