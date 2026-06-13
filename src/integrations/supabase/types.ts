@@ -423,6 +423,7 @@ export type Database = {
           education: Database["public"]["Enums"]["education_level"] | null
           full_name: string
           gender: Database["public"]["Enums"]["gender_type"] | null
+          gmail: string | null
           id: string
           phone: string | null
           province: string | null
@@ -437,6 +438,7 @@ export type Database = {
           education?: Database["public"]["Enums"]["education_level"] | null
           full_name: string
           gender?: Database["public"]["Enums"]["gender_type"] | null
+          gmail?: string | null
           id?: string
           phone?: string | null
           province?: string | null
@@ -451,6 +453,7 @@ export type Database = {
           education?: Database["public"]["Enums"]["education_level"] | null
           full_name?: string
           gender?: Database["public"]["Enums"]["gender_type"] | null
+          gmail?: string | null
           id?: string
           phone?: string | null
           province?: string | null
@@ -489,6 +492,45 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
+        }
+        Relationships: []
+      }
+      team_applications: {
+        Row: {
+          created_at: string
+          cv_path: string | null
+          email: string
+          full_name: string
+          id: string
+          message: string | null
+          phone: string | null
+          position: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          cv_path?: string | null
+          email: string
+          full_name: string
+          id?: string
+          message?: string | null
+          phone?: string | null
+          position: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          cv_path?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          message?: string | null
+          phone?: string | null
+          position?: string
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
