@@ -120,14 +120,7 @@ const Careers = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Join Our Team — Careers at PakJobs</title>
-        <meta
-          name="description"
-          content="Work with PakJobs. Open roles for computer operators, remote operators, application experts, content writers and social media marketers in Pakistan."
-        />
-        <link rel="canonical" href="https://pkjobs.lovable.app/careers" />
-      </Helmet>
+
 
       <main className="container py-10 md:py-14">
         <header className="text-center mb-10 max-w-2xl mx-auto">
