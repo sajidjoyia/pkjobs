@@ -40,6 +40,7 @@ const SeoSettingsManager = () => {
         google_analytics_id: settings.google_analytics_id,
         test_prep_banner_html: settings.test_prep_banner_html,
         jobs_ad_html: settings.jobs_ad_html,
+        test_prep_url: settings.test_prep_url,
       });
     }
   }, [settings]);
