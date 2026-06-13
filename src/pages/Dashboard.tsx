@@ -45,6 +45,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 import MyDocuments from "@/components/dashboard/MyDocuments";
+import TestPrepPromo from "@/components/TestPrepPromo";
 import {
   ServiceDisclaimerBanner,
   ServiceDisclaimerDialog,
