@@ -218,6 +218,38 @@ const SeoSettingsManager = () => {
         </CardContent>
       </Card>
 
+      {/* Test Prep Cross-Promotion */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BookOpen className="h-5 w-5" />
+            Test Preparation Cross-Promotion
+          </CardTitle>
+          <CardDescription>
+            Link to your separate test preparation website. Shown as a branded banner on the Jobs and Dashboard pages.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Test Prep Website URL</Label>
+            <Input
+              placeholder="https://testprep.example.com"
+              value={formData.test_prep_url || ""}
+              onChange={(e) => handleChange("test_prep_url" as any, e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Leave empty to hide the banner. Must start with https://
+            </p>
+          </div>
+          {formData.test_prep_url && (
+            <div className="space-y-2">
+              <Label>Live Preview</Label>
+              <TestPrepPromo />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Default Meta Tags */}
       <Card>
         <CardHeader>
