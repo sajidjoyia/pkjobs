@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { Briefcase, Mail, Phone, MapPin } from "lucide-react";
+import { Briefcase, Mail, Phone, MapPin, BookOpen, ExternalLink } from "lucide-react";
+import { useSeoSettings } from "@/hooks/useSeoSettings";
 
 const Footer = () => {
   return (
