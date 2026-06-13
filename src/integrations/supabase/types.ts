@@ -192,6 +192,7 @@ export type Database = {
           social_twitter: string | null
           social_youtube: string | null
           test_prep_banner_html: string | null
+          test_prep_url: string | null
           updated_at: string
           website_name: string | null
           website_url: string | null
@@ -218,6 +219,7 @@ export type Database = {
           social_twitter?: string | null
           social_youtube?: string | null
           test_prep_banner_html?: string | null
+          test_prep_url?: string | null
           updated_at?: string
           website_name?: string | null
           website_url?: string | null
@@ -244,6 +246,7 @@ export type Database = {
           social_twitter?: string | null
           social_youtube?: string | null
           test_prep_banner_html?: string | null
+          test_prep_url?: string | null
           updated_at?: string
           website_name?: string | null
           website_url?: string | null

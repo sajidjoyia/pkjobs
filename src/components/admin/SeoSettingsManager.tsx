@@ -5,8 +5,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Upload, Globe, Search, BarChart3, Share2, Building2 } from "lucide-react";
+import { Loader2, Upload, Globe, Search, BarChart3, Share2, Building2, BookOpen } from "lucide-react";
 import { useSeoSettings, useUpdateSeoSettings, useUploadSeoAsset, SeoSettingsUpdate } from "@/hooks/useSeoSettings";
+import TestPrepPromo from "@/components/TestPrepPromo";
 
 const SeoSettingsManager = () => {
   const { data: settings, isLoading } = useSeoSettings();
@@ -40,6 +41,7 @@ const SeoSettingsManager = () => {
         google_analytics_id: settings.google_analytics_id,
         test_prep_banner_html: settings.test_prep_banner_html,
         jobs_ad_html: settings.jobs_ad_html,
+        test_prep_url: settings.test_prep_url,
       });
     }
   }, [settings]);
@@ -212,6 +214,38 @@ const SeoSettingsManager = () => {
                 className="p-4 rounded-lg border-l-4 border-accent bg-accent/5"
                 dangerouslySetInnerHTML={{ __html: formData.jobs_ad_html }}
               />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Test Prep Cross-Promotion */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BookOpen className="h-5 w-5" />
+            Test Preparation Cross-Promotion
+          </CardTitle>
+          <CardDescription>
+            Link to your separate test preparation website. Shown as a branded banner on the Jobs and Dashboard pages.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Test Prep Website URL</Label>
+            <Input
+              placeholder="https://testprep.example.com"
+              value={formData.test_prep_url || ""}
+              onChange={(e) => handleChange("test_prep_url" as any, e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Leave empty to hide the banner. Must start with https://
+            </p>
+          </div>
+          {formData.test_prep_url && (
+            <div className="space-y-2">
+              <Label>Live Preview</Label>
+              <TestPrepPromo />
             </div>
           )}
         </CardContent>
