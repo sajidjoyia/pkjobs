@@ -32,6 +32,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 import AdminAdSlot from "@/components/AdminAdSlot";
+import TestPrepPromo from "@/components/TestPrepPromo";
 
 const educationLabels: Record<string, string> = {
   matric: "Matric / SSC",
