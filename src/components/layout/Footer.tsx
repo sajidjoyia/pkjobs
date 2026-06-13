@@ -3,6 +3,9 @@ import { Briefcase, Mail, Phone, MapPin, BookOpen, ExternalLink } from "lucide-r
 import { useSeoSettings } from "@/hooks/useSeoSettings";
 
 const Footer = () => {
+  const { data: settings } = useSeoSettings();
+  const testPrepUrl = settings?.test_prep_url?.trim();
+
   return (
     <footer className="border-t border-border bg-muted/30">
       <div className="container py-12">
