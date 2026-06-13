@@ -143,6 +143,7 @@ const Dashboard = () => {
         province: editForm.province || undefined,
         domicile: editForm.domicile || undefined,
         phone: editForm.phone || undefined,
+        gmail: editForm.gmail ? editForm.gmail.trim() : null,
       });
       
       // Save educations
