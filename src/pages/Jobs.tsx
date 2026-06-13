@@ -154,6 +154,9 @@ const Jobs = () => {
         {/* Admin-controlled advertisement */}
         <AdminAdSlot slot="jobs" />
 
+        {/* Test Prep cross-promotion */}
+        <TestPrepPromo className="mb-4 sm:mb-6" />
+
         {/* Header */}
         <div className="mb-6 sm:mb-8 flex items-start justify-between gap-3">
           <div>
