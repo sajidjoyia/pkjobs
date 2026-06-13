@@ -311,6 +311,9 @@ const Dashboard = () => {
           </div>
         </div>
 
+        {/* Test Prep cross-promotion */}
+        <TestPrepPromo className="mb-6" />
+
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-6">
