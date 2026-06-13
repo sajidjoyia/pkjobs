@@ -72,6 +72,19 @@ const Footer = () => {
                   Terms of Service
                 </Link>
               </li>
+              {testPrepUrl && (
+                <li>
+                  <a
+                    href={testPrepUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1"
+                  >
+                    Test Preparation
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </li>
+              )}
             </ul>
           </div>
 
