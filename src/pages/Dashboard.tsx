@@ -607,6 +607,18 @@ const Dashboard = () => {
                         Required &mdash; used to contact you about your applications.
                       </p>
                     </div>
+                    <div className="space-y-2">
+                      <Label>Gmail address (optional)</Label>
+                      <Input
+                        type="email"
+                        value={editForm.gmail}
+                        onChange={(e) => setEditForm({ ...editForm, gmail: e.target.value })}
+                        placeholder="yourname@gmail.com"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Optional &mdash; lets us connect your Gmail for job updates.
+                      </p>
+                    </div>
                   </div>
                   <div className="space-y-4">
                     <div className="space-y-2">
