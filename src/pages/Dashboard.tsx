@@ -91,6 +91,7 @@ const Dashboard = () => {
     province: profile?.province || "",
     domicile: profile?.domicile || "",
     phone: profile?.phone || "",
+    gmail: (profile as any)?.gmail || "",
   });
   const [editEducations, setEditEducations] = useState<EducationEntry[]>([]);
 
@@ -104,6 +105,7 @@ const Dashboard = () => {
         province: profile.province || "",
         domicile: profile.domicile || "",
         phone: profile.phone || "",
+        gmail: (profile as any).gmail || "",
       });
     }
   }, [profile]);
@@ -141,6 +143,7 @@ const Dashboard = () => {
         province: editForm.province || undefined,
         domicile: editForm.domicile || undefined,
         phone: editForm.phone || undefined,
+        gmail: editForm.gmail ? editForm.gmail.trim() : null,
       });
       
       // Save educations
@@ -540,6 +543,7 @@ const Dashboard = () => {
                         province: profile?.province || "",
                         domicile: profile?.domicile || "",
                         phone: profile?.phone || "",
+                        gmail: (profile as any)?.gmail || "",
                       });
                       setEditEducations(
                         userEducations.map((e) => ({
@@ -601,6 +605,18 @@ const Dashboard = () => {
                       />
                       <p className="text-xs text-muted-foreground">
                         Required &mdash; used to contact you about your applications.
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Gmail address (optional)</Label>
+                      <Input
+                        type="email"
+                        value={editForm.gmail}
+                        onChange={(e) => setEditForm({ ...editForm, gmail: e.target.value })}
+                        placeholder="yourname@gmail.com"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Optional &mdash; lets us connect your Gmail for job updates.
                       </p>
                     </div>
                   </div>
