@@ -74,6 +74,19 @@ const Careers = () => {
   const [cv, setCv] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  useEffect(() => {
+    document.title = "Join Our Team — Careers at PakJobs";
+    const meta = document.querySelector('meta[name="description"]');
+    const prev = meta?.getAttribute("content") ?? null;
+    meta?.setAttribute(
+      "content",
+      "Work with PakJobs. Open roles for computer operators, remote operators, application experts, content writers and social media marketers in Pakistan."
+    );
+    return () => {
+      if (meta && prev !== null) meta.setAttribute("content", prev);
+    };
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.full_name.trim() || !form.email.trim() || !form.position) {
