@@ -28,6 +28,7 @@ const Terms = lazy(() => import("./pages/Terms"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const BulkJobImport = lazy(() => import("./pages/BulkJobImport"));
 const ExpertDashboard = lazy(() => import("./pages/ExpertDashboard"));
+const Careers = lazy(() => import("./pages/Careers"));
 
 export const RQ_PERSIST_KEY = "pkjobs-rq-cache";
 
