@@ -5,8 +5,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Upload, Globe, Search, BarChart3, Share2, Building2 } from "lucide-react";
+import { Loader2, Upload, Globe, Search, BarChart3, Share2, Building2, BookOpen } from "lucide-react";
 import { useSeoSettings, useUpdateSeoSettings, useUploadSeoAsset, SeoSettingsUpdate } from "@/hooks/useSeoSettings";
+import TestPrepPromo from "@/components/TestPrepPromo";
 
 const SeoSettingsManager = () => {
   const { data: settings, isLoading } = useSeoSettings();
