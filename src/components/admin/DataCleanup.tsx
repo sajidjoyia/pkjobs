@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Trash2, RefreshCw, AlertTriangle } from "lucide-react";
+import { Loader2, Trash2, RefreshCw, AlertTriangle, FileDown } from "lucide-react";
 import { toast } from "sonner";
 
 type Row = { id: string; label: string; sub?: string; extra?: string };
@@ -19,12 +19,26 @@ interface SectionProps {
   loading: boolean;
   onDelete: (ids: string[]) => Promise<void>;
   onRefresh: () => void;
+  onExport?: (ids: string[]) => Promise<void>;
   emptyText?: string;
 }
 
-const Section = ({ title, description, rows, loading, onDelete, onRefresh, emptyText }: SectionProps) => {
+const Section = ({ title, description, rows, loading, onDelete, onRefresh, onExport, emptyText }: SectionProps) => {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async () => {
+    if (!onExport || selected.size === 0) return;
+    setExporting(true);
+    try {
+      await onExport(Array.from(selected));
+    } catch (e: any) {
+      toast.error(e.message || "Export failed");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const toggle = (id: string) => {
     setSelected((p) => {
@@ -68,6 +82,18 @@ const Section = ({ title, description, rows, loading, onDelete, onRefresh, empty
             <Button variant="outline" size="sm" onClick={onRefresh} disabled={loading}>
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             </Button>
+            {onExport && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExport}
+                disabled={selected.size === 0 || exporting}
+                className="gap-1.5"
+              >
+                {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+                Export PDF
+              </Button>
+            )}
             <Button
               variant="destructive"
               size="sm"
