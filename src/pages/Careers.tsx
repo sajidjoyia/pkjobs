@@ -100,10 +100,12 @@ const Careers = () => {
 
     setSubmitting(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const folder = user?.id ?? "anon";
       let cv_path: string | null = null;
       if (cv) {
         const safe = cv.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-        const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safe}`;
+        const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safe}`;
         const { error: upErr } = await supabase.storage
           .from("team-cvs")
           .upload(path, cv, { upsert: false, contentType: cv.type });
@@ -118,6 +120,7 @@ const Careers = () => {
         position: form.position,
         message: form.message.trim() || null,
         cv_path,
+        user_id: user?.id ?? null,
       });
       if (error) throw error;
 
