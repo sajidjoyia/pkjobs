@@ -299,6 +299,177 @@ const DataCleanup = () => {
 
   const refreshAll = () => qc.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith("cleanup-") });
 
+  // ---------- PDF export (print-to-PDF via new window) ----------
+  const esc = (v: any) =>
+    String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+  const fmtDate = (d: any) => (d ? new Date(d).toLocaleString() : "—");
+
+  const printReport = (title: string, bodyHtml: string) => {
+    const w = window.open("", "_blank", "width=900,height=700");
+    if (!w) {
+      toast.error("Pop-up blocked. Allow pop-ups to export.");
+      return;
+    }
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title>
+      <style>
+        *{box-sizing:border-box}
+        body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#111;margin:32px;line-height:1.45}
+        h1{font-size:20px;margin:0 0 4px;border-bottom:2px solid #15803d;padding-bottom:6px;color:#15803d}
+        h2{font-size:15px;margin:18px 0 6px;color:#15803d;border-bottom:1px solid #d4d4d8;padding-bottom:3px}
+        h3{font-size:13px;margin:10px 0 4px}
+        .meta{color:#555;font-size:12px;margin-bottom:14px}
+        .record{border:1px solid #d4d4d8;border-radius:6px;padding:12px;margin-bottom:18px;page-break-inside:avoid}
+        .kv{display:grid;grid-template-columns:160px 1fr;gap:4px 12px;font-size:12px}
+        .kv dt{color:#555;font-weight:600}
+        .kv dd{margin:0}
+        .chat{margin-top:10px;border-top:1px dashed #d4d4d8;padding-top:8px}
+        .msg{font-size:12px;margin:4px 0;padding:6px 8px;background:#f4f4f5;border-radius:4px}
+        .msg .who{font-weight:600;color:#15803d}
+        .msg .ts{color:#777;font-size:10px;margin-left:6px}
+        .empty{color:#888;font-style:italic;font-size:12px}
+        @media print{ body{margin:14mm} .no-print{display:none} button{display:none} }
+        .bar{position:fixed;top:8px;right:8px}
+        .bar button{background:#15803d;color:#fff;border:0;padding:8px 14px;border-radius:4px;cursor:pointer;font-size:13px}
+      </style></head><body>
+      <div class="bar no-print"><button onclick="window.print()">Save as PDF / Print</button></div>
+      <h1>${esc(title)}</h1>
+      <div class="meta">Generated ${new Date().toLocaleString()} • PakJobs Admin Export</div>
+      ${bodyHtml}
+      </body></html>`);
+    w.document.close();
+  };
+
+  const renderChat = async (filter: { application_id?: string; work_request_id?: string; user_id?: string }) => {
+    let q = supabase.from("conversations").select("id, subject, created_at, user_id, application_id, work_request_id");
+    if (filter.application_id) q = q.eq("application_id", filter.application_id);
+    else if (filter.work_request_id) q = q.eq("work_request_id", filter.work_request_id);
+    else if (filter.user_id) q = q.eq("user_id", filter.user_id);
+    const { data: convs } = await q;
+    if (!convs?.length) return '<p class="empty">No chat history.</p>';
+    const convIds = convs.map((c) => c.id);
+    const { data: msgs } = await supabase
+      .from("messages")
+      .select("id, conversation_id, sender_id, content, created_at, attachment_name")
+      .in("conversation_id", convIds)
+      .order("created_at", { ascending: true });
+    const senderIds = [...new Set((msgs || []).map((m: any) => m.sender_id))];
+    const { data: profs } = await supabase.from("profiles").select("user_id, full_name").in("user_id", senderIds);
+    const nameMap = new Map((profs || []).map((p: any) => [p.user_id, p.full_name]));
+    return convs
+      .map((c: any) => {
+        const cms = (msgs || []).filter((m: any) => m.conversation_id === c.id);
+        return `<h3>Conversation: ${esc(c.subject || "General")}</h3>
+          ${cms.length === 0 ? '<p class="empty">No messages.</p>' : cms
+            .map(
+              (m: any) =>
+                `<div class="msg"><span class="who">${esc(nameMap.get(m.sender_id) || "User")}</span><span class="ts">${fmtDate(
+                  m.created_at
+                )}</span><div>${esc(m.content)}${m.attachment_name ? ` 📎 ${esc(m.attachment_name)}` : ""}</div></div>`
+            )
+            .join("")}`;
+      })
+      .join("");
+  };
+
+  const exportApplications = async (ids: string[]) => {
+    const { data: apps } = await supabase
+      .from("applications")
+      .select("*, job:jobs(title, department, total_fee, last_date), profile:profiles!applications_user_id_fkey(full_name, phone, email, cnic, province, city)")
+      .in("id", ids);
+    const sections = await Promise.all(
+      (apps || []).map(async (a: any) => {
+        const chat = await renderChat({ application_id: a.id });
+        return `<div class="record">
+          <h2>${esc(a.job?.title || "Application")} — ${esc(a.profile?.full_name || "User")}</h2>
+          <dl class="kv">
+            <dt>Job</dt><dd>${esc(a.job?.title || "—")} (${esc(a.job?.department || "—")})</dd>
+            <dt>Job fee</dt><dd>Rs ${esc(a.job?.total_fee ?? "—")}</dd>
+            <dt>Applicant</dt><dd>${esc(a.profile?.full_name || "—")}</dd>
+            <dt>Phone</dt><dd>${esc(a.profile?.phone || "—")}</dd>
+            <dt>Email</dt><dd>${esc(a.profile?.email || "—")}</dd>
+            <dt>CNIC</dt><dd>${esc(a.profile?.cnic || "—")}</dd>
+            <dt>Location</dt><dd>${esc(a.profile?.city || "")} ${esc(a.profile?.province || "")}</dd>
+            <dt>Status</dt><dd>${esc(a.status)}</dd>
+            <dt>Payment</dt><dd>Rs ${esc(a.payment_amount ?? "—")} on ${fmtDate(a.payment_date)}</dd>
+            <dt>Receipt</dt><dd>${esc(a.receipt_url || "—")}</dd>
+            <dt>Notes</dt><dd>${esc(a.notes || "—")}</dd>
+            <dt>Created</dt><dd>${fmtDate(a.created_at)}</dd>
+            <dt>Updated</dt><dd>${fmtDate(a.updated_at)}</dd>
+          </dl>
+          <div class="chat"><h3>Chat History</h3>${chat}</div>
+        </div>`;
+      })
+    );
+    printReport(`Applications Archive (${ids.length})`, sections.join(""));
+  };
+
+  const exportWorkRequests = async (ids: string[]) => {
+    const { data: wrs } = await supabase
+      .from("work_requests")
+      .select("*, category:service_categories(display_name), profile:profiles!work_requests_user_id_fkey(full_name, phone, email)")
+      .in("id", ids);
+    const sections = await Promise.all(
+      (wrs || []).map(async (w: any) => {
+        const chat = await renderChat({ work_request_id: w.id });
+        return `<div class="record">
+          <h2>${esc(w.category?.display_name || "Work Request")} — ${esc(w.profile?.full_name || "User")}</h2>
+          <dl class="kv">
+            <dt>Category</dt><dd>${esc(w.category?.display_name || "—")}</dd>
+            <dt>User</dt><dd>${esc(w.profile?.full_name || "—")}</dd>
+            <dt>Phone</dt><dd>${esc(w.profile?.phone || "—")}</dd>
+            <dt>Email</dt><dd>${esc(w.profile?.email || "—")}</dd>
+            <dt>Status</dt><dd>${esc(w.status)}</dd>
+            <dt>Payment</dt><dd>Rs ${esc(w.payment_amount ?? "—")} on ${fmtDate(w.payment_date)}</dd>
+            <dt>Notes</dt><dd>${esc(w.notes || "—")}</dd>
+            <dt>Created</dt><dd>${fmtDate(w.created_at)}</dd>
+            <dt>Updated</dt><dd>${fmtDate(w.updated_at)}</dd>
+          </dl>
+          <div class="chat"><h3>Chat History</h3>${chat}</div>
+        </div>`;
+      })
+    );
+    printReport(`Work Requests Archive (${ids.length})`, sections.join(""));
+  };
+
+  const exportInactiveUsers = async (ids: string[]) => {
+    const items = (inactiveUsers.data || []).filter((u: any) => ids.includes(u.id));
+    const sections = await Promise.all(
+      items.map(async (u: any) => {
+        const chat = await renderChat({ user_id: u.user_id });
+        return `<div class="record">
+          <h2>${esc(u.full_name || "Unnamed")}</h2>
+          <dl class="kv">
+            <dt>Full name</dt><dd>${esc(u.full_name || "—")}</dd>
+            <dt>Phone</dt><dd>${esc(u.phone || "—")}</dd>
+            <dt>User ID</dt><dd>${esc(u.user_id)}</dd>
+            <dt>Joined</dt><dd>${fmtDate(u.created_at)}</dd>
+          </dl>
+          <div class="chat"><h3>Chat History</h3>${chat}</div>
+        </div>`;
+      })
+    );
+    printReport(`Inactive Users Archive (${ids.length})`, sections.join(""));
+  };
+
+  const exportTeamApps = async (ids: string[]) => {
+    const items = (oldTeamApps.data || []).filter((t: any) => ids.includes(t.id));
+    const html = items
+      .map(
+        (t: any) => `<div class="record">
+          <h2>${esc(t.full_name)} — ${esc(t.position)}</h2>
+          <dl class="kv">
+            <dt>Email</dt><dd>${esc(t.email)}</dd>
+            <dt>Position</dt><dd>${esc(t.position)}</dd>
+            <dt>CV path</dt><dd>${esc(t.cv_path || "—")}</dd>
+            <dt>Submitted</dt><dd>${fmtDate(t.created_at)}</dd>
+          </dl>
+        </div>`
+      )
+      .join("");
+    printReport(`Career CV Archive (${ids.length})`, html);
+  };
+
+
   return (
     <div className="space-y-6">
       <Card className="border-warning/40 bg-warning/5">
@@ -371,6 +542,7 @@ const DataCleanup = () => {
             extra: new Date(a.updated_at).toLocaleDateString(),
           }))}
           onDelete={deleteAppsWithReceipts}
+          onExport={exportApplications}
           onRefresh={() => completedApps.refetch()}
         />
 
@@ -384,6 +556,7 @@ const DataCleanup = () => {
             extra: new Date(w.updated_at).toLocaleDateString(),
           }))}
           onDelete={deleteWRWithReceipts}
+          onExport={exportWorkRequests}
           onRefresh={() => completedWR.refetch()}
         />
 
@@ -398,6 +571,7 @@ const DataCleanup = () => {
             extra: new Date(u.created_at).toLocaleDateString(),
           }))}
           onDelete={deleteFromTable("profiles")}
+          onExport={exportInactiveUsers}
           onRefresh={() => inactiveUsers.refetch()}
         />
 
@@ -426,6 +600,7 @@ const DataCleanup = () => {
             extra: new Date(t.created_at).toLocaleDateString(),
           }))}
           onDelete={deleteTeamAppsWithCVs}
+          onExport={exportTeamApps}
           onRefresh={() => oldTeamApps.refetch()}
         />
       </div>
