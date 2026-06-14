@@ -66,6 +66,8 @@ const WhatsAppBulkMessaging = lazy(() => import("@/components/admin/WhatsAppBulk
 import { useExpertUsers } from "@/hooks/useExperts";
 import { BarChart3, UserCheck, MessageSquare as MessageSquareIcon } from "lucide-react";
 import ApplicationDetailsDialog from "@/components/admin/ApplicationDetailsDialog";
+const DataCleanup = lazy(() => import("@/components/admin/DataCleanup"));
+import { Trash } from "lucide-react";
 const PROVINCE_OPTIONS = [
   { value: "Punjab", label: "Punjab" },
   { value: "Sindh", label: "Sindh" },
@@ -566,6 +568,9 @@ const Admin = () => {
             <TabsTrigger value="whatsapp" className="gap-1.5 text-xs sm:text-sm">
               <MessageSquareIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> WhatsApp
             </TabsTrigger>
+            <TabsTrigger value="cleanup" className="gap-1.5 text-xs sm:text-sm">
+              <Trash className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Cleanup
+            </TabsTrigger>
           </TabsList>
 
           {/* Jobs Tab */}
@@ -981,6 +986,13 @@ const Admin = () => {
           <TabsContent value="whatsapp">
             <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
               <WhatsAppBulkMessaging />
+            </Suspense>
+          </TabsContent>
+
+          {/* Cleanup Tab */}
+          <TabsContent value="cleanup">
+            <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+              <DataCleanup />
             </Suspense>
           </TabsContent>
         </Tabs>
