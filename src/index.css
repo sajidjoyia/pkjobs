@@ -262,3 +262,11 @@
     display: none;
   }
 }
+
+@layer utilities {
+  @keyframes news-marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  [dir="rtl"] .news-marquee { animation-direction: reverse; }
+}
