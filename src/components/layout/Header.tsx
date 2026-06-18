@@ -4,6 +4,7 @@ import { Menu, X, Briefcase, User, Shield, LogOut, UserCheck } from "lucide-reac
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import ThemeToggle from "@/components/ThemeToggle";
+import LanguageToggle from "@/components/LanguageToggle";
 import NotificationDropdown from "@/components/NotificationDropdown";
 import RequestWorkDropdown from "@/components/RequestWorkDropdown";
 
