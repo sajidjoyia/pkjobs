@@ -569,6 +569,9 @@ const Admin = () => {
             <TabsTrigger value="whatsapp" className="gap-1.5 text-xs sm:text-sm">
               <MessageSquareIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> WhatsApp
             </TabsTrigger>
+            <TabsTrigger value="news" className="gap-1.5 text-xs sm:text-sm">
+              <Megaphone className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> News
+            </TabsTrigger>
             <TabsTrigger value="cleanup" className="gap-1.5 text-xs sm:text-sm">
               <Trash className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Cleanup
             </TabsTrigger>
