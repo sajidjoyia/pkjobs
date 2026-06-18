@@ -62,50 +62,54 @@ const App = () => (
     persistOptions={{ persister: persister!, maxAge: 1000 * 60 * 60 * 24, buster: "v1" }}
   >
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AuthProvider>
-            <Layout>
-              <Suspense fallback={<PageLoader />}>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/jobs" element={<Jobs />} />
-                  <Route path="/jobs/:id" element={<JobDetail />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/about" element={<About />} />
-                  <Route path="/faq" element={<FAQ />} />
-                  <Route path="/privacy" element={<Privacy />} />
-                  <Route path="/terms" element={<Terms />} />
-                  <Route path="/careers" element={<Careers />} />
-                  <Route path="/dashboard" element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin" element={
-                    <ProtectedRoute requireAdmin>
-                      <Admin />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/bulk-import" element={
-                    <ProtectedRoute requireAdmin>
-                      <BulkJobImport />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/expert" element={
-                    <ProtectedRoute requireExpert>
-                      <ExpertDashboard />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
-            </Layout>
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
+      <LanguageProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AuthProvider>
+              <Layout>
+                <Suspense fallback={<PageLoader />}>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/jobs" element={<Jobs />} />
+                    <Route path="/jobs/:id" element={<JobDetail />} />
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/faq" element={<FAQ />} />
+                    <Route path="/privacy" element={<Privacy />} />
+                    <Route path="/terms" element={<Terms />} />
+                    <Route path="/careers" element={<Careers />} />
+                    <Route path="/dashboard" element={
+                      <ProtectedRoute>
+                        <Dashboard />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/admin" element={
+                      <ProtectedRoute requireAdmin>
+                        <Admin />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/admin/bulk-import" element={
+                      <ProtectedRoute requireAdmin>
+                        <BulkJobImport />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/expert" element={
+                      <ProtectedRoute requireExpert>
+                        <ExpertDashboard />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+              </Layout>
+            </AuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </LanguageProvider>
     </ThemeProvider>
   </PersistQueryClientProvider>
 );
