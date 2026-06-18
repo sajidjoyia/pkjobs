@@ -183,6 +183,7 @@ export type Database = {
           id: string
           jobs_ad_html: string | null
           logo_url: string | null
+          news_scroll_speed_seconds: number
           organization_name: string | null
           site_description: string | null
           site_title: string | null
@@ -210,6 +211,7 @@ export type Database = {
           id?: string
           jobs_ad_html?: string | null
           logo_url?: string | null
+          news_scroll_speed_seconds?: number
           organization_name?: string | null
           site_description?: string | null
           site_title?: string | null
@@ -237,6 +239,7 @@ export type Database = {
           id?: string
           jobs_ad_html?: string | null
           logo_url?: string | null
+          news_scroll_speed_seconds?: number
           organization_name?: string | null
           site_description?: string | null
           site_title?: string | null
@@ -380,6 +383,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      news_items: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          sort_order: number
+          title: string
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          sort_order?: number
+          title: string
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          sort_order?: number
+          title?: string
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: []
       }
       notifications: {
         Row: {

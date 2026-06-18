@@ -38,6 +38,8 @@ const ChatWidget = () => {
   const [showNewChat, setShowNewChat] = useState(false);
   const [vibrate, setVibrate] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const windowRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const { data: conversations = [], isLoading: loadingConversations } = useMyConversations();
   const { data: messages = [], isLoading: loadingMessages } = useMessages(selectedConversation);
@@ -84,7 +86,7 @@ const ChatWidget = () => {
     return () => window.removeEventListener('openChatWindow', handler);
   }, []);
 
-  // Subscribe to new incoming messages globally — open chat & vibrate icon
+  // Subscribe to new incoming messages globally — vibrate icon (do NOT auto-open)
   useEffect(() => {
     if (!user) return;
     const channel = supabase
@@ -95,10 +97,7 @@ const ChatWidget = () => {
         (payload) => {
           const msg = payload.new as { sender_id: string; conversation_id: string };
           if (msg.sender_id === user.id) return;
-          // Auto-open chat window for the new message
-          setIsOpen(true);
-          setSelectedConversation(msg.conversation_id);
-          // Trigger vibration animation
+          // Trigger vibration animation only — let the user click to open
           setVibrate(true);
           window.setTimeout(() => setVibrate(false), 1200);
         }
@@ -108,6 +107,22 @@ const ChatWidget = () => {
       supabase.removeChannel(channel);
     };
   }, [user?.id]);
+
+  // Close chat window when clicking outside
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (
+        windowRef.current && !windowRef.current.contains(target) &&
+        buttonRef.current && !buttonRef.current.contains(target)
+      ) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -149,6 +164,7 @@ const ChatWidget = () => {
     <>
       {/* Chat Button */}
       <Button
+        ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           "fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg",
@@ -161,7 +177,7 @@ const ChatWidget = () => {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-50 w-80 sm:w-96 h-[500px] bg-background border rounded-lg shadow-xl flex flex-col">
+        <div ref={windowRef} className="fixed bottom-24 right-6 z-50 w-80 sm:w-96 h-[500px] bg-background border rounded-lg shadow-xl flex flex-col">
           {/* Header */}
           <div className="p-4 border-b bg-primary text-primary-foreground rounded-t-lg">
             <h3 className="font-semibold">

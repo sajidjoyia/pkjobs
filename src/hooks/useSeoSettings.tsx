@@ -26,6 +26,7 @@ export interface SeoSettings {
   test_prep_banner_html: string | null;
   jobs_ad_html: string | null;
   test_prep_url: string | null;
+  news_scroll_speed_seconds?: number;
   created_at: string;
   updated_at: string;
 }

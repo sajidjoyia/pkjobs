@@ -45,6 +45,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 import MyDocuments from "@/components/dashboard/MyDocuments";
+import ChangePassword from "@/components/dashboard/ChangePassword";
 import TestPrepPromo from "@/components/TestPrepPromo";
 import {
   ServiceDisclaimerBanner,
@@ -747,6 +748,9 @@ const Dashboard = () => {
                   </div>
                 </div>
               )}
+            </div>
+            <div className="mt-6">
+              <ChangePassword />
             </div>
           </TabsContent>
 

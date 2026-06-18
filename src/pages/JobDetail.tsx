@@ -25,6 +25,7 @@ import { isEligibleForJob, useUserEducations } from "@/hooks/useProfile";
 import { useEducationFields } from "@/hooks/useEducationFields";
 import { toast } from "sonner";
 import ShareButtons from "@/components/ShareButtons";
+import GlobalSeoHead from "@/components/seo/GlobalSeoHead";
 import TestPrepBanner from "@/components/TestPrepBanner";
 import { useState } from "react";
 import { ExternalLink } from "lucide-react";
@@ -186,6 +187,13 @@ const JobDetail = () => {
 
   return (
     <div className="py-8">
+      <GlobalSeoHead
+        pageTitle={`${job.title} — ${job.department}`}
+        pageDescription={job.description ? job.description.slice(0, 160) : `Apply for ${job.title} in ${job.department}. Last date: ${new Date(job.last_date).toLocaleDateString()}.`}
+        pageOgTitle={`${job.title} — ${job.department}`}
+        pageOgDescription={job.description ? job.description.slice(0, 160) : undefined}
+        pageOgImage={(job as any).advertisement_image || undefined}
+      />
       <div className="container max-w-5xl">
         {/* Back button */}
         <Link
