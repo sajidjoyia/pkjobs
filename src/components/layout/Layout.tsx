@@ -3,10 +3,10 @@ import Header from "./Header";
 import Footer from "./Footer";
 import MobileBottomNav from "./MobileBottomNav";
 import GlobalSeoHead from "@/components/seo/GlobalSeoHead";
+import NewsBar from "@/components/NewsBar";
+import SessionExpiredBanner from "@/components/SessionExpiredBanner";
 import { useAuth } from "@/hooks/useAuth";
 
-// Chat widget is heavy (Supabase Realtime channels, attachments, message bubbles).
-// Lazy-load it AND only mount when a user is signed in so guests don't pay the cost.
 const ChatWidget = lazy(() => import("@/components/chat/ChatWidget"));
 
 interface LayoutProps {
@@ -19,6 +19,8 @@ const Layout = ({ children }: LayoutProps) => {
   return (
     <div className="min-h-screen flex flex-col">
       <GlobalSeoHead />
+      <SessionExpiredBanner />
+      <NewsBar />
       <Header />
       <main className="flex-1 pb-16 md:pb-0">{children}</main>
       <div className="hidden md:block">
