@@ -93,10 +93,12 @@ const Auth = () => {
         return;
       }
 
+      const from = (location.state as any)?.from?.pathname || "/dashboard";
+
       if (isLogin) {
         const { error } = await signIn(formData.email, formData.password);
         if (!error) {
-          navigate("/dashboard");
+          navigate(from, { replace: true });
         }
       } else {
         const nameResult = nameSchema.safeParse(formData.name);
@@ -131,7 +133,7 @@ const Auth = () => {
         });
 
         if (!error) {
-          navigate("/dashboard");
+          navigate(from, { replace: true });
         } else {
           refreshCaptcha();
         }
