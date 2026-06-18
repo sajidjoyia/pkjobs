@@ -993,6 +993,13 @@ const Admin = () => {
             </Suspense>
           </TabsContent>
 
+          {/* News Tab */}
+          <TabsContent value="news">
+            <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+              <NewsManager />
+            </Suspense>
+          </TabsContent>
+
           {/* Cleanup Tab */}
           <TabsContent value="cleanup">
             <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
