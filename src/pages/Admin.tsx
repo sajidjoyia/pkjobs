@@ -67,7 +67,8 @@ import { useExpertUsers } from "@/hooks/useExperts";
 import { BarChart3, UserCheck, MessageSquare as MessageSquareIcon } from "lucide-react";
 import ApplicationDetailsDialog from "@/components/admin/ApplicationDetailsDialog";
 const DataCleanup = lazy(() => import("@/components/admin/DataCleanup"));
-import { Trash } from "lucide-react";
+const NewsManager = lazy(() => import("@/components/admin/NewsManager"));
+import { Trash, Megaphone } from "lucide-react";
 const PROVINCE_OPTIONS = [
   { value: "Punjab", label: "Punjab" },
   { value: "Sindh", label: "Sindh" },
