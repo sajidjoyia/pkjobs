@@ -38,6 +38,8 @@ const ChatWidget = () => {
   const [showNewChat, setShowNewChat] = useState(false);
   const [vibrate, setVibrate] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const windowRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const { data: conversations = [], isLoading: loadingConversations } = useMyConversations();
   const { data: messages = [], isLoading: loadingMessages } = useMessages(selectedConversation);
