@@ -57,6 +57,7 @@ const Header = () => {
 
         <div className="hidden md:flex items-center gap-3">
           <RequestWorkDropdown />
+          <LanguageToggle />
           <ThemeToggle />
           {!loading && user && <NotificationDropdown />}
           {!loading && user ? (
