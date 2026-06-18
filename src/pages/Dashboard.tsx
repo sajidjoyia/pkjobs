@@ -749,6 +749,9 @@ const Dashboard = () => {
                 </div>
               )}
             </div>
+            <div className="mt-6">
+              <ChangePassword />
+            </div>
           </TabsContent>
 
           {/* Documents Tab */}
