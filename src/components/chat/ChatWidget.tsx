@@ -86,7 +86,7 @@ const ChatWidget = () => {
     return () => window.removeEventListener('openChatWindow', handler);
   }, []);
 
-  // Subscribe to new incoming messages globally — open chat & vibrate icon
+  // Subscribe to new incoming messages globally — vibrate icon (do NOT auto-open)
   useEffect(() => {
     if (!user) return;
     const channel = supabase
@@ -97,10 +97,7 @@ const ChatWidget = () => {
         (payload) => {
           const msg = payload.new as { sender_id: string; conversation_id: string };
           if (msg.sender_id === user.id) return;
-          // Auto-open chat window for the new message
-          setIsOpen(true);
-          setSelectedConversation(msg.conversation_id);
-          // Trigger vibration animation
+          // Trigger vibration animation only — let the user click to open
           setVibrate(true);
           window.setTimeout(() => setVibrate(false), 1200);
         }
@@ -110,6 +107,22 @@ const ChatWidget = () => {
       supabase.removeChannel(channel);
     };
   }, [user?.id]);
+
+  // Close chat window when clicking outside
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (
+        windowRef.current && !windowRef.current.contains(target) &&
+        buttonRef.current && !buttonRef.current.contains(target)
+      ) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
