@@ -25,6 +25,7 @@ import { isEligibleForJob, useUserEducations } from "@/hooks/useProfile";
 import { useEducationFields } from "@/hooks/useEducationFields";
 import { toast } from "sonner";
 import ShareButtons from "@/components/ShareButtons";
+import GlobalSeoHead from "@/components/seo/GlobalSeoHead";
 import TestPrepBanner from "@/components/TestPrepBanner";
 import { useState } from "react";
 import { ExternalLink } from "lucide-react";
