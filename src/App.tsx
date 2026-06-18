@@ -11,6 +11,7 @@ import Layout from "./components/layout/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { lazy, Suspense } from "react";
 import { Loader2 } from "lucide-react";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 
 // Eager load critical pages
 import Index from "./pages/Index";
@@ -19,6 +20,8 @@ import Jobs from "./pages/Jobs";
 // Lazy load non-critical pages
 const JobDetail = lazy(() => import("./pages/JobDetail"));
 const Auth = lazy(() => import("./pages/Auth"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Admin = lazy(() => import("./pages/Admin"));
 const About = lazy(() => import("./pages/About"));
