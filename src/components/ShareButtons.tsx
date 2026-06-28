@@ -6,17 +6,23 @@ interface ShareButtonsProps {
   title: string;
   url?: string;
   description?: string;
+  /**
+   * Optional alternative URL to hand to Facebook's sharer. Use this when
+   * you have a crawler-friendly endpoint (e.g. an edge function that
+   * serves OG meta on first scrape) — humans following the share link
+   * will be auto-redirected to the canonical page.
+   */
+  facebookUrl?: string;
 }
 
-const ShareButtons = ({ title, url, description }: ShareButtonsProps) => {
+const ShareButtons = ({ title, url, description, facebookUrl }: ShareButtonsProps) => {
   const shareUrl = url || window.location.href;
-  const shareText = description 
-    ? `${title} - ${description}` 
+  const shareText = description
+    ? `${title} - ${description}`
     : `Check out this job: ${title}`;
-  
+
   const encodedUrl = encodeURIComponent(shareUrl);
   const encodedText = encodeURIComponent(shareText);
-  const encodedTitle = encodeURIComponent(title);
 
   const handleWhatsAppShare = () => {
     window.open(
@@ -27,8 +33,9 @@ const ShareButtons = ({ title, url, description }: ShareButtonsProps) => {
   };
 
   const handleFacebookShare = () => {
+    const fbTarget = encodeURIComponent(facebookUrl || shareUrl);
     window.open(
-      `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedText}`,
+      `https://www.facebook.com/sharer/sharer.php?u=${fbTarget}&quote=${encodedText}`,
       "_blank",
       "noopener,noreferrer,width=600,height=400"
     );

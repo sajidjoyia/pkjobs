@@ -8,6 +8,8 @@ interface GlobalSeoHeadProps {
   pageOgImage?: string;
   pageOgTitle?: string;
   pageOgDescription?: string;
+  /** Absolute canonical URL for this page. Also used as og:url. */
+  canonicalUrl?: string;
 }
 
 const GlobalSeoHead = ({
@@ -17,19 +19,17 @@ const GlobalSeoHead = ({
   pageOgImage,
   pageOgTitle,
   pageOgDescription,
+  canonicalUrl,
 }: GlobalSeoHeadProps) => {
   const { data: settings } = useSeoSettings();
 
   useEffect(() => {
     if (!settings) return;
 
-    // Helper to set or update meta tag
     const setMetaTag = (name: string, content: string | null, property?: boolean) => {
       if (!content) return;
-      
       const attr = property ? "property" : "name";
       let meta = document.querySelector(`meta[${attr}="${name}"]`) as HTMLMetaElement;
-      
       if (!meta) {
         meta = document.createElement("meta");
         meta.setAttribute(attr, name);
@@ -38,47 +38,53 @@ const GlobalSeoHead = ({
       meta.setAttribute("content", content);
     };
 
-    // Title
-    const title = pageTitle || settings.default_meta_title || settings.site_title;
-    if (title) {
-      document.title = title;
-    }
+    const setCanonical = (href: string) => {
+      let link = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+      if (!link) {
+        link = document.createElement("link");
+        link.setAttribute("rel", "canonical");
+        document.head.appendChild(link);
+      }
+      link.setAttribute("href", href);
+    };
 
-    // Meta Description
+    const title = pageTitle || settings.default_meta_title || settings.site_title;
+    if (title) document.title = title;
+
     const description = pageDescription || settings.default_meta_description || settings.site_description;
     setMetaTag("description", description);
 
-    // Meta Keywords
     const keywords = pageKeywords || settings.default_meta_keywords;
-    if (keywords) {
-      setMetaTag("keywords", keywords);
-    }
+    if (keywords) setMetaTag("keywords", keywords);
 
-    // Open Graph
     const ogTitle = pageOgTitle || settings.default_og_title || title;
     const ogDescription = pageOgDescription || settings.default_og_description || description;
     const ogImage = pageOgImage || settings.default_og_image_url;
 
-    setMetaTag("og:title", ogTitle, true);
-    setMetaTag("og:description", ogDescription, true);
-    setMetaTag("og:type", "website", true);
-    if (ogImage) {
-      setMetaTag("og:image", ogImage, true);
-    }
-    if (settings.website_url) {
-      setMetaTag("og:url", settings.website_url, true);
-    }
-    if (settings.website_name) {
-      setMetaTag("og:site_name", settings.website_name, true);
+    // Canonical + og:url — self-referential per route so crawlers attribute
+    // metadata to the correct URL rather than the homepage.
+    const pageUrl =
+      canonicalUrl ||
+      (typeof window !== "undefined"
+        ? `${window.location.origin}${window.location.pathname}`
+        : settings.website_url) ||
+      undefined;
+
+    if (pageUrl) {
+      setCanonical(pageUrl);
+      setMetaTag("og:url", pageUrl, true);
     }
 
-    // Twitter Card
+    setMetaTag("og:title", ogTitle, true);
+    setMetaTag("og:description", ogDescription, true);
+    setMetaTag("og:type", canonicalUrl ? "article" : "website", true);
+    if (ogImage) setMetaTag("og:image", ogImage, true);
+    if (settings.website_name) setMetaTag("og:site_name", settings.website_name, true);
+
     setMetaTag("twitter:card", "summary_large_image");
     setMetaTag("twitter:title", ogTitle);
     setMetaTag("twitter:description", ogDescription);
-    if (ogImage) {
-      setMetaTag("twitter:image", ogImage);
-    }
+    if (ogImage) setMetaTag("twitter:image", ogImage);
 
     // Google Search Console Verification
     if (settings.google_search_console_verification) {
@@ -162,7 +168,7 @@ const GlobalSeoHead = ({
     return () => {
       // Note: We don't remove meta tags on unmount as they should persist
     };
-  }, [settings, pageTitle, pageDescription, pageKeywords, pageOgImage, pageOgTitle, pageOgDescription]);
+  }, [settings, pageTitle, pageDescription, pageKeywords, pageOgImage, pageOgTitle, pageOgDescription, canonicalUrl]);
 
   return null; // This component only manages head elements
 };
