@@ -20,8 +20,8 @@ const Layout = ({ children }: LayoutProps) => {
     <div className="min-h-screen flex flex-col">
       <GlobalSeoHead />
       <SessionExpiredBanner />
-      <NewsBar />
       <Header />
+      <NewsBar />
       <main className="flex-1 pb-16 md:pb-0">{children}</main>
       <div className="hidden md:block">
         <Footer />
