@@ -4,7 +4,7 @@ import { Menu, X, Briefcase, User, Shield, LogOut, UserCheck } from "lucide-reac
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import ThemeToggle from "@/components/ThemeToggle";
-import LanguageToggle from "@/components/LanguageToggle";
+
 import NotificationDropdown from "@/components/NotificationDropdown";
 import RequestWorkDropdown from "@/components/RequestWorkDropdown";
 
@@ -57,7 +57,6 @@ const Header = () => {
 
         <div className="hidden md:flex items-center gap-3">
           <RequestWorkDropdown />
-          <LanguageToggle />
           <ThemeToggle />
           {!loading && user && <NotificationDropdown />}
           {!loading && user ? (
@@ -103,7 +102,6 @@ const Header = () => {
 
         {/* Mobile Menu Button */}
         <div className="md:hidden flex items-center gap-1">
-          <LanguageToggle />
           <button className="p-2" onClick={() => setIsMenuOpen(!isMenuOpen)}>
             {isMenuOpen ? <X className="h-6 w-6 text-foreground" /> : <Menu className="h-6 w-6 text-foreground" />}
           </button>

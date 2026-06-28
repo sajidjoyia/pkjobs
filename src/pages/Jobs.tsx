@@ -22,6 +22,8 @@ import {
   CheckCircle,
   ChevronLeft,
   ChevronRight,
+  LogIn,
+  AlertCircle,
 } from "lucide-react";
 import { useJobs, Job } from "@/hooks/useJobs";
 import { useAuth } from "@/hooks/useAuth";
@@ -33,6 +35,7 @@ import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 import AdminAdSlot from "@/components/AdminAdSlot";
 import TestPrepPromo from "@/components/TestPrepPromo";
+import { useLocation } from "react-router-dom";
 
 const educationLabels: Record<string, string> = {
   matric: "Matric / SSC",
@@ -59,6 +62,7 @@ const Jobs = () => {
   });
 
   const { profile, user } = useAuth();
+  const location = useLocation();
   const { data: userEducations } = useUserEducations(user?.id);
   const { data: allEducationFields } = useEducationFields();
   const qc = useQueryClient();
@@ -264,8 +268,43 @@ const Jobs = () => {
 
         {/* Error */}
         {error && (
-          <div className="text-center py-12">
-            <p className="text-destructive">Failed to load jobs. Please try again.</p>
+          <div className="card-elevated p-6 sm:p-8 text-center">
+            <AlertCircle className="h-10 w-10 text-warning mx-auto mb-3" />
+            {!user ? (
+              <>
+                <h3 className="text-lg font-semibold text-foreground mb-2">Please sign in to view jobs</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  You need an account to browse and apply for jobs. It only takes a minute.
+                </p>
+                <div className="flex flex-wrap justify-center gap-2">
+                  <Link to="/auth" state={{ from: location.pathname }}>
+                    <Button size="sm" className="gap-1.5">
+                      <LogIn className="h-4 w-4" /> Sign In
+                    </Button>
+                  </Link>
+                  <Link to="/auth?mode=register" state={{ from: location.pathname }}>
+                    <Button variant="outline" size="sm">Create Account</Button>
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3 className="text-lg font-semibold text-foreground mb-2">Something went wrong</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  We couldn't load jobs. Your session may have expired — try signing in again.
+                </p>
+                <div className="flex flex-wrap justify-center gap-2">
+                  <Button size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["jobs"] })}>
+                    Retry
+                  </Button>
+                  <Link to="/auth" state={{ from: location.pathname }}>
+                    <Button variant="outline" size="sm" className="gap-1.5">
+                      <LogIn className="h-4 w-4" /> Sign In Again
+                    </Button>
+                  </Link>
+                </div>
+              </>
+            )}
           </div>
         )}
 
