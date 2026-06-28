@@ -22,6 +22,8 @@ import {
   CheckCircle,
   ChevronLeft,
   ChevronRight,
+  LogIn,
+  AlertCircle,
 } from "lucide-react";
 import { useJobs, Job } from "@/hooks/useJobs";
 import { useAuth } from "@/hooks/useAuth";
@@ -33,6 +35,7 @@ import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 import AdminAdSlot from "@/components/AdminAdSlot";
 import TestPrepPromo from "@/components/TestPrepPromo";
+import { useLocation } from "react-router-dom";
 
 const educationLabels: Record<string, string> = {
   matric: "Matric / SSC",
