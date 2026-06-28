@@ -2,3 +2,9 @@ project_id = "qrxgpjvhepznplmpctbw"
 
 [functions.parse-jobs-ai]
 verify_jwt = false
+
+[functions.job-preview]
+verify_jwt = false
+
+[functions.job-og-image]
+verify_jwt = false

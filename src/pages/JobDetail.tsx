@@ -185,6 +185,18 @@ const JobDetail = () => {
     }
   };
 
+  const siteOrigin = "https://pkjobs.lovable.app";
+  const canonicalUrl = `${siteOrigin}/jobs/${job.id}`;
+  const supabaseProjectRef = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+  const ogImageUrl =
+    (job as any).advertisement_image ||
+    (supabaseProjectRef
+      ? `https://${supabaseProjectRef}.supabase.co/functions/v1/job-og-image?id=${job.id}`
+      : undefined);
+  const facebookShareUrl = supabaseProjectRef
+    ? `https://${supabaseProjectRef}.supabase.co/functions/v1/job-preview?id=${job.id}`
+    : canonicalUrl;
+
   return (
     <div className="py-8">
       <GlobalSeoHead
@@ -192,7 +204,8 @@ const JobDetail = () => {
         pageDescription={job.description ? job.description.slice(0, 160) : `Apply for ${job.title} in ${job.department}. Last date: ${new Date(job.last_date).toLocaleDateString()}.`}
         pageOgTitle={`${job.title} — ${job.department}`}
         pageOgDescription={job.description ? job.description.slice(0, 160) : undefined}
-        pageOgImage={(job as any).advertisement_image || undefined}
+        pageOgImage={ogImageUrl}
+        canonicalUrl={canonicalUrl}
       />
       <div className="container max-w-5xl">
         {/* Back button */}
@@ -407,9 +420,10 @@ const JobDetail = () => {
 
               {/* Share Buttons */}
               <div className="mt-6 pt-4 border-t border-border">
-                <ShareButtons 
+                <ShareButtons
                   title={job.title}
-                  url={`${window.location.origin}/jobs/${job.id}`}
+                  url={canonicalUrl}
+                  facebookUrl={facebookShareUrl}
                   description={`${job.department} - ${job.total_seats} seats available. Apply before ${new Date(job.last_date).toLocaleDateString()}`}
                 />
               </div>
