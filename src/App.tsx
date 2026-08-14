@@ -32,6 +32,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const BulkJobImport = lazy(() => import("./pages/BulkJobImport"));
 const ExpertDashboard = lazy(() => import("./pages/ExpertDashboard"));
 const Careers = lazy(() => import("./pages/Careers"));
+const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
 
 export const RQ_PERSIST_KEY = "pkjobs-rq-cache";
 
@@ -81,6 +82,7 @@ const App = () => (
                   <Route path="/privacy" element={<Privacy />} />
                   <Route path="/terms" element={<Terms />} />
                   <Route path="/careers" element={<Careers />} />
+                  <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
                   <Route path="/dashboard" element={
                     <ProtectedRoute>
                       <Dashboard />

@@ -46,13 +46,22 @@ const Auth = () => {
     setCaptchaInput("");
   };
 
+  // Same-origin relative path preserved across sign-in (e.g. the OAuth consent page)
+  const nextPath = (() => {
+    const raw = new URLSearchParams(location.search).get("next");
+    if (!raw) return null;
+    return raw.startsWith("/") && !raw.startsWith("//") ? raw : null;
+  })();
+
+  const destination =
+    nextPath || (location.state as any)?.from?.pathname || "/dashboard";
+
   // Redirect if already logged in
   useEffect(() => {
     if (user && !authLoading) {
-      const from = (location.state as any)?.from?.pathname || "/dashboard";
-      navigate(from, { replace: true });
+      navigate(destination, { replace: true });
     }
-  }, [user, authLoading, navigate, location]);
+  }, [user, authLoading, navigate, destination]);
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -62,7 +71,9 @@ const Auth = () => {
     setGoogleLoading(true);
     try {
       const { error } = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: nextPath
+          ? `${window.location.origin}${nextPath}`
+          : window.location.origin,
       });
       if (error) {
         toast.error("Google sign-in failed. Please try again.");
@@ -93,7 +104,7 @@ const Auth = () => {
         return;
       }
 
-      const from = (location.state as any)?.from?.pathname || "/dashboard";
+      const from = destination;
 
       if (isLogin) {
         const { error } = await signIn(formData.email, formData.password);
