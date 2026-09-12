@@ -20,5 +20,14 @@ export default defineMcp({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated",
   }),
-  tools: [searchJobsTool, getJobTool, getMyProfileTool, listMyApplicationsTool, applyToJobTool],
+  tools: [
+    searchJobsTool,
+    getJobTool,
+    getMyProfileTool,
+    checkEligibilityTool,
+    listMyApplicationsTool,
+    trackMyApplicationsTool,
+    applyToJobTool,
+    createJobTool,
+  ],
 });
