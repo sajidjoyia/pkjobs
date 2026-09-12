@@ -92,6 +92,31 @@
         "outputSchema": null
       },
       {
+        "name": "check_my_eligibility",
+        "title": "Check my eligibility for a job",
+        "description": "Check whether the signed-in user is eligible for a specific job, with the exact reasons for each criterion (age, gender, education level, specialization, province, deadline).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "job_id": {
+              "type": "string",
+              "description": "The job id (UUID) to evaluate."
+            }
+          },
+          "required": [
+            "job_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
         "name": "list_my_applications",
         "title": "List my applications",
         "description": "List the signed-in user's job applications with their current status and linked job details.",
@@ -106,6 +131,28 @@
             "status": {
               "type": "string",
               "description": "Optional status filter, e.g. pending, in_progress, completed."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "track_my_applications",
+        "title": "Track my application progress",
+        "description": "List the signed-in user's applications with the latest completed step (paid, expert assigned, applied, receipt uploaded) and the timestamps for each milestone.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "job_id": {
+              "type": "string",
+              "description": "Optional job id (UUID) to track a single application."
             }
           },
           "additionalProperties": false,
@@ -132,6 +179,114 @@
           },
           "required": [
             "job_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_job",
+        "title": "Create a job listing (admin)",
+        "description": "Admin only. Create a new government job listing with title, department, education requirements, age limits, gender, domicile/provinces, deadline, seats and fee breakdown.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "Job title, e.g. Junior Clerk (BPS-11)."
+            },
+            "department": {
+              "type": "string",
+              "description": "Hiring department or organisation."
+            },
+            "description": {
+              "type": "string",
+              "description": "Full job description / details."
+            },
+            "required_education_levels": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Education levels: matric, intermediate, bachelor, master, phd."
+            },
+            "required_education_fields": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Education field ids (UUIDs) for specialization requirements."
+            },
+            "min_age": {
+              "type": "integer",
+              "description": "Minimum age in years (default 18)."
+            },
+            "max_age": {
+              "type": "integer",
+              "description": "Maximum age in years (default 30)."
+            },
+            "gender_requirement": {
+              "type": "string",
+              "description": "One of male, female, other. Omit for no gender restriction."
+            },
+            "domicile": {
+              "type": "string",
+              "description": "Required domicile, e.g. Punjab."
+            },
+            "provinces": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Provinces eligible to apply."
+            },
+            "last_date": {
+              "type": "string",
+              "description": "Application deadline as YYYY-MM-DD."
+            },
+            "total_seats": {
+              "type": "integer",
+              "description": "Number of vacancies (default 1)."
+            },
+            "expert_fee": {
+              "type": "number",
+              "description": "Expert service fee in PKR."
+            },
+            "bank_challan_fee": {
+              "type": "number",
+              "description": "Bank challan fee in PKR."
+            },
+            "photocopy_fee": {
+              "type": "number",
+              "description": "Photocopy / documentation fee in PKR."
+            },
+            "post_office_fee": {
+              "type": "number",
+              "description": "Post office / courier fee in PKR."
+            },
+            "advertisement_link": {
+              "type": "string",
+              "description": "Link to the official advertisement."
+            },
+            "advertisement_image": {
+              "type": "string",
+              "description": "Image URL of the advertisement."
+            },
+            "is_active": {
+              "type": "boolean",
+              "description": "Whether the listing is visible (default true)."
+            }
+          },
+          "required": [
+            "title",
+            "department",
+            "last_date"
           ],
           "additionalProperties": false,
           "$schema": "http://json-schema.org/draft-07/schema#"

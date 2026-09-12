@@ -211,18 +211,380 @@ var apply_to_job_default = defineTool5({
   }
 });
 
+// src/lib/mcp/tools/create-job.ts
+import { defineTool as defineTool6 } from "npm:@lovable.dev/mcp-js@0.26.2";
+import { z as z5 } from "npm:zod@^3.25.76";
+var create_job_default = defineTool6({
+  name: "create_job",
+  title: "Create a job listing (admin)",
+  description: "Admin only. Create a new government job listing with title, department, education requirements, age limits, gender, domicile/provinces, deadline, seats and fee breakdown.",
+  inputSchema: {
+    title: z5.string().describe("Job title, e.g. Junior Clerk (BPS-11)."),
+    department: z5.string().describe("Hiring department or organisation."),
+    description: z5.string().optional().describe("Full job description / details."),
+    required_education_levels: z5.array(z5.string()).optional().describe("Education levels: matric, intermediate, bachelor, master, phd."),
+    required_education_fields: z5.array(z5.string()).optional().describe("Education field ids (UUIDs) for specialization requirements."),
+    min_age: z5.number().int().optional().describe("Minimum age in years (default 18)."),
+    max_age: z5.number().int().optional().describe("Maximum age in years (default 30)."),
+    gender_requirement: z5.string().optional().describe("One of male, female, other. Omit for no gender restriction."),
+    domicile: z5.string().optional().describe("Required domicile, e.g. Punjab."),
+    provinces: z5.array(z5.string()).optional().describe("Provinces eligible to apply."),
+    last_date: z5.string().describe("Application deadline as YYYY-MM-DD."),
+    total_seats: z5.number().int().optional().describe("Number of vacancies (default 1)."),
+    expert_fee: z5.number().optional().describe("Expert service fee in PKR."),
+    bank_challan_fee: z5.number().optional().describe("Bank challan fee in PKR."),
+    photocopy_fee: z5.number().optional().describe("Photocopy / documentation fee in PKR."),
+    post_office_fee: z5.number().optional().describe("Post office / courier fee in PKR."),
+    advertisement_link: z5.string().optional().describe("Link to the official advertisement."),
+    advertisement_image: z5.string().optional().describe("Image URL of the advertisement."),
+    is_active: z5.boolean().optional().describe("Whether the listing is visible (default true).")
+  },
+  annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+  handler: async (input, ctx) => {
+    if (!ctx.isAuthenticated()) {
+      return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
+    }
+    const supabase = supabaseForUser(ctx);
+    const userId = ctx.getUserId();
+    const { data: isAdmin, error: roleError } = await supabase.rpc("has_role", {
+      _user_id: userId,
+      _role: "admin"
+    });
+    if (roleError) return { content: [{ type: "text", text: roleError.message }], isError: true };
+    if (!isAdmin) {
+      return {
+        content: [{ type: "text", text: "Only administrators can create job listings." }],
+        isError: true
+      };
+    }
+    const gender = input.gender_requirement?.trim().toLowerCase();
+    if (gender && !["male", "female", "other"].includes(gender)) {
+      return {
+        content: [{ type: "text", text: "gender_requirement must be male, female or other." }],
+        isError: true
+      };
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(input.last_date)) {
+      return { content: [{ type: "text", text: "last_date must be in YYYY-MM-DD format." }], isError: true };
+    }
+    const expert = input.expert_fee ?? 0;
+    const challan = input.bank_challan_fee ?? 0;
+    const photocopy = input.photocopy_fee ?? 0;
+    const post = input.post_office_fee ?? 0;
+    const { data, error } = await supabase.from("jobs").insert({
+      title: input.title.trim(),
+      department: input.department.trim(),
+      description: input.description ?? null,
+      required_education_levels: input.required_education_levels ?? null,
+      required_education_fields: input.required_education_fields ?? null,
+      min_age: input.min_age ?? 18,
+      max_age: input.max_age ?? 30,
+      gender_requirement: gender ?? null,
+      domicile: input.domicile ?? null,
+      provinces: input.provinces ?? null,
+      last_date: input.last_date,
+      total_seats: input.total_seats ?? 1,
+      expert_fee: expert,
+      bank_challan_fee: challan,
+      photocopy_fee: photocopy,
+      post_office_fee: post,
+      total_fee: expert + challan + photocopy + post,
+      advertisement_link: input.advertisement_link ?? null,
+      advertisement_image: input.advertisement_image ?? null,
+      is_active: input.is_active ?? true,
+      created_by: userId
+    }).select("*").single();
+    if (error) return { content: [{ type: "text", text: error.message }], isError: true };
+    const job = { ...data, url: `https://pkjobs.lovable.app/jobs/${data.id}` };
+    return {
+      content: [{ type: "text", text: `Job created.
+${JSON.stringify(job, null, 2)}` }],
+      structuredContent: { job }
+    };
+  }
+});
+
+// src/lib/mcp/tools/check-eligibility.ts
+import { defineTool as defineTool7 } from "npm:@lovable.dev/mcp-js@0.26.2";
+import { z as z6 } from "npm:zod@^3.25.76";
+
+// src/lib/mcp/eligibility.ts
+var LEVEL_RANK = {
+  matric: 1,
+  intermediate: 2,
+  bachelor: 3,
+  master: 4,
+  phd: 5
+};
+function educationRank(level) {
+  return level && LEVEL_RANK[level] || 0;
+}
+function calculateAge(dateOfBirth) {
+  const today = /* @__PURE__ */ new Date();
+  const birth = new Date(dateOfBirth);
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || m === 0 && today.getDate() < birth.getDate()) age--;
+  return age;
+}
+function evaluateEligibility(profile, job, userEducations = [], allEducationFields = []) {
+  const checks = [];
+  const requiredLevels = job.required_education_levels || [];
+  const requiredFields = job.required_education_fields || [];
+  const jobProvinces = job.provinces || [];
+  if (profile.date_of_birth) {
+    const age = calculateAge(profile.date_of_birth);
+    const passed = age >= job.min_age && age <= job.max_age;
+    checks.push({
+      criterion: "age",
+      passed,
+      requirement: `${job.min_age}-${job.max_age} years`,
+      your_value: `${age} years`,
+      reason: passed ? `Your age (${age}) is within the allowed range ${job.min_age}-${job.max_age}.` : `Your age (${age}) is outside the allowed range ${job.min_age}-${job.max_age}.`
+    });
+  } else {
+    checks.push({
+      criterion: "age",
+      passed: true,
+      requirement: `${job.min_age}-${job.max_age} years`,
+      your_value: "unknown (date of birth missing)",
+      reason: "Age could not be verified because your date of birth is missing from your profile."
+    });
+  }
+  if (job.gender_requirement) {
+    const passed = !profile.gender || job.gender_requirement === profile.gender;
+    checks.push({
+      criterion: "gender",
+      passed,
+      requirement: `${job.gender_requirement} only`,
+      your_value: profile.gender ?? "unknown",
+      reason: passed ? `This post accepts ${job.gender_requirement} candidates and your profile matches.` : `This post is open to ${job.gender_requirement} candidates only.`
+    });
+  }
+  if (requiredLevels.length > 0) {
+    const minRequiredRank = Math.min(...requiredLevels.map(educationRank));
+    const userMaxRank = userEducations.length > 0 ? Math.max(...userEducations.map((ue) => educationRank(ue.education_level))) : educationRank(profile.education);
+    const userLevelName = userEducations.length > 0 ? Object.keys(LEVEL_RANK).find((k) => LEVEL_RANK[k] === userMaxRank) ?? "none" : profile.education ?? "none";
+    const passed = userMaxRank >= minRequiredRank && userMaxRank > 0;
+    checks.push({
+      criterion: "education_level",
+      passed,
+      requirement: requiredLevels.join(", "),
+      your_value: userLevelName,
+      reason: passed ? `Your highest education (${userLevelName}) meets or exceeds the required level (${requiredLevels.join(", ")}).` : `Your highest education (${userLevelName}) is below the required level (${requiredLevels.join(", ")}).`
+    });
+  }
+  if (requiredFields.length > 0) {
+    const fieldNames = requiredFields.map(
+      (id) => allEducationFields.find((f) => f.id === id)?.display_name ?? id
+    );
+    let passed = false;
+    let detail = "You do not have a matching field of study for this post.";
+    if (userEducations.length > 0) {
+      const match = userEducations.find(
+        (ue) => ue.education_field_id && requiredFields.includes(ue.education_field_id)
+      );
+      if (match) {
+        passed = true;
+        detail = `Your field of study matches one of the required specializations (${fieldNames.join(", ")}).`;
+      } else {
+        let maxFieldLevel = 0;
+        for (const id of requiredFields) {
+          const f = allEducationFields.find((x) => x.id === id);
+          if (f) maxFieldLevel = Math.max(maxFieldLevel, educationRank(f.education_level));
+        }
+        const userMaxRank = Math.max(...userEducations.map((ue) => educationRank(ue.education_level)));
+        if (maxFieldLevel > 0 && userMaxRank > maxFieldLevel) {
+          passed = true;
+          detail = "Your education level is higher than the required specialization level, so the field requirement is waived.";
+        }
+      }
+    } else {
+      detail = "No education entries found in your profile, so the specialization could not be matched.";
+    }
+    checks.push({
+      criterion: "education_field",
+      passed,
+      requirement: fieldNames.join(", "),
+      your_value: userEducations.map((ue) => allEducationFields.find((f) => f.id === ue.education_field_id)?.display_name ?? ue.education_level).join(", ") || "none",
+      reason: detail
+    });
+  }
+  if (jobProvinces.length > 0) {
+    const userProvince = (profile.province || "").toLowerCase();
+    const normalized = jobProvinces.map((p) => p.toLowerCase());
+    const passed = !userProvince || normalized.some((p) => p.includes("all") || p.includes(userProvince) || userProvince.includes(p));
+    checks.push({
+      criterion: "province",
+      passed,
+      requirement: jobProvinces.join(", "),
+      your_value: profile.province ?? "unknown",
+      reason: passed ? `Your province (${profile.province ?? "unspecified"}) is accepted for this post.` : `This post is open to ${jobProvinces.join(", ")} domicile holders only.`
+    });
+  }
+  if (job.last_date) {
+    const open = new Date(job.last_date) >= new Date((/* @__PURE__ */ new Date()).toDateString());
+    checks.push({
+      criterion: "deadline",
+      passed: open && job.is_active !== false,
+      requirement: `Apply by ${job.last_date}`,
+      your_value: (/* @__PURE__ */ new Date()).toISOString().slice(0, 10),
+      reason: open && job.is_active !== false ? `The job is still open; the last date is ${job.last_date}.` : `The application deadline (${job.last_date}) has passed or the job is no longer active.`
+    });
+  }
+  const failed = checks.filter((c) => !c.passed);
+  return {
+    eligible: failed.length === 0,
+    checks,
+    passed_reasons: checks.filter((c) => c.passed).map((c) => c.reason),
+    failed_reasons: failed.map((c) => c.reason)
+  };
+}
+
+// src/lib/mcp/tools/check-eligibility.ts
+var check_eligibility_default = defineTool7({
+  name: "check_my_eligibility",
+  title: "Check my eligibility for a job",
+  description: "Check whether the signed-in user is eligible for a specific job, with the exact reasons for each criterion (age, gender, education level, specialization, province, deadline).",
+  inputSchema: { job_id: z6.string().describe("The job id (UUID) to evaluate.") },
+  annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
+  handler: async ({ job_id }, ctx) => {
+    if (!ctx.isAuthenticated()) {
+      return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
+    }
+    const supabase = supabaseForUser(ctx);
+    const userId = ctx.getUserId();
+    const [jobRes, profileRes, eduRes, fieldsRes] = await Promise.all([
+      supabase.from("jobs").select("*").eq("id", job_id).maybeSingle(),
+      supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
+      supabase.from("user_educations").select("education_level,education_field_id").eq("user_id", userId),
+      supabase.from("education_fields").select("id,education_level,display_name")
+    ]);
+    if (jobRes.error) return { content: [{ type: "text", text: jobRes.error.message }], isError: true };
+    if (!jobRes.data) return { content: [{ type: "text", text: "No job found with that id." }], isError: true };
+    if (profileRes.error) return { content: [{ type: "text", text: profileRes.error.message }], isError: true };
+    if (!profileRes.data) {
+      return {
+        content: [{ type: "text", text: "No profile found. Complete your profile to check eligibility." }],
+        isError: true
+      };
+    }
+    const result = evaluateEligibility(
+      profileRes.data,
+      jobRes.data,
+      eduRes.data ?? [],
+      fieldsRes.data ?? []
+    );
+    const payload = {
+      job: { id: jobRes.data.id, title: jobRes.data.title, department: jobRes.data.department },
+      eligible: result.eligible,
+      checks: result.checks,
+      why_eligible: result.passed_reasons,
+      why_not_eligible: result.failed_reasons
+    };
+    return {
+      content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+      structuredContent: payload
+    };
+  }
+});
+
+// src/lib/mcp/tools/track-my-applications.ts
+import { defineTool as defineTool8 } from "npm:@lovable.dev/mcp-js@0.26.2";
+import { z as z7 } from "npm:zod@^3.25.76";
+var STEP_ORDER = [
+  "pending",
+  "payment_received",
+  "expert_assigned",
+  "in_progress",
+  "applied",
+  "completed"
+];
+var STEP_LABEL = {
+  pending: "Submitted \u2014 awaiting payment",
+  payment_received: "Paid",
+  expert_assigned: "Expert assigned",
+  in_progress: "Expert working on it",
+  applied: "Applied to the department",
+  completed: "Completed"
+};
+var track_my_applications_default = defineTool8({
+  name: "track_my_applications",
+  title: "Track my application progress",
+  description: "List the signed-in user's applications with the latest completed step (paid, expert assigned, applied, receipt uploaded) and the timestamps for each milestone.",
+  inputSchema: {
+    job_id: z7.string().optional().describe("Optional job id (UUID) to track a single application.")
+  },
+  annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
+  handler: async ({ job_id }, ctx) => {
+    if (!ctx.isAuthenticated()) {
+      return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
+    }
+    const supabase = supabaseForUser(ctx);
+    let q = supabase.from("applications").select(
+      "id,job_id,status,payment_amount,payment_date,receipt_url,expert_id,notes,created_at,updated_at,jobs(title,department,last_date)"
+    ).eq("user_id", ctx.getUserId()).order("created_at", { ascending: false });
+    if (job_id?.trim()) q = q.eq("job_id", job_id.trim());
+    const { data, error } = await q;
+    if (error) return { content: [{ type: "text", text: error.message }], isError: true };
+    const applications = (data ?? []).map((a) => {
+      const status = String(a.status);
+      const reached = STEP_ORDER.indexOf(status);
+      const timeline = [
+        { step: "submitted", done: true, at: a.created_at },
+        { step: "paid", done: reached >= 1 || Boolean(a.payment_date), at: a.payment_date ?? null },
+        { step: "expert_assigned", done: reached >= 2 || Boolean(a.expert_id), at: reached >= 2 ? a.updated_at : null },
+        { step: "in_progress", done: reached >= 3, at: reached >= 3 ? a.updated_at : null },
+        { step: "applied", done: reached >= 4, at: reached >= 4 ? a.updated_at : null },
+        { step: "receipt_uploaded", done: Boolean(a.receipt_url), at: a.receipt_url ? a.updated_at : null },
+        { step: "completed", done: reached >= 5, at: reached >= 5 ? a.updated_at : null }
+      ];
+      const doneSteps = timeline.filter((t) => t.done);
+      return {
+        application_id: a.id,
+        job_id: a.job_id,
+        job: a.jobs,
+        status,
+        status_label: STEP_LABEL[status] ?? status,
+        latest_step: doneSteps[doneSteps.length - 1]?.step ?? "submitted",
+        latest_step_at: doneSteps[doneSteps.length - 1]?.at ?? a.created_at,
+        payment_amount: a.payment_amount,
+        receipt_uploaded: Boolean(a.receipt_url),
+        notes: a.notes,
+        created_at: a.created_at,
+        updated_at: a.updated_at,
+        timeline,
+        url: `https://pkjobs.lovable.app/jobs/${a.job_id}`
+      };
+    });
+    return {
+      content: [{ type: "text", text: JSON.stringify(applications, null, 2) }],
+      structuredContent: { applications, count: applications.length }
+    };
+  }
+});
+
 // src/lib/mcp/index.ts
 var projectRef = "qrxgpjvhepznplmpctbw";
 var mcp_default = defineMcp({
   name: "career-companion",
   title: "Career Companion",
   version: "0.1.0",
-  instructions: "Tools for PakJobs, a Pakistani government job platform. Use `search_jobs` and `get_job` to browse listings, `get_my_profile` to check the signed-in user's education and eligibility details, `list_my_applications` to review application status, and `apply_to_job` to submit a new application.",
+  instructions: "Tools for PakJobs, a Pakistani government job platform. Use `search_jobs` and `get_job` to browse listings, `get_my_profile` for the signed-in user's details, `check_my_eligibility` for a per-criterion eligibility verdict on a job, `list_my_applications` and `track_my_applications` to review application status and milestones, `apply_to_job` to submit an application, and `create_job` (admins only) to publish a new listing.",
   auth: auth.oauth.issuer({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated"
   }),
-  tools: [search_jobs_default, get_job_default, get_my_profile_default, list_my_applications_default, apply_to_job_default]
+  tools: [
+    search_jobs_default,
+    get_job_default,
+    get_my_profile_default,
+    check_eligibility_default,
+    list_my_applications_default,
+    track_my_applications_default,
+    apply_to_job_default,
+    create_job_default
+  ]
 });
 
 // lovable-mcp-supabase-entry.ts
