@@ -44,6 +44,7 @@ import {
   FileQuestion,
   ChevronLeft,
   ChevronRight,
+  Bot,
 } from "lucide-react";
 import { useAllJobs, useCreateJob, useUpdateJob, useDeleteJob, useToggleJobStatus, CreateJobInput } from "@/hooks/useJobs";
 import { useAllApplications, useUpdateApplicationStatus } from "@/hooks/useApplications";
@@ -68,6 +69,7 @@ import { BarChart3, UserCheck, MessageSquare as MessageSquareIcon } from "lucide
 import ApplicationDetailsDialog from "@/components/admin/ApplicationDetailsDialog";
 const DataCleanup = lazy(() => import("@/components/admin/DataCleanup"));
 const NewsManager = lazy(() => import("@/components/admin/NewsManager"));
+const McpGuide = lazy(() => import("@/components/admin/McpGuide"));
 import { Trash, Megaphone } from "lucide-react";
 const PROVINCE_OPTIONS = [
   { value: "Punjab", label: "Punjab" },
@@ -575,6 +577,9 @@ const Admin = () => {
             <TabsTrigger value="cleanup" className="gap-1.5 text-xs sm:text-sm">
               <Trash className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Cleanup
             </TabsTrigger>
+            <TabsTrigger value="agents" className="gap-1.5 text-xs sm:text-sm">
+              <Bot className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> <span className="hidden sm:inline">AI Agents</span><span className="sm:hidden">Agents</span>
+            </TabsTrigger>
           </TabsList>
 
           {/* Jobs Tab */}
@@ -1004,6 +1009,12 @@ const Admin = () => {
           <TabsContent value="cleanup">
             <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
               <DataCleanup />
+            </Suspense>
+          </TabsContent>
+
+          <TabsContent value="agents">
+            <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+              <McpGuide />
             </Suspense>
           </TabsContent>
         </Tabs>

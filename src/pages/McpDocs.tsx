@@ -234,8 +234,8 @@ const CodeBlock = ({ label, value }: { label: string; value: unknown }) => {
 const McpDocs = () => (
   <div className="container mx-auto max-w-4xl px-4 py-10">
     <GlobalSeoHead
-      title="Agent (MCP) tools & API reference | PakJobs"
-      description="Sample requests and responses for every PakJobs agent tool: search jobs, check eligibility, track applications, apply, and create listings."
+      pageTitle="Agent (MCP) tools & API reference | PakJobs"
+      pageDescription="Sample requests and responses for every PakJobs agent tool: search jobs, check eligibility, track applications, apply, and create listings."
     />
 
     <h1 className="font-serif text-3xl font-bold">Agent tools (MCP) reference</h1>
