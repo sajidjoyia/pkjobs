@@ -84,6 +84,7 @@ const App = () => (
                   <Route path="/terms" element={<Terms />} />
                   <Route path="/careers" element={<Careers />} />
                   <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
+                  <Route path="/mcp-docs" element={<McpDocs />} />
                   <Route path="/dashboard" element={
                     <ProtectedRoute>
                       <Dashboard />
