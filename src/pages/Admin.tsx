@@ -68,6 +68,7 @@ import { BarChart3, UserCheck, MessageSquare as MessageSquareIcon } from "lucide
 import ApplicationDetailsDialog from "@/components/admin/ApplicationDetailsDialog";
 const DataCleanup = lazy(() => import("@/components/admin/DataCleanup"));
 const NewsManager = lazy(() => import("@/components/admin/NewsManager"));
+const McpGuide = lazy(() => import("@/components/admin/McpGuide"));
 import { Trash, Megaphone } from "lucide-react";
 const PROVINCE_OPTIONS = [
   { value: "Punjab", label: "Punjab" },
