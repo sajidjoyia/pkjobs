@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { formatSeats } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -131,7 +132,7 @@ const Admin = () => {
     gender_requirement: "",
     provinces: [] as string[],
     domicile: "",
-    total_seats: "1",
+    total_seats: "",
     last_date: "",
     bank_challan_fee: "",
     post_office_fee: "",
@@ -166,7 +167,7 @@ const Admin = () => {
     title: "", department: "", description: "",
     required_education_levels: [] as string[], required_education_fields: [] as string[],
     min_age: "18", max_age: "35", gender_requirement: "",
-    provinces: [] as string[], domicile: "", total_seats: "1", last_date: "",
+    provinces: [] as string[], domicile: "", total_seats: "", last_date: "",
     bank_challan_fee: "", post_office_fee: "", photocopy_fee: "", expert_fee: "",
     advertisement_link: "", advertisement_image: "",
     test_preparation_available: false,
