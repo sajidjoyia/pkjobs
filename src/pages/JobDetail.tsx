@@ -424,8 +424,17 @@ const JobDetail = () => {
                 <ShareButtons
                   title={job.title}
                   url={canonicalUrl}
-                  facebookUrl={facebookShareUrl}
-                  description={`${job.department} - ${job.total_seats} seats available. Apply before ${new Date(job.last_date).toLocaleDateString()}`}
+                  previewUrl={facebookShareUrl}
+                  description={`${job.department} — ${formatSeats(job.total_seats)}. Apply before ${new Date(job.last_date).toLocaleDateString()}`}
+                  details={[
+                    { label: "Department", value: job.department },
+                    { label: "Seats", value: job.total_seats > 0 ? String(job.total_seats) : "Not specified" },
+                    { label: "Education", value: (job.required_education_levels || []).map((l) => educationLabels[l] || l).join(", ") || "Any" },
+                    { label: "Age", value: `${job.min_age}-${job.max_age} years` },
+                    { label: "Location", value: formatProvinces(job.provinces) },
+                    { label: "Last date", value: new Date(job.last_date).toLocaleDateString() },
+                    { label: "Total fee", value: `Rs. ${Number(job.total_fee).toLocaleString()}` },
+                  ]}
                 />
               </div>
 
