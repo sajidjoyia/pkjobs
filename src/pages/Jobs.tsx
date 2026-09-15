@@ -323,7 +323,7 @@ const Jobs = () => {
                         <p className="text-sm text-muted-foreground">{job.department}</p>
                       </div>
                       <div className="flex flex-wrap gap-1.5">
-                        <Badge variant="secondary" className="text-xs">{job.total_seats} seats</Badge>
+                        <Badge variant="secondary" className="text-xs">{formatSeats(job.total_seats)}</Badge>
                         {getEligibilityBadge(job)}
                       </div>
                     </div>
