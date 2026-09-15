@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { formatSeats } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -131,7 +132,7 @@ const Admin = () => {
     gender_requirement: "",
     provinces: [] as string[],
     domicile: "",
-    total_seats: "1",
+    total_seats: "",
     last_date: "",
     bank_challan_fee: "",
     post_office_fee: "",
@@ -166,7 +167,7 @@ const Admin = () => {
     title: "", department: "", description: "",
     required_education_levels: [] as string[], required_education_fields: [] as string[],
     min_age: "18", max_age: "35", gender_requirement: "",
-    provinces: [] as string[], domicile: "", total_seats: "1", last_date: "",
+    provinces: [] as string[], domicile: "", total_seats: "", last_date: "",
     bank_challan_fee: "", post_office_fee: "", photocopy_fee: "", expert_fee: "",
     advertisement_link: "", advertisement_image: "",
     test_preparation_available: false,
@@ -186,7 +187,7 @@ const Admin = () => {
       gender_requirement: job.gender_requirement || "any",
       provinces: job.provinces || [],
       domicile: job.domicile || "",
-      total_seats: String(job.total_seats ?? 1),
+      total_seats: job.total_seats ? String(job.total_seats) : "",
       last_date: job.last_date || "",
       bank_challan_fee: String(job.bank_challan_fee ?? ""),
       post_office_fee: String(job.post_office_fee ?? ""),
@@ -220,7 +221,7 @@ const Admin = () => {
       gender_requirement: formData.gender_requirement && formData.gender_requirement !== "any" ? formData.gender_requirement as any : null,
       provinces: formData.provinces.length > 0 ? formData.provinces : undefined,
       domicile: formData.domicile || undefined,
-      total_seats: parseInt(formData.total_seats) || 1,
+      total_seats: parseInt(formData.total_seats) || 0,
       last_date: formData.last_date,
       bank_challan_fee: parseInt(formData.bank_challan_fee) || 0,
       post_office_fee: parseInt(formData.post_office_fee) || 0,
@@ -417,8 +418,9 @@ const Admin = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="seats">Total Seats *</Label>
-                      <Input id="seats" type="number" placeholder="500" value={formData.total_seats} onChange={(e) => handleChange("total_seats", e.target.value)} required />
+                      <Label htmlFor="seats">Total Seats</Label>
+                      <Input id="seats" type="number" min={0} placeholder="Leave empty if unknown" value={formData.total_seats} onChange={(e) => handleChange("total_seats", e.target.value)} />
+                      <p className="text-xs text-muted-foreground">Optional — leave empty if the advertisement doesn't mention seats.</p>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="lastDate">Last Date *</Label>
@@ -645,7 +647,7 @@ const Admin = () => {
                               </td>
                               <td className="p-4 font-medium text-foreground">{job.title}</td>
                               <td className="p-4 text-muted-foreground">{job.department}</td>
-                              <td className="p-4 text-muted-foreground">{job.total_seats}</td>
+                              <td className="p-4 text-muted-foreground">{job.total_seats > 0 ? job.total_seats : "—"}</td>
                               <td className="p-4">
                                 <span className={expired ? "text-destructive" : "text-muted-foreground"}>
                                   {new Date(job.last_date).toLocaleDateString()}
@@ -700,7 +702,7 @@ const Admin = () => {
                               </Badge>
                             </div>
                             <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
-                              <span>{job.total_seats} seats</span>
+                              <span>{formatSeats(job.total_seats)}</span>
                               <span className={expired ? "text-destructive" : ""}>{new Date(job.last_date).toLocaleDateString()}{expired && " ⚠"}</span>
                               <span>Rs. {Number(job.total_fee).toLocaleString()}</span>
                             </div>

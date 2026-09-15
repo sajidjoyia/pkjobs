@@ -2,40 +2,59 @@ import { Facebook, Twitter, Share2, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
+interface ShareDetail {
+  label: string;
+  value: string;
+}
+
 interface ShareButtonsProps {
   title: string;
+  /** Canonical page URL (used as a fallback). */
   url?: string;
   description?: string;
   /**
-   * Optional alternative URL to hand to Facebook's sharer. Use this when
-   * you have a crawler-friendly endpoint (e.g. an edge function that
-   * serves OG meta on first scrape) — humans following the share link
-   * will be auto-redirected to the canonical page.
+   * Crawler-friendly URL that serves Open Graph meta on the first scrape
+   * (an edge function that redirects humans to the canonical page). Used for
+   * every share target so WhatsApp / Facebook / X always show the rich card.
    */
-  facebookUrl?: string;
+  previewUrl?: string;
+  /** Extra key/value lines included in the WhatsApp message body. */
+  details?: ShareDetail[];
 }
 
-const ShareButtons = ({ title, url, description, facebookUrl }: ShareButtonsProps) => {
-  const shareUrl = url || window.location.href;
-  const shareText = description
-    ? `${title} - ${description}`
-    : `Check out this job: ${title}`;
+const ShareButtons = ({ title, url, description, previewUrl, details }: ShareButtonsProps) => {
+  const canonicalUrl = url || window.location.href;
+  const shareUrl = previewUrl || canonicalUrl;
+
+  const detailLines = (details || [])
+    .filter((d) => d.value)
+    .map((d) => `${d.label}: ${d.value}`)
+    .join("\n");
+
+  const whatsappText = [
+    `*${title}*`,
+    detailLines,
+    description && !detailLines ? description : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const shortText = description ? `${title} - ${description}` : title;
 
   const encodedUrl = encodeURIComponent(shareUrl);
-  const encodedText = encodeURIComponent(shareText);
+  const encodedShort = encodeURIComponent(shortText);
 
   const handleWhatsAppShare = () => {
     window.open(
-      `https://wa.me/?text=${encodedText}%0A%0A${encodedUrl}`,
+      `https://wa.me/?text=${encodeURIComponent(whatsappText)}%0A%0A${encodedUrl}`,
       "_blank",
       "noopener,noreferrer"
     );
   };
 
   const handleFacebookShare = () => {
-    const fbTarget = encodeURIComponent(facebookUrl || shareUrl);
     window.open(
-      `https://www.facebook.com/sharer/sharer.php?u=${fbTarget}&quote=${encodedText}`,
+      `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedShort}`,
       "_blank",
       "noopener,noreferrer,width=600,height=400"
     );
@@ -43,7 +62,7 @@ const ShareButtons = ({ title, url, description, facebookUrl }: ShareButtonsProp
 
   const handleTwitterShare = () => {
     window.open(
-      `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`,
+      `https://twitter.com/intent/tweet?text=${encodedShort}&url=${encodedUrl}`,
       "_blank",
       "noopener,noreferrer,width=600,height=400"
     );
@@ -52,7 +71,7 @@ const ShareButtons = ({ title, url, description, facebookUrl }: ShareButtonsProp
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
-      toast.success("Link copied to clipboard!");
+      toast.success("Link copied — paste it anywhere to show the job preview");
     } catch {
       toast.error("Failed to copy link");
     }
