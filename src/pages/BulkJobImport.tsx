@@ -82,6 +82,68 @@ const BulkJobImport = () => {
     errors: string[];
   } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [copiedPrompt, setCopiedPrompt] = useState(false);
+  const [promptEdited, setPromptEdited] = useState<string | null>(null);
+
+  const buildAiPrompt = () => {
+    const levelsList = educationLevels
+      .map((l) => `- "${l.value}" (${l.label})`)
+      .join("\n");
+    const fieldsList = educationFields
+      .map((f) => `- "${f.name}" — ${f.display_name} (level: ${f.education_level})`)
+      .join("\n");
+
+    return `You are a data-entry assistant for a Pakistan government jobs portal.
+
+TASK: Convert the job listing text I paste at the end into a VALID JSON ARRAY of job objects. Output ONLY raw JSON (no markdown, no code fences, no explanation) so it can be pasted directly into an import tool.
+
+Each job object MUST follow EXACTLY this shape and key names:
+[
+  {
+    "title": "Assistant Sub Inspector",
+    "department": "Punjab Police",
+    "description": "",
+    "required_education_levels": ["intermediate"],
+    "required_education_fields": [],
+    "min_age": 18,
+    "max_age": 30,
+    "gender_requirement": "male",
+    "provinces": ["Punjab"],
+    "domicile": "Punjab",
+    "total_seats": 500,
+    "last_date": "2026-03-15",
+    "bank_challan_fee": 500,
+    "post_office_fee": 200,
+    "photocopy_fee": 100,
+    "expert_fee": 1000,
+    "advertisement_link": "",
+    "advertisement_image": ""
+  }
+]
+
+STRICT RULES:
+1. required_education_levels: use ONLY these exact level values:
+${levelsList}
+2. required_education_fields: use ONLY these exact field names (or leave as [] to auto-select ALL fields of the chosen levels):
+${fieldsList || "(none configured yet — always leave as [])"}
+3. gender_requirement: "male", "female", or "other". Use null for Any/Both.
+4. provinces: use ONLY values from ["Punjab", "Sindh", "Khyber Pakhtunkhwa", "Balochistan", "Islamabad", "AJK", "Gilgit-Baltistan"]. Use [] for all-Pakistan posts.
+5. last_date: "YYYY-MM-DD" format.
+6. All fee fields (bank_challan_fee, post_office_fee, photocopy_fee, expert_fee) are plain numbers, no "Rs." prefix. Use 0 if unknown.
+7. advertisement_link and advertisement_image must be full https:// URLs, or empty string "".
+8. Make an exact copy of the structure above — same keys, same order — for every job. One array even for a single job.
+9. If a value is missing in my text, use sensible defaults: min_age 18, max_age 35, total_seats 1, gender null, provinces [].
+
+JOB LISTING TEXT TO CONVERT:
+(PASTE YOUR JOB TEXT HERE)`;
+  };
+
+  const handleCopyAiPrompt = () => {
+    const text = promptEdited ?? buildAiPrompt();
+    navigator.clipboard.writeText(text);
+    setCopiedPrompt(true);
+    setTimeout(() => setCopiedPrompt(false), 2000);
+  };
 
   const handleParseBulkJobsAI = async () => {
     if (!bulkJobText.trim()) return;
@@ -485,8 +547,59 @@ Bank Challan: Rs. 400 | Expert Fee: Rs. 800`}
                     <p>• <code>advertisement_image</code> &amp; <code>advertisement_link</code>: Must be a <strong>full URL</strong> starting with <code>https://</code> (e.g. <code>https://example.com/ad.jpg</code>).</p>
                     <p>• <code>last_date</code>: Format <code>YYYY-MM-DD</code></p>
                     <p>• All fee fields are numbers (no "Rs." prefix)</p>
-                    <p>• Add multiple jobs as array items: <code>[{`{job1}, {job2}`}]</code></p>
+                  <p>• Add multiple jobs as array items: <code>[{`{job1}, {job2}`}]</code></p>
                   </div>
+                </CollapsibleContent>
+              </Collapsible>
+
+              {/* AI prompt generator */}
+              <Collapsible className="mt-4">
+                <div className="flex items-center gap-2">
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 px-2">
+                      <FileQuestion className="h-3 w-3" />
+                      AI Prompt (for ChatGPT / Claude / Gemini)
+                    </Button>
+                  </CollapsibleTrigger>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs gap-1"
+                    onClick={handleCopyAiPrompt}
+                  >
+                    {copiedPrompt ? (
+                      <>
+                        <CheckCircle className="h-3 w-3 text-emerald-500" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-3 w-3" />
+                        Copy Prompt for AI
+                      </>
+                    )}
+                  </Button>
+                </div>
+                <CollapsibleContent>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Copy this prompt and paste it into any AI chat (ChatGPT, Claude, Gemini, etc.) along with your job text. It includes the exact JSON format and your current education levels &amp; fields, so the AI outputs import-ready JSON. You can edit the prompt below before copying.
+                  </p>
+                  <Textarea
+                    value={promptEdited ?? buildAiPrompt()}
+                    onChange={(e) => setPromptEdited(e.target.value)}
+                    rows={16}
+                    className="mt-2 text-[11px] font-mono leading-relaxed"
+                  />
+                  {promptEdited !== null && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs mt-1"
+                      onClick={() => setPromptEdited(null)}
+                    >
+                      Reset to auto-generated prompt
+                    </Button>
+                  )}
                 </CollapsibleContent>
               </Collapsible>
             </div>
