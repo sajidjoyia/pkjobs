@@ -25,6 +25,7 @@ import { isEligibleForJob, useUserEducations } from "@/hooks/useProfile";
 import { useEducationFields } from "@/hooks/useEducationFields";
 import { toast } from "sonner";
 import ShareButtons from "@/components/ShareButtons";
+import { formatSeats } from "@/lib/utils";
 import GlobalSeoHead from "@/components/seo/GlobalSeoHead";
 import TestPrepBanner from "@/components/TestPrepBanner";
 import { useState } from "react";
@@ -245,7 +246,7 @@ const JobDetail = () => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="flex items-center gap-2 text-sm">
                   <Building2 className="h-4 w-4 text-primary" />
-                  <span className="text-muted-foreground">{job.total_seats} seats</span>
+                  <span className="text-muted-foreground">{formatSeats(job.total_seats)}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Users className="h-4 w-4 text-primary" />
