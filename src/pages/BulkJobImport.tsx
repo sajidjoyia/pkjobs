@@ -547,8 +547,59 @@ Bank Challan: Rs. 400 | Expert Fee: Rs. 800`}
                     <p>• <code>advertisement_image</code> &amp; <code>advertisement_link</code>: Must be a <strong>full URL</strong> starting with <code>https://</code> (e.g. <code>https://example.com/ad.jpg</code>).</p>
                     <p>• <code>last_date</code>: Format <code>YYYY-MM-DD</code></p>
                     <p>• All fee fields are numbers (no "Rs." prefix)</p>
-                    <p>• Add multiple jobs as array items: <code>[{`{job1}, {job2}`}]</code></p>
+                  <p>• Add multiple jobs as array items: <code>[{`{job1}, {job2}`}]</code></p>
                   </div>
+                </CollapsibleContent>
+              </Collapsible>
+
+              {/* AI prompt generator */}
+              <Collapsible className="mt-4">
+                <div className="flex items-center gap-2">
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 px-2">
+                      <FileQuestion className="h-3 w-3" />
+                      AI Prompt (for ChatGPT / Claude / Gemini)
+                    </Button>
+                  </CollapsibleTrigger>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs gap-1"
+                    onClick={handleCopyAiPrompt}
+                  >
+                    {copiedPrompt ? (
+                      <>
+                        <CheckCircle className="h-3 w-3 text-emerald-500" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-3 w-3" />
+                        Copy Prompt for AI
+                      </>
+                    )}
+                  </Button>
+                </div>
+                <CollapsibleContent>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Copy this prompt and paste it into any AI chat (ChatGPT, Claude, Gemini, etc.) along with your job text. It includes the exact JSON format and your current education levels &amp; fields, so the AI outputs import-ready JSON. You can edit the prompt below before copying.
+                  </p>
+                  <Textarea
+                    value={promptEdited ?? buildAiPrompt()}
+                    onChange={(e) => setPromptEdited(e.target.value)}
+                    rows={16}
+                    className="mt-2 text-[11px] font-mono leading-relaxed"
+                  />
+                  {promptEdited !== null && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs mt-1"
+                      onClick={() => setPromptEdited(null)}
+                    >
+                      Reset to auto-generated prompt
+                    </Button>
+                  )}
                 </CollapsibleContent>
               </Collapsible>
             </div>
