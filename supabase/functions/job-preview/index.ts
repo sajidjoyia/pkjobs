@@ -62,9 +62,19 @@ Deno.serve(async (req) => {
 
     const canonical = `${SITE_ORIGIN}/jobs/${job.id}`;
     const title = `${job.title} — ${job.department}`;
-    const rawDesc =
-      (job.description && String(job.description).replace(/\s+/g, " ").trim()) ||
-      `Apply for ${job.title} in ${job.department}. ${job.total_seats} seats. Last date ${new Date(job.last_date).toLocaleDateString()}.`;
+    const seatsText =
+      job.total_seats && job.total_seats > 0
+        ? `${job.total_seats} seat${job.total_seats > 1 ? "s" : ""}`
+        : "Seats not specified";
+    const lastDate = new Date(job.last_date).toLocaleDateString("en-GB", {
+      day: "2-digit", month: "short", year: "numeric",
+    });
+    // Keep the key facts (department, seats, deadline) in the snippet that
+    // WhatsApp / Facebook show, then append the admin description.
+    const facts = `${job.department} · ${seatsText} · Last date ${lastDate}`;
+    const adminDesc =
+      (job.description && String(job.description).replace(/\s+/g, " ").trim()) || "";
+    const rawDesc = adminDesc ? `${facts} — ${adminDesc}` : facts;
     const desc = rawDesc.length > 200 ? rawDesc.slice(0, 197) + "…" : rawDesc;
 
     // Per-job OG image: use the admin-uploaded advertisement image when

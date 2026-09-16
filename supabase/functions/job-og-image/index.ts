@@ -86,11 +86,11 @@ function svgFor(job: {
   </g>
 
   <g transform="translate(80, 510)" font-family="Inter, Arial, sans-serif" fill="#ffffff">
-    <rect x="0" y="0" rx="26" ry="26" width="220" height="52" fill="#ffffff" opacity="0.14"/>
-    <text x="28" y="34" font-size="22" font-weight="600">${job.total_seats} seats</text>
+    <rect x="0" y="0" rx="26" ry="26" width="${seatsWidth}" height="52" fill="#ffffff" opacity="0.14"/>
+    <text x="28" y="34" font-size="22" font-weight="600">${esc(seatsText)}</text>
 
-    <rect x="240" y="0" rx="26" ry="26" width="320" height="52" fill="#ffffff" opacity="0.14"/>
-    <text x="268" y="34" font-size="22" font-weight="600">Apply by ${esc(dueDate)}</text>
+    <rect x="${seatsWidth + 20}" y="0" rx="26" ry="26" width="320" height="52" fill="#ffffff" opacity="0.14"/>
+    <text x="${seatsWidth + 48}" y="34" font-size="22" font-weight="600">Apply by ${esc(dueDate)}</text>
   </g>
 
   <g font-family="Inter, Arial, sans-serif" fill="#f4c430" text-anchor="end">
