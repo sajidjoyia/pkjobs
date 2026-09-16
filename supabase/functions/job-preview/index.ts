@@ -15,6 +15,7 @@ import {
 } from "../_shared/job-share.ts";
 
 const SITE_ORIGIN = "https://pkjobs.lovable.app";
+const FUNCTION_ORIGIN = new URL(Deno.env.get("SUPABASE_URL") || SITE_ORIGIN).origin;
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -70,7 +71,7 @@ Deno.serve(async (req) => {
 
     // The generated image uses the same database row and summary formatter,
     // ensuring every platform receives the same title and key job facts.
-    const ogImage = `${url.origin}/functions/v1/job-og-image?id=${summary.id}`;
+    const ogImage = `${FUNCTION_ORIGIN}/functions/v1/job-og-image?id=${summary.id}`;
 
     const html = `<!doctype html>
 <html lang="en">
