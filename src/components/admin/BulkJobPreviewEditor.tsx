@@ -135,7 +135,7 @@ const BulkJobPreviewEditor = ({
       required_education_levels: [],
       min_age: 18,
       max_age: 35,
-      total_seats: 1,
+      total_seats: 0,
       last_date: "",
       bank_challan_fee: 0,
       post_office_fee: 0,
@@ -230,7 +230,7 @@ const BulkJobPreviewEditor = ({
                         <p className="font-medium text-sm sm:text-base truncate">{job.title || "Untitled Job"}</p>
                         <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
                           <span className="text-xs text-muted-foreground truncate">
-                            {job.department || "No department"} • {job.total_seats} seat{job.total_seats > 1 ? "s" : ""}
+                            {job.department || "No department"} • {job.total_seats > 0 ? `${job.total_seats} seat${job.total_seats > 1 ? "s" : ""}` : "seats not specified"}
                           </span>
                           {missingFields.length > 0 && (
                             <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
@@ -394,7 +394,7 @@ const BulkJobPreviewEditor = ({
                               <Input
                                 type="number"
                                 value={job.total_seats}
-                                onChange={(e) => updateJob(i, { total_seats: parseInt(e.target.value) || 1 })}
+                                onChange={(e) => updateJob(i, { total_seats: parseInt(e.target.value) || 0 })}
                                 className="h-9 text-sm"
                               />
                             </FieldWrapper>

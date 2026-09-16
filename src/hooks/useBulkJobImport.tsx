@@ -198,7 +198,7 @@ export const parseJobsFromText = (
             jobData.domicile = value;
             break;
           case 'total seats':
-            jobData.total_seats = parseInt(value) || 1;
+            jobData.total_seats = parseInt(value) || 0;
             break;
           case 'last date':
             jobData.last_date = value;
@@ -355,7 +355,7 @@ export const parseJobsFromText = (
         gender_requirement: jobData.gender_requirement,
         provinces: jobData.provinces,
         domicile: jobData.domicile,
-        total_seats: jobData.total_seats || 1,
+        total_seats: jobData.total_seats || 0,
         last_date: jobData.last_date,
         bank_challan_fee: jobData.bank_challan_fee || 0,
         post_office_fee: jobData.post_office_fee || 0,
