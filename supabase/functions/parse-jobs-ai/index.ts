@@ -83,7 +83,7 @@ RULES:
 - last_date: YYYY-MM-DD format
 - All fee fields default to 0 if not mentioned
 - min_age defaults to 18, max_age defaults to 35 if not specified
-- total_seats defaults to 1 if not specified
+- total_seats defaults to 0 if not specified (0 means unknown)
 - domicile: string or null
 - advertisement_link: URL string or null (link to the original job advertisement)
 - advertisement_image: URL string or null (image of the job advertisement)
@@ -224,7 +224,7 @@ Example output format:
         gender_requirement: job.gender_requirement || null,
         provinces: validProvinces.length > 0 ? validProvinces : undefined,
         domicile: job.domicile || undefined,
-        total_seats: Number(job.total_seats) || 1,
+        total_seats: Number(job.total_seats) || 0,
         last_date: job.last_date,
         bank_challan_fee: Number(job.bank_challan_fee) || 0,
         post_office_fee: Number(job.post_office_fee) || 0,

@@ -132,7 +132,7 @@ ${fieldsList || "(none configured yet — always leave as [])"}
 6. All fee fields (bank_challan_fee, post_office_fee, photocopy_fee, expert_fee) are plain numbers, no "Rs." prefix. Use 0 if unknown.
 7. advertisement_link and advertisement_image must be full https:// URLs, or empty string "".
 8. Make an exact copy of the structure above — same keys, same order — for every job. One array even for a single job.
-9. If a value is missing in my text, use sensible defaults: min_age 18, max_age 35, total_seats 1, gender null, provinces [].
+9. If a value is missing in my text, use sensible defaults: min_age 18, max_age 35, total_seats 0 (0 means unknown/not mentioned), gender null, provinces [].
 
 JOB LISTING TEXT TO CONVERT:
 (PASTE YOUR JOB TEXT HERE)`;
@@ -312,7 +312,7 @@ JOB LISTING TEXT TO CONVERT:
           gender_requirement: gender,
           provinces: normalizedProvinces,
           domicile: job.domicile || "",
-          total_seats: job.total_seats ?? 1,
+          total_seats: job.total_seats ?? 0,
           last_date: job.last_date || new Date().toISOString().split("T")[0],
           bank_challan_fee: job.bank_challan_fee ?? 0,
           post_office_fee: job.post_office_fee ?? 0,

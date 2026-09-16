@@ -45,13 +45,18 @@ function wrap(text: string, max: number, maxLines: number): string[] {
 function svgFor(job: {
   title: string;
   department: string;
-  total_seats: number;
+  total_seats: number | null;
   last_date: string;
 }): string {
   const titleLines = wrap(job.title, 32, 3);
   const dueDate = new Date(job.last_date).toLocaleDateString("en-GB", {
     day: "2-digit", month: "short", year: "numeric",
   });
+  const seatsText =
+    job.total_seats && job.total_seats > 0
+      ? `${job.total_seats} seat${job.total_seats > 1 ? "s" : ""}`
+      : "Seats not specified";
+  const seatsWidth = Math.max(180, seatsText.length * 14 + 48);
 
   const titleTspans = titleLines
     .map((l, i) => `<tspan x="80" dy="${i === 0 ? 0 : 84}">${esc(l)}</tspan>`)
@@ -86,11 +91,11 @@ function svgFor(job: {
   </g>
 
   <g transform="translate(80, 510)" font-family="Inter, Arial, sans-serif" fill="#ffffff">
-    <rect x="0" y="0" rx="26" ry="26" width="220" height="52" fill="#ffffff" opacity="0.14"/>
-    <text x="28" y="34" font-size="22" font-weight="600">${job.total_seats} seats</text>
+    <rect x="0" y="0" rx="26" ry="26" width="${seatsWidth}" height="52" fill="#ffffff" opacity="0.14"/>
+    <text x="28" y="34" font-size="22" font-weight="600">${esc(seatsText)}</text>
 
-    <rect x="240" y="0" rx="26" ry="26" width="320" height="52" fill="#ffffff" opacity="0.14"/>
-    <text x="268" y="34" font-size="22" font-weight="600">Apply by ${esc(dueDate)}</text>
+    <rect x="${seatsWidth + 20}" y="0" rx="26" ry="26" width="320" height="52" fill="#ffffff" opacity="0.14"/>
+    <text x="${seatsWidth + 48}" y="34" font-size="22" font-weight="600">Apply by ${esc(dueDate)}</text>
   </g>
 
   <g font-family="Inter, Arial, sans-serif" fill="#f4c430" text-anchor="end">
