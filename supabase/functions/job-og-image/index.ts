@@ -7,6 +7,12 @@
 // URL shape: GET /functions/v1/job-og-image?id=<job_id>
 
 import { createClient } from "npm:@supabase/supabase-js@2";
+import {
+  buildJobShareSummary,
+  JOB_SHARE_COLUMNS,
+  type JobShareRecord,
+  type JobShareSummary,
+} from "../_shared/job-share.ts";
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -42,21 +48,8 @@ function wrap(text: string, max: number, maxLines: number): string[] {
   return lines;
 }
 
-function svgFor(job: {
-  title: string;
-  department: string;
-  total_seats: number | null;
-  last_date: string;
-}): string {
+function svgFor(job: JobShareSummary): string {
   const titleLines = wrap(job.title, 32, 3);
-  const dueDate = new Date(job.last_date).toLocaleDateString("en-GB", {
-    day: "2-digit", month: "short", year: "numeric",
-  });
-  const seatsText =
-    job.total_seats && job.total_seats > 0
-      ? `${job.total_seats} seat${job.total_seats > 1 ? "s" : ""}`
-      : "Seats not specified";
-  const seatsWidth = Math.max(180, seatsText.length * 14 + 48);
 
   const titleTspans = titleLines
     .map((l, i) => `<tspan x="80" dy="${i === 0 ? 0 : 84}">${esc(l)}</tspan>`)
@@ -90,12 +83,13 @@ function svgFor(job: {
     <text x="80" y="${230 + titleLines.length * 84 + 30}" font-size="32" font-weight="500">${esc(job.department)}</text>
   </g>
 
-  <g transform="translate(80, 510)" font-family="Inter, Arial, sans-serif" fill="#ffffff">
-    <rect x="0" y="0" rx="26" ry="26" width="${seatsWidth}" height="52" fill="#ffffff" opacity="0.14"/>
-    <text x="28" y="34" font-size="22" font-weight="600">${esc(seatsText)}</text>
-
-    <rect x="${seatsWidth + 20}" y="0" rx="26" ry="26" width="320" height="52" fill="#ffffff" opacity="0.14"/>
-    <text x="${seatsWidth + 48}" y="34" font-size="22" font-weight="600">Apply by ${esc(dueDate)}</text>
+  <g transform="translate(80, 500)" font-family="Inter, Arial, sans-serif" fill="#ffffff">
+    <text x="0" y="0" font-size="22" opacity="0.75">LAST DATE</text>
+    <text x="0" y="35" font-size="25" font-weight="700">${esc(job.lastDateText)}</text>
+    <text x="350" y="0" font-size="22" opacity="0.75">SEATS</text>
+    <text x="350" y="35" font-size="25" font-weight="700">${esc(job.seatsText)}</text>
+    <text x="760" y="0" font-size="22" opacity="0.75">TOTAL FEE</text>
+    <text x="760" y="35" font-size="25" font-weight="700">${esc(job.feeText)}</text>
   </g>
 
   <g font-family="Inter, Arial, sans-serif" fill="#f4c430" text-anchor="end">
@@ -119,28 +113,13 @@ Deno.serve(async (req) => {
 
     const { data: job, error } = await supabase
       .from("jobs")
-      .select("title,department,total_seats,last_date,advertisement_image")
+      .select(JOB_SHARE_COLUMNS)
       .eq("id", id)
       .maybeSingle();
 
     if (error || !job) return new Response("Not found", { status: 404 });
 
-    if (job.advertisement_image && /^https?:\/\//.test(job.advertisement_image)) {
-      return new Response(null, {
-        status: 302,
-        headers: {
-          Location: job.advertisement_image,
-          "Cache-Control": "public, max-age=3600, s-maxage=86400",
-        },
-      });
-    }
-
-    const svg = svgFor({
-      title: job.title,
-      department: job.department,
-      total_seats: job.total_seats,
-      last_date: job.last_date,
-    });
+    const svg = svgFor(buildJobShareSummary(job as JobShareRecord));
 
     return new Response(svg, {
       status: 200,

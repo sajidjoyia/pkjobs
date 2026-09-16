@@ -189,22 +189,26 @@ const JobDetail = () => {
   const siteOrigin = "https://pkjobs.lovable.app";
   const canonicalUrl = `${siteOrigin}/jobs/${job.id}`;
   const supabaseProjectRef = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-  const ogImageUrl =
-    (job as any).advertisement_image ||
-    (supabaseProjectRef
-      ? `https://${supabaseProjectRef}.supabase.co/functions/v1/job-og-image?id=${job.id}`
-      : undefined);
+  const ogImageUrl = supabaseProjectRef
+    ? `https://${supabaseProjectRef}.supabase.co/functions/v1/job-og-image?id=${job.id}`
+    : undefined;
   const facebookShareUrl = supabaseProjectRef
     ? `https://${supabaseProjectRef}.supabase.co/functions/v1/job-preview?id=${job.id}`
     : canonicalUrl;
+  const shareLastDate = new Date(job.last_date).toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+  const shareDescription = `${job.department} · Last date ${shareLastDate} · ${formatSeats(job.total_seats)} · Total fee Rs. ${Number(job.total_fee).toLocaleString("en-PK")}`;
 
   return (
     <div className="py-8">
       <GlobalSeoHead
         pageTitle={`${job.title} — ${job.department}`}
-        pageDescription={job.description ? job.description.slice(0, 160) : `Apply for ${job.title} in ${job.department}. Last date: ${new Date(job.last_date).toLocaleDateString()}.`}
-        pageOgTitle={`${job.title} — ${job.department}`}
-        pageOgDescription={job.description ? job.description.slice(0, 160) : undefined}
+        pageDescription={shareDescription}
+        pageOgTitle={job.title}
+        pageOgDescription={shareDescription}
         pageOgImage={ogImageUrl}
         canonicalUrl={canonicalUrl}
       />
@@ -425,7 +429,7 @@ const JobDetail = () => {
                   title={job.title}
                   url={canonicalUrl}
                   previewUrl={facebookShareUrl}
-                  description={`${job.department} — ${formatSeats(job.total_seats)}. Apply before ${new Date(job.last_date).toLocaleDateString()}`}
+                   description={shareDescription}
                   details={[
                     { label: "Department", value: job.department },
                     { label: "Seats", value: job.total_seats > 0 ? String(job.total_seats) : "Not specified" },
