@@ -8,6 +8,11 @@
 //             GET /functions/v1/job-preview/<job_id>
 
 import { createClient } from "npm:@supabase/supabase-js@2";
+import {
+  buildJobShareSummary,
+  JOB_SHARE_COLUMNS,
+  type JobShareRecord,
+} from "../_shared/job-share.ts";
 
 const SITE_ORIGIN = "https://pkjobs.lovable.app";
 
@@ -52,38 +57,20 @@ Deno.serve(async (req) => {
 
     const { data: job, error } = await supabase
       .from("jobs")
-      .select(
-        "id,title,department,description,last_date,total_seats,provinces,advertisement_image,is_active",
-      )
+      .select(JOB_SHARE_COLUMNS)
       .eq("id", id)
       .maybeSingle();
 
     if (error || !job) return notFoundHtml("Job not found.");
 
-    const canonical = `${SITE_ORIGIN}/jobs/${job.id}`;
-    const title = `${job.title} — ${job.department}`;
-    const seatsText =
-      job.total_seats && job.total_seats > 0
-        ? `${job.total_seats} seat${job.total_seats > 1 ? "s" : ""}`
-        : "Seats not specified";
-    const lastDate = new Date(job.last_date).toLocaleDateString("en-GB", {
-      day: "2-digit", month: "short", year: "numeric",
-    });
-    // Keep the key facts (department, seats, deadline) in the snippet that
-    // WhatsApp / Facebook show, then append the admin description.
-    const facts = `${job.department} · ${seatsText} · Last date ${lastDate}`;
-    const adminDesc =
-      (job.description && String(job.description).replace(/\s+/g, " ").trim()) || "";
-    const rawDesc = adminDesc ? `${facts} — ${adminDesc}` : facts;
-    const desc = rawDesc.length > 200 ? rawDesc.slice(0, 197) + "…" : rawDesc;
+    const summary = buildJobShareSummary(job as JobShareRecord);
+    const canonical = `${SITE_ORIGIN}/jobs/${summary.id}`;
+    const title = summary.shareTitle;
+    const desc = summary.descriptionText;
 
-    // Per-job OG image: use the admin-uploaded advertisement image when
-    // present, otherwise fall back to our dynamic generator which always
-    // returns a branded 1200×630 PNG/SVG.
-    const ogImage =
-      job.advertisement_image && /^https?:\/\//.test(job.advertisement_image)
-        ? job.advertisement_image
-        : `${url.origin}/functions/v1/job-og-image?id=${job.id}`;
+    // The generated image uses the same database row and summary formatter,
+    // ensuring every platform receives the same title and key job facts.
+    const ogImage = `${url.origin}/functions/v1/job-og-image?id=${summary.id}`;
 
     const html = `<!doctype html>
 <html lang="en">
@@ -113,12 +100,12 @@ Deno.serve(async (req) => {
   "@context": "https://schema.org",
   "@type": "JobPosting",
   title: job.title,
-  description: rawDesc,
+  description: summary.descriptionText,
   datePosted: undefined,
-  validThrough: job.last_date,
+  validThrough: summary.last_date,
   employmentType: "FULL_TIME",
-  hiringOrganization: { "@type": "Organization", name: job.department },
-  jobLocation: (job.provinces || []).map((p: string) => ({
+  hiringOrganization: { "@type": "Organization", name: summary.department },
+  jobLocation: (summary.provinces || []).map((p: string) => ({
     "@type": "Place",
     address: { "@type": "PostalAddress", addressRegion: p, addressCountry: "PK" },
   })),
