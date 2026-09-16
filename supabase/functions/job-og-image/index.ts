@@ -45,13 +45,18 @@ function wrap(text: string, max: number, maxLines: number): string[] {
 function svgFor(job: {
   title: string;
   department: string;
-  total_seats: number;
+  total_seats: number | null;
   last_date: string;
 }): string {
   const titleLines = wrap(job.title, 32, 3);
   const dueDate = new Date(job.last_date).toLocaleDateString("en-GB", {
     day: "2-digit", month: "short", year: "numeric",
   });
+  const seatsText =
+    job.total_seats && job.total_seats > 0
+      ? `${job.total_seats} seat${job.total_seats > 1 ? "s" : ""}`
+      : "Seats not specified";
+  const seatsWidth = Math.max(180, seatsText.length * 14 + 48);
 
   const titleTspans = titleLines
     .map((l, i) => `<tspan x="80" dy="${i === 0 ? 0 : 84}">${esc(l)}</tspan>`)
