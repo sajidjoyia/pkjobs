@@ -46,6 +46,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Bot,
+  Bell,
 } from "lucide-react";
 import { useAllJobs, useCreateJob, useUpdateJob, useDeleteJob, useToggleJobStatus, CreateJobInput } from "@/hooks/useJobs";
 import { useAllApplications, useUpdateApplicationStatus } from "@/hooks/useApplications";
