@@ -764,6 +764,11 @@ const Dashboard = () => {
           <TabsContent value="documents">
             <MyDocuments />
           </TabsContent>
+
+          {/* Job Alerts Tab */}
+          <TabsContent value="alerts">
+            <AlertPreferences />
+          </TabsContent>
         </Tabs>
       </div>
     </div>
