@@ -756,6 +756,9 @@ const Dashboard = () => {
               )}
             </div>
             <div className="mt-6">
+              <AlertPreferences />
+            </div>
+            <div className="mt-6">
               <ChangePassword />
             </div>
           </TabsContent>
