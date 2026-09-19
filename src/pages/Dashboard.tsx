@@ -29,7 +29,9 @@ import {
   FileQuestion,
   AlertCircle,
   ArrowRight,
+  Bell,
 } from "lucide-react";
+import AlertPreferences from "@/components/notifications/AlertPreferences";
 import { useAuth } from "@/hooks/useAuth";
 import { useMyApplications, Application } from "@/hooks/useApplications";
 import { useMyWorkRequests, WorkRequest, useGetOrCreateWorkRequestConversation } from "@/hooks/useWorkRequests";
