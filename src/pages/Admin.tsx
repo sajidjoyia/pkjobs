@@ -1019,6 +1019,12 @@ const Admin = () => {
             </Suspense>
           </TabsContent>
 
+          <TabsContent value="alerts">
+            <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+              <JobAlertsPanel />
+            </Suspense>
+          </TabsContent>
+
           <TabsContent value="agents">
             <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
               <McpGuide />
