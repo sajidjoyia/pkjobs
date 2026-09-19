@@ -330,6 +330,10 @@ const Dashboard = () => {
               <FileText className="h-4 w-4" />
               Documents
             </TabsTrigger>
+            <TabsTrigger value="alerts" className="gap-2">
+              <Bell className="h-4 w-4" />
+              Job Alerts
+            </TabsTrigger>
           </TabsList>
 
           {/* Applications Tab */}
