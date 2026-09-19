@@ -46,6 +46,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Bot,
+  Bell,
 } from "lucide-react";
 import { useAllJobs, useCreateJob, useUpdateJob, useDeleteJob, useToggleJobStatus, CreateJobInput } from "@/hooks/useJobs";
 import { useAllApplications, useUpdateApplicationStatus } from "@/hooks/useApplications";
@@ -71,6 +72,7 @@ import ApplicationDetailsDialog from "@/components/admin/ApplicationDetailsDialo
 const DataCleanup = lazy(() => import("@/components/admin/DataCleanup"));
 const NewsManager = lazy(() => import("@/components/admin/NewsManager"));
 const McpGuide = lazy(() => import("@/components/admin/McpGuide"));
+const JobAlertsPanel = lazy(() => import("@/components/admin/JobAlertsPanel"));
 import { Trash, Megaphone } from "lucide-react";
 const PROVINCE_OPTIONS = [
   { value: "Punjab", label: "Punjab" },
@@ -579,6 +581,9 @@ const Admin = () => {
             <TabsTrigger value="cleanup" className="gap-1.5 text-xs sm:text-sm">
               <Trash className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Cleanup
             </TabsTrigger>
+            <TabsTrigger value="alerts" className="gap-1.5 text-xs sm:text-sm">
+              <Bell className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Alerts
+            </TabsTrigger>
             <TabsTrigger value="agents" className="gap-1.5 text-xs sm:text-sm">
               <Bot className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> <span className="hidden sm:inline">AI Agents</span><span className="sm:hidden">Agents</span>
             </TabsTrigger>
@@ -1011,6 +1016,12 @@ const Admin = () => {
           <TabsContent value="cleanup">
             <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
               <DataCleanup />
+            </Suspense>
+          </TabsContent>
+
+          <TabsContent value="alerts">
+            <Suspense fallback={<div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+              <JobAlertsPanel />
             </Suspense>
           </TabsContent>
 

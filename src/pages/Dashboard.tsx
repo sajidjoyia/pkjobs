@@ -29,7 +29,9 @@ import {
   FileQuestion,
   AlertCircle,
   ArrowRight,
+  Bell,
 } from "lucide-react";
+import AlertPreferences from "@/components/notifications/AlertPreferences";
 import { useAuth } from "@/hooks/useAuth";
 import { useMyApplications, Application } from "@/hooks/useApplications";
 import { useMyWorkRequests, WorkRequest, useGetOrCreateWorkRequestConversation } from "@/hooks/useWorkRequests";
@@ -329,6 +331,10 @@ const Dashboard = () => {
             <TabsTrigger value="documents" className="gap-2">
               <FileText className="h-4 w-4" />
               Documents
+            </TabsTrigger>
+            <TabsTrigger value="alerts" className="gap-2">
+              <Bell className="h-4 w-4" />
+              Job Alerts
             </TabsTrigger>
           </TabsList>
 
@@ -750,6 +756,9 @@ const Dashboard = () => {
               )}
             </div>
             <div className="mt-6">
+              <AlertPreferences />
+            </div>
+            <div className="mt-6">
               <ChangePassword />
             </div>
           </TabsContent>
@@ -757,6 +766,11 @@ const Dashboard = () => {
           {/* Documents Tab */}
           <TabsContent value="documents">
             <MyDocuments />
+          </TabsContent>
+
+          {/* Job Alerts Tab */}
+          <TabsContent value="alerts">
+            <AlertPreferences />
           </TabsContent>
         </Tabs>
       </div>
