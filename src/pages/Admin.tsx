@@ -579,6 +579,9 @@ const Admin = () => {
             <TabsTrigger value="cleanup" className="gap-1.5 text-xs sm:text-sm">
               <Trash className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Cleanup
             </TabsTrigger>
+            <TabsTrigger value="alerts" className="gap-1.5 text-xs sm:text-sm">
+              <Bell className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Alerts
+            </TabsTrigger>
             <TabsTrigger value="agents" className="gap-1.5 text-xs sm:text-sm">
               <Bot className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> <span className="hidden sm:inline">AI Agents</span><span className="sm:hidden">Agents</span>
             </TabsTrigger>
