@@ -72,6 +72,7 @@ import ApplicationDetailsDialog from "@/components/admin/ApplicationDetailsDialo
 const DataCleanup = lazy(() => import("@/components/admin/DataCleanup"));
 const NewsManager = lazy(() => import("@/components/admin/NewsManager"));
 const McpGuide = lazy(() => import("@/components/admin/McpGuide"));
+const JobAlertsPanel = lazy(() => import("@/components/admin/JobAlertsPanel"));
 import { Trash, Megaphone } from "lucide-react";
 const PROVINCE_OPTIONS = [
   { value: "Punjab", label: "Punjab" },
