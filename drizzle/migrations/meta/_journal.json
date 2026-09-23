@@ -8,6 +8,13 @@
       "when": 1789646410130,
       "tag": "0000_job_alert_preferences",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790126213191,
+      "tag": "0001_push_config_manual_firebase",
+      "breakpoints": true
     }
   ]
 }

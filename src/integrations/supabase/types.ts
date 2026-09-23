@@ -567,6 +567,36 @@ export type Database = {
         }
         Relationships: []
       }
+      push_config: {
+        Row: {
+          app_id: string | null
+          id: boolean
+          project_id: string | null
+          service_account_json: string | null
+          updated_at: string
+          vapid_key: string | null
+          web_api_key: string | null
+        }
+        Insert: {
+          app_id?: string | null
+          id?: boolean
+          project_id?: string | null
+          service_account_json?: string | null
+          updated_at?: string
+          vapid_key?: string | null
+          web_api_key?: string | null
+        }
+        Update: {
+          app_id?: string | null
+          id?: boolean
+          project_id?: string | null
+          service_account_json?: string | null
+          updated_at?: string
+          vapid_key?: string | null
+          web_api_key?: string | null
+        }
+        Relationships: []
+      }
       push_subscriptions: {
         Row: {
           created_at: string
@@ -811,6 +841,15 @@ export type Database = {
     }
     Functions: {
       eligible_users_for_job: { Args: { _job_id: string }; Returns: string[] }
+      get_push_web_config: {
+        Args: never
+        Returns: {
+          app_id: string
+          project_id: string
+          vapid_key: string
+          web_api_key: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
