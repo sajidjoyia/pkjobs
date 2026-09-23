@@ -109,6 +109,55 @@ const JobAlertsPanel = () => {
 
       <Card>
         <CardHeader>
+          <CardTitle>Setup guide</CardTitle>
+          <CardDescription>
+            Each channel starts working by itself as soon as its setup is done — no other changes needed.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5 text-sm">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 font-medium">
+              <Smartphone className="h-4 w-4 text-primary" />
+              Browser notifications (Firebase)
+              {isPushConfigured() ? (
+                <Badge variant="secondary" className="gap-1">
+                  <CircleCheck className="h-3 w-3" /> Connected
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="gap-1">
+                  <CircleDashed className="h-3 w-3" /> Not connected yet
+                </Badge>
+              )}
+            </div>
+            <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+              <li>Create a free project at firebase.google.com (no billing needed).</li>
+              <li>In the Firebase project, add a "Web app" and copy its settings.</li>
+              <li>Ask in chat to "connect Firebase" and pick your project — include web push when asked.</li>
+              <li>Publish the site once after connecting. The "Browser notifications" switch then turns on for users automatically.</li>
+            </ol>
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 font-medium">
+              <Mail className="h-4 w-4 text-primary" />
+              Email alerts
+              <Badge variant="outline" className="gap-1">
+                <CircleDashed className="h-3 w-3" /> Needs a sender domain
+              </Badge>
+            </div>
+            <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+              <li>You need a domain you own (e.g. yourdomain.com). You can buy one in Project Settings → Domains.</li>
+              <li>Ask in chat to "set up email domain" and follow the short steps shown.</li>
+              <li>Once verified, job alert emails start sending automatically — nothing else to change.</li>
+            </ol>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Until a channel is connected, users simply don't see it — bell alerts inside the site keep working regardless.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Recent alert deliveries</CardTitle>
           <CardDescription>The last 50 alerts sent out.</CardDescription>
         </CardHeader>
