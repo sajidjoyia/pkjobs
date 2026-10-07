@@ -11,10 +11,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
-import { isPushConfigured } from "@/lib/push";
+import { usePushConfigured } from "@/lib/push";
 import { formatDistanceToNow } from "date-fns";
 
 const JobAlertsPanel = () => {
+  const pushReady = usePushConfigured();
   const { data, isLoading } = useQuery({
     queryKey: ["admin-job-alerts"],
     queryFn: async () => {
@@ -119,7 +120,7 @@ const JobAlertsPanel = () => {
             <div className="flex items-center gap-2 font-medium">
               <Smartphone className="h-4 w-4 text-primary" />
               Browser notifications (Firebase)
-              {isPushConfigured() ? (
+              {pushReady ? (
                 <Badge variant="secondary" className="gap-1">
                   <CircleCheck className="h-3 w-3" /> Connected
                 </Badge>

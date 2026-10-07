@@ -110,3 +110,18 @@ export async function enablePush(): Promise<PushResult> {
     return { status: "error", message: e instanceof Error ? e.message : String(e) };
   }
 }
+
+import { useEffect, useState } from "react";
+
+/** React hook: true once Firebase web settings are available (env or admin form). */
+export function usePushConfigured(): boolean {
+  const [ok, setOk] = useState<boolean>(!!cached);
+  useEffect(() => {
+    let alive = true;
+    fetchPushConfig().then((c) => alive && setOk(!!c));
+    return () => {
+      alive = false;
+    };
+  }, []);
+  return ok;
+}
