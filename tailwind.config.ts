@@ -14,10 +14,23 @@ export default {
     },
     extend: {
       fontFamily: {
+        editorial: ['Libre Baskerville', 'Georgia', 'serif'],
+        reading: ['IBM Plex Sans', 'system-ui', 'sans-serif'],
         sans: ['Inter', 'system-ui', 'sans-serif'],
         display: ['Playfair Display', 'Georgia', 'serif'],
       },
       colors: {
+        editorial: {
+          paper: 'hsl(var(--editorial-paper) / <alpha-value>)',
+          ink: 'hsl(var(--editorial-ink) / <alpha-value>)',
+          green: 'hsl(var(--editorial-green) / <alpha-value>)',
+          gold: 'hsl(var(--editorial-gold) / <alpha-value>)',
+          surface: 'hsl(var(--editorial-surface) / <alpha-value>)',
+          muted: 'hsl(var(--editorial-muted) / <alpha-value>)',
+          line: 'hsl(var(--editorial-line) / <alpha-value>)',
+          inverse: 'hsl(var(--editorial-inverse) / <alpha-value>)',
+          overlay: 'hsl(var(--editorial-overlay) / <alpha-value>)',
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

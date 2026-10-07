@@ -8,6 +8,7 @@ interface GlobalSeoHeadProps {
   pageOgImage?: string;
   pageOgTitle?: string;
   pageOgDescription?: string;
+  pageOgType?: "website" | "article";
   /** Absolute canonical URL for this page. Also used as og:url. */
   canonicalUrl?: string;
 }
@@ -19,6 +20,7 @@ const GlobalSeoHead = ({
   pageOgImage,
   pageOgTitle,
   pageOgDescription,
+  pageOgType,
   canonicalUrl,
 }: GlobalSeoHeadProps) => {
   const { data: settings } = useSeoSettings();
@@ -77,7 +79,7 @@ const GlobalSeoHead = ({
 
     setMetaTag("og:title", ogTitle, true);
     setMetaTag("og:description", ogDescription, true);
-    setMetaTag("og:type", canonicalUrl ? "article" : "website", true);
+    setMetaTag("og:type", pageOgType || (canonicalUrl ? "article" : "website"), true);
     if (ogImage) setMetaTag("og:image", ogImage, true);
     if (settings.website_name) setMetaTag("og:site_name", settings.website_name, true);
 
@@ -168,7 +170,7 @@ const GlobalSeoHead = ({
     return () => {
       // Note: We don't remove meta tags on unmount as they should persist
     };
-  }, [settings, pageTitle, pageDescription, pageKeywords, pageOgImage, pageOgTitle, pageOgDescription, canonicalUrl]);
+  }, [settings, pageTitle, pageDescription, pageKeywords, pageOgImage, pageOgTitle, pageOgDescription, pageOgType, canonicalUrl]);
 
   return null; // This component only manages head elements
 };

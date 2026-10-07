@@ -3,10 +3,17 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap');
-
 @layer base {
   :root {
+    --editorial-paper: 150 16.66667% 97.64706%;
+    --editorial-ink: 140 12.32877% 14.31373%;
+    --editorial-green: 156.77419 67.88321% 26.86275%;
+    --editorial-gold: 43.01205 66.4% 50.98039%;
+    --editorial-surface: 0 0% 100%;
+    --editorial-muted: 140 8% 36%;
+    --editorial-line: 140 12% 85%;
+    --editorial-inverse: 0 0% 100%;
+    --editorial-overlay: 140 12.32877% 14.31373%;
     --background: 0 0% 98%;
     --foreground: 215 25% 15%;
 
@@ -70,6 +77,11 @@
   }
 
   .dark {
+    --editorial-paper: 140 12% 9%;
+    --editorial-ink: 150 16% 94%;
+    --editorial-surface: 140 12% 13%;
+    --editorial-muted: 140 9% 72%;
+    --editorial-line: 140 10% 26%;
     --background: 215 30% 8%;
     --foreground: 210 20% 95%;
 
@@ -138,6 +150,20 @@
 }
 
 @layer components {
+  .editorial-home { font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 16px; }
+  .editorial-home h1, .editorial-home h2, .editorial-home h3, .editorial-home h4 { font-family: 'Libre Baskerville', Georgia, serif; letter-spacing: 0; }
+  .editorial-home * { letter-spacing: 0; }
+  .editorial-hero { height: min(740px, calc(100svh - 200px)); min-height: 510px; }
+  .editorial-hero-photo { object-position: center 48%; }
+  .editorial-hero-shade { background: hsl(var(--editorial-overlay) / 0.57); }
+  .editorial-step { scroll-margin-top: 100px; }
+  @media (max-width: 640px) {
+    .editorial-hero { height: auto; min-height: 480px; }
+    .editorial-hero-photo { object-position: 60% center; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .editorial-home *, .editorial-home *::before, .editorial-home *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  }
   .btn-primary {
     @apply bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200;
     box-shadow: var(--shadow-primary);

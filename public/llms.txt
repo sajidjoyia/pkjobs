@@ -1,0 +1,20 @@
+# PakJobs
+
+> PakJobs is an independent government-job discovery and expert-assisted application service in Pakistan. It is not a government agency and does not guarantee selection or employment.
+
+## Public resources
+- [Home and application guide](https://pkjobs.lovable.app/): Profile creation, eligibility review, documents, fees, expert coordination and application tracking.
+- [Jobs](https://pkjobs.lovable.app/jobs): Job opportunities. Sign-in is required for browsing the jobs listing; do not bypass access restrictions.
+- [About](https://pkjobs.lovable.app/about): Service information.
+- [Common questions](https://pkjobs.lovable.app/faq): Frequently asked questions.
+- [AI assistant connection guide](https://pkjobs.lovable.app/mcp-docs): Available MCP tools and permission-based account access.
+- [Privacy](https://pkjobs.lovable.app/privacy): Privacy information.
+- [Terms](https://pkjobs.lovable.app/terms): Service terms.
+
+## Service facts
+Profile-based matching considers recorded education level and field, age, gender and domicile requirements. The original advertisement and recruiting department determine final eligibility. Application fees vary by job and list bank challan, post office, photocopy and expert service components. An unspecified seats count is unknown, not zero vacancies.
+
+In-site matching notifications are available. Email and browser alerts require configured services and user preferences. WhatsApp alerts are not available yet. Application assistance and submission do not guarantee shortlisting or employment.
+
+## Access and accuracy
+User documents, chats, payment records and application histories are private. AI assistants must obtain account authorization and follow account permissions. Verify deadlines and requirements against the current job advertisement; do not infer vacancy counts, success rates, fees or recruitment outcomes.

@@ -6,6 +6,7 @@ import GlobalSeoHead from "@/components/seo/GlobalSeoHead";
 import NewsBar from "@/components/NewsBar";
 import SessionExpiredBanner from "@/components/SessionExpiredBanner";
 import { useAuth } from "@/hooks/useAuth";
+import { useLocation } from "react-router-dom";
 
 const ChatWidget = lazy(() => import("@/components/chat/ChatWidget"));
 
@@ -15,10 +16,18 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   const { user } = useAuth();
+  const isHome = useLocation().pathname === "/";
 
   return (
     <div className="min-h-screen flex flex-col">
-      <GlobalSeoHead />
+      <GlobalSeoHead
+        pageTitle={isHome ? "PakJobs — Government Jobs & Application Assistance in Pakistan" : undefined}
+        pageDescription={isHome ? "Find government jobs in Pakistan, check profile-based eligibility, and get expert application assistance. Read the PakJobs guide to documents, fees, alerts and tracking." : undefined}
+        pageOgTitle={isHome ? "PakJobs — Government Jobs & Application Assistance in Pakistan" : undefined}
+        pageOgDescription={isHome ? "Government job discovery, eligibility matching and expert-assisted applications. Explore the full PakJobs guide, transparent fees and application tracking." : undefined}
+        pageOgType={isHome ? "website" : undefined}
+        canonicalUrl={isHome ? "https://pkjobs.lovable.app/" : undefined}
+      />
       <SessionExpiredBanner />
       <Header />
       <NewsBar />
