@@ -12,7 +12,7 @@ import {
   useUpdateNotificationPreferences,
   DEFAULT_PREFERENCES,
 } from "@/hooks/useNotificationPreferences";
-import { enablePush, isPushConfigured } from "@/lib/push";
+import { enablePush, usePushConfigured } from "@/lib/push";
 
 interface Props {
   compact?: boolean;
@@ -112,7 +112,7 @@ const AlertPreferences = ({ compact = false }: Props) => {
               <div>
                 <p className="font-medium">Browser notifications</p>
                 <p className="text-sm text-muted-foreground">
-                  {isPushConfigured()
+                  {pushReady
                     ? "Pops up on your phone or computer, even when the site is closed."
                     : "Coming soon on this site."}
                 </p>
@@ -123,7 +123,7 @@ const AlertPreferences = ({ compact = false }: Props) => {
             ) : (
               <Switch
                 checked={prefs.push_enabled}
-                disabled={!isPushConfigured()}
+                disabled={!pushReady}
                 onCheckedChange={handlePushToggle}
               />
             )}
