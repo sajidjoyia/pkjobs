@@ -19,6 +19,7 @@ interface Props {
 }
 
 const AlertPreferences = ({ compact = false }: Props) => {
+  const pushReady = usePushConfigured();
   const { data, isLoading } = useNotificationPreferences();
   const update = useUpdateNotificationPreferences();
   const { toast } = useToast();
