@@ -1,130 +1,44 @@
 import { Link } from "react-router-dom";
 import { lazy, Suspense } from "react";
+import { ArrowDown, ArrowRight, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, CheckCircle, Users, FileText, Sparkles } from "lucide-react";
-import heroAsset from "@/assets/hero-image.webp.asset.json";
+import heroImage from "@/assets/pakjobs-editorial.webp";
 
-// Lazy-load below-the-fold sections so the initial page paints faster.
 const BelowFold = lazy(() => import("./index-sections/BelowFold"));
 
-const HeroSection = () => {
-  return (
-    <section className="relative overflow-hidden hero-gradient">
-      {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-1/2 -right-1/4 w-[800px] h-[800px] rounded-full bg-primary/5 blur-3xl" />
-        <div className="absolute -bottom-1/2 -left-1/4 w-[600px] h-[600px] rounded-full bg-secondary/5 blur-3xl" />
-      </div>
-
-      <div className="container relative py-20 lg:py-28">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Content */}
-          <div className="space-y-8 animate-slide-up">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
-              <Sparkles className="h-4 w-4" />
-              Trusted by 50,000+ job seekers
-            </div>
-
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight">
-              Your Gateway to{" "}
-              <span className="text-gradient-primary">Government Jobs</span>{" "}
-              in Pakistan
-            </h1>
-
-            <p className="text-lg text-muted-foreground max-w-lg">
-              We simplify the government job application process. From finding eligible
-              jobs to expert-assisted applications, we handle everything so you can
-              focus on your career.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Link to="/auth?mode=register">
-                <Button variant="hero" className="w-full sm:w-auto">
-                  Get Started Free
-                  <ArrowRight className="h-5 w-5" />
-                </Button>
-              </Link>
-              <Link to="/how-it-works">
-                <Button variant="hero-outline" className="w-full sm:w-auto">
-                  How It Works
-                </Button>
-              </Link>
-            </div>
-
-            {/* Trust indicators */}
-            <div className="flex flex-wrap gap-6 pt-4">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <CheckCircle className="h-5 w-5 text-success" />
-                Free eligibility check
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <CheckCircle className="h-5 w-5 text-success" />
-                Expert assistance
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <CheckCircle className="h-5 w-5 text-success" />
-                Full transparency
-              </div>
-            </div>
-          </div>
-
-          {/* Image — LCP candidate: eager + high priority + explicit dimensions to avoid CLS */}
-          <div className="relative animate-fade-in">
-            <div className="relative rounded-2xl overflow-hidden shadow-xl">
-              <img
-                src={heroAsset.url}
-                alt="Professional Pakistanis ready for government careers"
-                width={1600}
-                height={900}
-                loading="eager"
-                // @ts-expect-error - lowercase per HTML spec to avoid React DOM warning
-                fetchpriority="high"
-                decoding="async"
-                className="w-full h-auto object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-background/20 to-transparent" />
-            </div>
-
-            {/* Floating cards */}
-            <div className="absolute -bottom-6 -left-6 card-elevated p-4 animate-scale-in" style={{ animationDelay: '0.3s' }}>
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-success/20 flex items-center justify-center">
-                  <FileText className="h-5 w-5 text-success" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-foreground">1,200+</p>
-                  <p className="text-xs text-muted-foreground">Jobs Available</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="absolute -top-6 -right-6 card-elevated p-4 animate-scale-in" style={{ animationDelay: '0.5s' }}>
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
-                  <Users className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-foreground">50,000+</p>
-                  <p className="text-xs text-muted-foreground">Happy Users</p>
-                </div>
-              </div>
-            </div>
-          </div>
+const Index = () => (
+  <div className="editorial-home bg-editorial-paper text-editorial-ink">
+    <section className="editorial-hero relative isolate flex items-center justify-center overflow-hidden">
+      <img src={heroImage} alt="Pakistani applicants holding document folders outside a civic building — editorial illustration" width={1920} height={1024} loading="eager" decoding="async" className="editorial-hero-photo absolute inset-0 -z-20 h-full w-full object-cover" />
+      <div className="editorial-hero-shade absolute inset-0 -z-10" />
+      <div className="mx-auto w-full max-w-5xl px-6 py-14 text-center text-editorial-inverse motion-safe:animate-fade-in">
+        <div className="mb-6 flex items-center justify-center gap-4 text-editorial-gold">
+          <span className="h-px w-10 bg-editorial-gold" />
+          <p className="text-xs font-semibold uppercase">Independent application assistance</p>
+          <span className="h-px w-10 bg-editorial-gold" />
         </div>
+        <h1 className="mb-6 text-6xl font-bold leading-tight md:text-8xl lg:text-9xl">PakJobs</h1>
+        <p className="mx-auto mb-4 max-w-3xl font-editorial text-2xl leading-relaxed md:text-3xl">Government job applications<br className="hidden sm:block" /> in <span className="text-editorial-gold">Pakistan.</span></p>
+        <p className="mx-auto mb-8 max-w-xl text-base leading-relaxed text-editorial-inverse/90">Find opportunities that match your profile. Get expert help with your application, and follow every step in one place.</p>
+        <div className="flex flex-col justify-center gap-4 sm:flex-row">
+          <Button asChild variant="editorial" className="h-12"><a href="#user-guide"><BookOpen />Read the Guide</a></Button>
+          <Button asChild variant="editorial-outline" className="h-12"><Link to="/jobs">Browse Jobs<ArrowRight /></Link></Button>
+        </div>
+        <p className="mt-6 text-sm text-editorial-inverse/80">Not a government agency. Application assistance, not a job guarantee.</p>
       </div>
     </section>
-  );
-};
-
-const Index = () => {
-  return (
-    <>
-      <HeroSection />
-      <Suspense fallback={<div className="py-20" />}>
-        <BelowFold />
-      </Suspense>
-    </>
-  );
-};
-
+    <nav aria-label="Homepage contents" className="border-b border-editorial-line">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-5 lg:px-10">
+        <span className="text-xs font-semibold uppercase text-editorial-muted">Your career, clearly mapped</span>
+        <div className="flex flex-wrap gap-x-7 gap-y-3 text-sm font-medium">
+          <a href="#user-guide" className="hover:text-editorial-green">The guide</a>
+          <a href="#features" className="hover:text-editorial-green">Features</a>
+          <a href="#questions" className="hover:text-editorial-green">Questions</a>
+          <Link to="/auth?mode=register" className="inline-flex items-center gap-2 text-editorial-green">Create an account<ArrowRight className="h-4 w-4" /></Link>
+        </div>
+      </div>
+    </nav>
+    <Suspense fallback={<div className="min-h-96 px-6 py-16" role="status">Loading the guide…</div>}><BelowFold /></Suspense>
+  </div>
+);
 export default Index;

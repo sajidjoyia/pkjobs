@@ -1,168 +1,74 @@
 import { Link } from "react-router-dom";
+import { ArrowRight, Bell, Bot, CheckCheck, FileCheck, FolderLock, MessageCircle, SearchCheck, Share2, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Users, Shield, FileText } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
-const FeaturesSection = () => {
-  const features = [
-    {
-      icon: Users,
-      title: "Smart Job Matching",
-      description:
-        "Our system automatically matches your profile with eligible government jobs based on your education, age, and domicile.",
-    },
-    {
-      icon: Shield,
-      title: "Expert Assistance",
-      description:
-        "Dedicated experts handle your application process, from form filling to document submission and fee payment.",
-    },
-    {
-      icon: FileText,
-      title: "Complete Transparency",
-      description:
-        "Track every step of your application. View all payments, receipts, and chat history in one place.",
-    },
-  ];
-
-  return (
-    <section className="py-20 bg-muted/30">
-      <div className="container">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Why Choose <span className="text-primary">PakJobs</span>?
-          </h2>
-          <p className="text-muted-foreground">
-            We've simplified the complex government job application process into a seamless experience.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-8">
-          {features.map((feature, index) => (
-            <div
-              key={feature.title}
-              className="card-elevated p-8 text-center animate-slide-up"
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
-              <div className="inline-flex items-center justify-center h-14 w-14 rounded-xl bg-primary/10 mb-6">
-                <feature.icon className="h-7 w-7 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold text-foreground mb-3">{feature.title}</h3>
-              <p className="text-muted-foreground">{feature.description}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
-
-const HowItWorksSection = () => {
-  const steps = [
-    { step: "01", title: "Create Your Profile", description: "Register and enter your details - age, education, province, and domicile." },
-    { step: "02", title: "Find Eligible Jobs", description: "Browse jobs that match your eligibility. No more wasted applications." },
-    { step: "03", title: "Select & Pay", description: "Choose a job, review the complete fee breakdown, and make payment." },
-    { step: "04", title: "Expert Applies for You", description: "Our expert handles everything - forms, documents, and official fee payment." },
-  ];
-
-  return (
-    <section className="py-20">
-      <div className="container">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            How It <span className="text-primary">Works</span>
-          </h2>
-          <p className="text-muted-foreground">Four simple steps to your government career</p>
-        </div>
-
-        <div className="grid md:grid-cols-4 gap-6">
-          {steps.map((item, index) => (
-            <div key={item.step} className="relative">
-              <div className="card-elevated p-6 h-full">
-                <span className="text-5xl font-bold text-primary/10">{item.step}</span>
-                <h3 className="text-lg font-semibold text-foreground mt-4 mb-2">{item.title}</h3>
-                <p className="text-sm text-muted-foreground">{item.description}</p>
-              </div>
-              {index < steps.length - 1 && (
-                <div className="hidden md:block absolute top-1/2 -right-3 w-6 h-0.5 bg-border" />
-              )}
-            </div>
-          ))}
-        </div>
-
-        <div className="text-center mt-12">
-          <Link to="/auth?mode=register">
-            <Button size="xl">
-              Start Your Journey
-              <ArrowRight className="h-5 w-5" />
-            </Button>
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-};
-
-const StatsSection = () => {
-  const stats = [
-    { value: "50,000+", label: "Registered Users" },
-    { value: "1,200+", label: "Active Jobs" },
-    { value: "35,000+", label: "Applications Submitted" },
-    { value: "98%", label: "Success Rate" },
-  ];
-
-  return (
-    <section className="py-16 bg-primary">
-      <div className="container">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-          {stats.map((stat) => (
-            <div key={stat.label} className="text-center">
-              <p className="text-3xl md:text-4xl font-bold text-primary-foreground">{stat.value}</p>
-              <p className="text-primary-foreground/80 mt-1">{stat.label}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
-
-const CTASection = () => {
-  return (
-    <section className="py-20">
-      <div className="container">
-        <div className="card-elevated p-12 text-center max-w-3xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Ready to Start Your Government Career?
-          </h2>
-          <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
-            Join thousands of successful applicants who found their dream government jobs through PakJobs.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/auth?mode=register">
-              <Button size="xl">
-                Create Free Account
-                <ArrowRight className="h-5 w-5" />
-              </Button>
-            </Link>
-            <Link to="/jobs">
-              <Button variant="outline" size="xl">
-                Browse Jobs
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-};
+const steps = [
+  { title: "Build your profile", text: "Create an account, then complete your personal details, date of birth, gender, education level and field, province, and domicile. Keep these accurate: they determine your profile-based job matches.", link: "/auth?mode=register", label: "Create your account" },
+  { title: "Check the job requirements", text: "Sign in to browse jobs. Review the department, education, age limit, gender, domicile, last date, and seats. Compare the original advertisement with your qualifications; a profile match is guidance, not the department’s final eligibility decision.", link: "/jobs", label: "Browse opportunities" },
+  { title: "Prepare your documents", text: "Open My Documents in your dashboard. Upload readable CNIC and Matric documents, plus other qualifications or documents required by the advertisement. Documents are private and made available to authorized people handling your request.", link: "/dashboard", label: "Open your dashboard" },
+  { title: "Review fees & request assistance", text: "The job page shows bank challan, post office, photocopy, and expert service fees, along with the total. Choose Apply for Me, review your request, and follow the payment instructions provided. Keep proof of payment and resolve questions in chat before proceeding.", link: "/jobs", label: "Review job fees" },
+  { title: "Coordinate with your expert", text: "After assignment, your expert helps prepare and submit the application. Use the application chat to clarify missing details and provide requested documents. Respond promptly, especially when the application deadline is near.", link: "/dashboard", label: "View your applications" },
+  { title: "Track progress & keep receipts", text: "Check your dashboard for the application status, progress steps, messages, and uploaded receipts. Follow the recruiting department’s official instructions for tests and interviews. Submission does not guarantee shortlisting, selection, or employment.", link: "/dashboard", label: "Track your request" },
+];
+const highlights = [
+  { icon: SearchCheck, title: "Profile-based matching", text: "Compare education level and field, age, gender, province and domicile with the listed requirements.", dark: false },
+  { icon: FileCheck, title: "Expert-assisted applications", text: "Get help with forms, required documents, submission and official fee handling.", dark: true },
+  { icon: Wallet, title: "A clear fee breakdown", text: "Bank challan, postage, photocopies and expert service charges — see the total before proceeding.", dark: false },
+  { icon: CheckCheck, title: "Progress you can follow", text: "Keep application milestones, messages, payment records and receipts together in your dashboard.", dark: false },
+];
+const extras = [
+  { icon: FolderLock, title: "Private documents", text: "Keep CNIC and education documents in My Documents for your application requests." },
+  { icon: MessageCircle, title: "Application chat", text: "Talk to the people handling your request, with messages and attachments in context." },
+  { icon: Bell, title: "Eligible-job alerts", text: "In-site notifications for matching new jobs. Email and browser alerts depend on service setup; choose timing or pause them in Job Alerts. WhatsApp alerts are not available yet." },
+  { icon: Share2, title: "Share job opportunities", text: "Share a job link on WhatsApp, Facebook or X with its department, deadline, seats status and total fee." },
+  { icon: Bot, title: "AI assistant access", text: "Connect a compatible AI assistant with your permission to find jobs, check your eligibility and track your applications. Access follows your account permissions." },
+];
+const questions = [
+  { q: "Is PakJobs an official government website?", a: "No. PakJobs is an independent government-job discovery and application-assistance service. The recruiting department makes all eligibility and selection decisions. Always check the original advertisement and official instructions." },
+  { q: "How does government job eligibility matching work?", a: "PakJobs compares your profile with the job’s recorded education level and field, age, gender, and domicile requirements. Complete your profile accurately and read the official advertisement for additional conditions, exemptions or age relaxations." },
+  { q: "What if the number of seats is unknown?", a: "The job shows ‘Seats not specified’ when no number is available. It does not mean the job has no vacancies. Check the original advertisement or the recruiting department for confirmation." },
+  { q: "What do I pay for application assistance?", a: "Charges vary by job. The fee breakdown lists bank challan, post office, photocopy and expert service fees, with a total. Review the amount shown on the job page before requesting assistance." },
+  { q: "Can I receive alerts without keeping the website open?", a: "In-site bell alerts are available when you return to PakJobs. Email and browser notifications require the respective services to be configured and your permission or subscription. You can choose instant or daily alerts, or pause external alerts, in Dashboard → Job Alerts. WhatsApp alerts are not available yet." },
+  { q: "Does application assistance guarantee a government job?", a: "No. Assistance covers the application process, not recruitment outcomes. Tests, interviews, merit, eligibility and final selection are controlled by the recruiting department." },
+];
 
 const BelowFold = () => (
   <>
-    <FeaturesSection />
-    <StatsSection />
-    <HowItWorksSection />
-    <CTASection />
+    <section className="mx-auto grid max-w-7xl grid-cols-1 gap-14 px-6 py-16 lg:grid-cols-12 lg:gap-16 lg:px-10 lg:py-24">
+      <div id="user-guide" className="editorial-step lg:col-span-5">
+        <p className="mb-4 text-xs font-semibold uppercase text-editorial-muted">From profile to submission</p>
+        <h2 className="mb-6 text-3xl font-bold text-editorial-green md:text-4xl">The User Guide</h2>
+        <p className="mb-12 border-l-2 border-editorial-gold pl-5 text-lg leading-relaxed text-editorial-muted">A clear path through your government job application — with the right details, documents and support.</p>
+        <ol className="space-y-10">
+          {steps.map((step, i) => <li key={step.title} className="grid grid-cols-[42px_minmax(0,1fr)] gap-4">
+            <span className="font-editorial text-3xl text-editorial-green" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
+            <div><h3 className="mb-3 text-lg font-bold leading-relaxed">{step.title}</h3><p className="text-sm leading-7 text-editorial-muted">{step.text}</p><Button asChild variant="editorial-link" className="mt-3 text-sm"><Link to={step.link}>{step.label}<ArrowRight /></Link></Button></div>
+          </li>)}
+        </ol>
+      </div>
+      <div id="features" className="editorial-step lg:col-span-7">
+        <p className="mb-4 text-xs font-semibold uppercase text-editorial-muted">The feature index</p>
+        <h2 className="mb-8 text-3xl font-bold md:text-4xl">More clarity.<br />Less paperwork.</h2>
+        <div className="grid grid-cols-1 gap-px overflow-hidden border border-editorial-line bg-editorial-line sm:grid-cols-2">
+          {highlights.map((feature) => <article key={feature.title} className={`flex min-h-72 flex-col justify-between p-7 xl:min-h-80 xl:p-9 ${feature.dark ? "bg-editorial-green text-editorial-inverse" : "bg-editorial-surface text-editorial-ink"}`}>
+            <feature.icon className={`mb-8 h-8 w-8 ${feature.dark ? "text-editorial-gold" : "text-editorial-green"}`} strokeWidth={1.5} />
+            <div><h3 className="mb-4 text-xl leading-relaxed">{feature.title}</h3><p className={`text-sm leading-7 ${feature.dark ? "text-editorial-inverse/90" : "text-editorial-muted"}`}>{feature.text}</p></div>
+          </article>)}
+        </div>
+        <div className="mt-10 divide-y divide-editorial-line">
+          {extras.map(feature => <article key={feature.title} className="flex gap-5 py-6"><feature.icon className="mt-1 h-5 w-5 shrink-0 text-editorial-green" /><div><h3 className="mb-2 text-base font-bold">{feature.title}</h3><p className="text-sm leading-7 text-editorial-muted">{feature.text}</p>{feature.title === "AI assistant access" && <Button asChild variant="editorial-link" className="mt-3"><Link to="/mcp-docs">Read the AI connection guide<ArrowRight /></Link></Button>}</div></article>)}
+        </div>
+        <div className="mt-8 border-t-2 border-editorial-gold pt-6"><h3 className="mb-3 text-lg">Before you apply</h3><p className="text-sm leading-7 text-editorial-muted">Use accurate profile details, check the official advertisement and deadline, and keep your payment and submission receipts. Never share your password in chat.</p></div>
+      </div>
+    </section>
+    <section id="questions" className="editorial-step border-y border-editorial-line bg-editorial-surface">
+      <div className="mx-auto grid max-w-7xl gap-10 px-6 py-16 lg:grid-cols-[1fr_2fr] lg:px-10">
+        <div><p className="mb-4 text-xs font-semibold uppercase text-editorial-muted">Good to know</p><h2 className="text-3xl leading-relaxed">Your questions,<br />answered.</h2><Button asChild variant="editorial-link" className="mt-6"><Link to="/faq">More questions<ArrowRight /></Link></Button></div>
+        <Accordion type="single" collapsible>{questions.map(item => <AccordionItem key={item.q} value={item.q} className="border-editorial-line"><AccordionTrigger className="text-left font-reading text-base leading-relaxed">{item.q}</AccordionTrigger><AccordionContent className="text-sm leading-7 text-editorial-muted">{item.a}</AccordionContent></AccordionItem>)}</Accordion>
+      </div>
+    </section>
+    <section className="px-6 py-16 text-center lg:py-20"><p className="mb-4 text-xs font-semibold uppercase text-editorial-green">Take the next step</p><h2 className="mb-5 text-3xl leading-relaxed md:text-4xl">Your next application<br />starts here.</h2><p className="mx-auto mb-8 max-w-lg leading-7 text-editorial-muted">Create your profile, review matching opportunities, and choose the support you need.</p><Button asChild variant="editorial" className="h-12"><Link to="/auth?mode=register">Create an account<ArrowRight /></Link></Button><div className="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm text-editorial-muted"><Link to="/about" className="hover:underline">About PakJobs</Link><Link to="/privacy" className="hover:underline">Privacy</Link><Link to="/terms" className="hover:underline">Terms of service</Link><Link to="/careers" className="hover:underline">Join our team</Link></div></section>
   </>
 );
-
 export default BelowFold;
