@@ -18,6 +18,9 @@ const buttonVariants = cva(
         hero: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary hover:shadow-lg hover:-translate-y-1 text-base px-8 py-6",
         "hero-outline": "border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground text-base px-8 py-6",
         success: "bg-success text-success-foreground hover:bg-success/90",
+        editorial: "rounded-sm bg-editorial-green text-editorial-inverse hover:bg-editorial-green/90 shadow-none px-8 font-semibold",
+        "editorial-outline": "rounded-sm border border-editorial-inverse/70 bg-transparent text-editorial-inverse hover:bg-editorial-inverse/10 shadow-none px-8 font-semibold",
+        "editorial-link": "rounded-sm text-editorial-green hover:underline underline-offset-4 h-auto p-0 justify-start shadow-none",
       },
       size: {
         default: "h-10 px-4 py-2",
