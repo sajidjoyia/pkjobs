@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { formatSeats } from "@/lib/utils";
+import JobListingCard from "@/components/JobListingCard";
 import {
   Select,
   SelectContent,
@@ -153,7 +154,7 @@ const Jobs = () => {
   };
 
   return (
-    <div className="py-6 sm:py-8">
+    <div className="font-reading py-6 sm:py-10">
       <PullToRefreshIndicator {...ptr} />
       <div className="container px-4 sm:px-6">
         {/* Admin-controlled advertisement */}
@@ -163,32 +164,34 @@ const Jobs = () => {
         <TestPrepPromo className="mb-4 sm:mb-6" />
 
         {/* Header */}
-        <div className="mb-6 sm:mb-8 flex items-start justify-between gap-3">
+        <div className="mb-6 sm:mb-8 flex items-start justify-between gap-3 border-b border-border pb-6">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Government Jobs</h1>
+            <p className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase text-primary"><span className="h-1 w-7 bg-secondary" />Opportunities across Pakistan</p>
+            <h1 className="font-editorial text-2xl sm:text-3xl font-bold text-foreground mb-3">Government Jobs</h1>
             <p className="text-sm sm:text-base text-muted-foreground">Browse and apply for government positions across Pakistan</p>
           </div>
           <RefreshButton queryKeys={[["jobs"]]} label="Refresh" />
         </div>
 
         {/* Filters */}
-        <div className="card-elevated p-4 sm:p-6 mb-6 sm:mb-8">
+        <div className="border-b border-border pb-6 mb-6 sm:mb-8">
           <div className="flex items-center gap-2 mb-4">
             <Filter className="h-5 w-5 text-primary" />
-            <h2 className="font-semibold text-foreground">Filter Jobs</h2>
+            <h2 className="font-reading font-semibold text-foreground">Filter Jobs</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search jobs..."
+                aria-label="Search jobs"
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); handleFilterChange(); }}
                 className="pl-10"
               />
             </div>
             <Select value={selectedProvince} onValueChange={(v) => { setSelectedProvince(v); handleFilterChange(); }}>
-              <SelectTrigger>
+              <SelectTrigger aria-label="Province">
                 <SelectValue placeholder="All Provinces" />
               </SelectTrigger>
               <SelectContent>
@@ -201,7 +204,7 @@ const Jobs = () => {
               </SelectContent>
             </Select>
             <Select value={selectedEducation} onValueChange={(v) => { setSelectedEducation(v); handleFilterChange(); }}>
-              <SelectTrigger>
+              <SelectTrigger aria-label="Education level">
                 <SelectValue placeholder="All Education" />
               </SelectTrigger>
               <SelectContent>
@@ -214,7 +217,7 @@ const Jobs = () => {
               </SelectContent>
             </Select>
             <Select value={dateFilter} onValueChange={(v) => { setDateFilter(v); handleFilterChange(); }}>
-              <SelectTrigger>
+              <SelectTrigger aria-label="Job status">
                 <SelectValue placeholder="Job Status" />
               </SelectTrigger>
               <SelectContent>
@@ -254,10 +257,11 @@ const Jobs = () => {
         </div>
 
         {/* Results count */}
-        <div className="mb-4">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <p className="text-sm text-muted-foreground">
             {isLoading ? "Loading..." : `Showing ${paginatedJobs?.length || 0} of ${filteredJobs?.length || 0} jobs`}
           </p>
+          <span className="text-xs text-muted-foreground">Newest first</span>
         </div>
 
         {/* Loading */}
@@ -315,56 +319,7 @@ const Jobs = () => {
             {paginatedJobs?.map((job) => {
               const expired = isJobExpired(job.last_date);
               return (
-                <div key={job.id} className={`card-elevated p-4 sm:p-6 ${expired ? "opacity-60" : ""}`}>
-                  <div className="flex flex-col gap-3 sm:gap-4">
-                    {/* Title row */}
-                    <div className="flex flex-wrap items-start gap-2">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-base sm:text-xl font-semibold text-foreground truncate">{job.title}</h3>
-                        <p className="text-sm text-muted-foreground">{job.department}</p>
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        <Badge variant="secondary" className="text-xs">{formatSeats(job.total_seats)}</Badge>
-                        {getEligibilityBadge(job)}
-                      </div>
-                    </div>
-
-                    {/* Info row */}
-                    <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs sm:text-sm">
-                      <div className="flex items-center gap-1.5 text-muted-foreground">
-                        <GraduationCap className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-                        <span className="truncate max-w-[150px] sm:max-w-none">{formatEducationLevels(job.required_education_levels)}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-muted-foreground">
-                        <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-                        {formatAgeRange(job.min_age, job.max_age)}
-                      </div>
-                      <div className="flex items-center gap-1.5 text-muted-foreground">
-                        <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-                        <span className="truncate max-w-[120px] sm:max-w-none">{formatProvinces(job.provinces)}</span>
-                      </div>
-                      <div className={`flex items-center gap-1.5 ${expired ? "text-destructive" : "text-muted-foreground"}`}>
-                        <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-                        {expired ? "Expired: " : "Last: "}
-                        {new Date(job.last_date).toLocaleDateString()}
-                      </div>
-                    </div>
-
-                    {/* Action row */}
-                    <div className="flex items-center justify-between pt-1 border-t border-border/50">
-                      <div>
-                        <p className="text-xs text-muted-foreground">Total Cost</p>
-                        <p className="text-lg sm:text-xl font-bold text-primary">Rs. {Number(job.total_fee).toLocaleString()}</p>
-                      </div>
-                      <Link to={`/jobs/${job.id}`}>
-                        <Button variant={expired ? "outline" : "default"} size="sm" className="gap-1.5">
-                          View Details
-                          <ArrowRight className="h-3.5 w-3.5" />
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                </div>
+                <JobListingCard key={job.id} job={job} expired={expired} eligibilityBadge={getEligibilityBadge(job)} educationText={formatEducationLevels(job.required_education_levels)} provinceText={formatProvinces(job.provinces)} fieldText={(job.required_education_fields || []).map(field => allEducationFields?.find(item => item.id === field || item.name === field)?.display_name || field).join(", ")} />
               );
             })}
           </div>
