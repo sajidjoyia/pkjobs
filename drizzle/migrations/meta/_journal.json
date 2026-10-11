@@ -15,6 +15,13 @@
       "when": 1790126213191,
       "tag": "0001_push_config_manual_firebase",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791733860949,
+      "tag": "0002_application_receipts_policies",
+      "breakpoints": true
     }
   ]
 }
