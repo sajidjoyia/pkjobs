@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Bell, Mail, Smartphone, CheckCircle2, AlertTriangle, Loader2, CircleCheck, CircleDashed } from "lucide-react";
+import { Bell, Mail, Smartphone, CheckCircle2, AlertTriangle, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -11,11 +11,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
-import { usePushConfigured } from "@/lib/push";
+import FirebasePushSetup from "./FirebasePushSetup";
 import { formatDistanceToNow } from "date-fns";
 
 const JobAlertsPanel = () => {
-  const pushReady = usePushConfigured();
   const { data, isLoading } = useQuery({
     queryKey: ["admin-job-alerts"],
     queryFn: async () => {
