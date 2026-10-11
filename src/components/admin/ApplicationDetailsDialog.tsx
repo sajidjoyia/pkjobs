@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ViewReceiptButton, UploadReceiptButton } from "@/components/ReceiptControls";
 import {
   User,
   Phone,
@@ -341,16 +342,15 @@ const ApplicationDetailsDialog = ({ open, onOpenChange, application, type = "app
             )}
 
             {/* Receipt */}
-            {application.receipt_url && (
-              <section>
-                <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
-                  <FileText className="h-4 w-4" /> Payment Receipt
-                </h3>
-                <Button variant="outline" size="sm" onClick={() => window.open(application.receipt_url!, "_blank")} className="gap-2">
-                  <Eye className="h-4 w-4" /> View Receipt
-                </Button>
-              </section>
-            )}
+            <section>
+              <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                <FileText className="h-4 w-4" /> Paid Challan / Receipt
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {application.receipt_url && <ViewReceiptButton receiptUrl={application.receipt_url} label="View receipt" />}
+                <UploadReceiptButton recordId={application.id} type={type === "application" ? "application" : "work_request"} hasReceipt={!!application.receipt_url} />
+              </div>
+            </section>
           </div>
         )}
       </DialogContent>

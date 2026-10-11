@@ -8,6 +8,7 @@ export interface ExpertAssignment {
   status: string;
   payment_amount: number | null;
   notes: string | null;
+  receipt_url?: string | null;
   created_at: string;
   user_id: string;
   custom_description?: string;

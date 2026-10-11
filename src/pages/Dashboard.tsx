@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import AlertPreferences from "@/components/notifications/AlertPreferences";
 import { useAuth } from "@/hooks/useAuth";
+import { ViewReceiptButton } from "@/components/ReceiptControls";
 import { useMyApplications, Application } from "@/hooks/useApplications";
 import { useMyWorkRequests, WorkRequest, useGetOrCreateWorkRequestConversation } from "@/hooks/useWorkRequests";
 import { useUpdateProfile, calculateAge } from "@/hooks/useProfile";
@@ -408,12 +409,7 @@ const Dashboard = () => {
                                 <MessageSquare className="h-4 w-4" />
                                 Chat
                               </Button>
-                              {app.receipt_url && (
-                                <Button variant="outline" size="sm" className="gap-2">
-                                  <FileText className="h-4 w-4" />
-                                  Receipt
-                                </Button>
-                              )}
+                              {app.receipt_url && <ViewReceiptButton receiptUrl={app.receipt_url} label="View receipt" />}
                             </div>
                           </div>
                         </div>
@@ -484,12 +480,7 @@ const Dashboard = () => {
                                 <MessageSquare className="h-4 w-4" />
                                 Chat
                               </Button>
-                              {wr.receipt_url && (
-                                <Button variant="outline" size="sm" className="gap-2">
-                                  <FileText className="h-4 w-4" />
-                                  Receipt
-                                </Button>
-                              )}
+                              {wr.receipt_url && <ViewReceiptButton receiptUrl={wr.receipt_url} label="View receipt" />}
                             </div>
                           </div>
                         </div>
