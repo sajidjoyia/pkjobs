@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Bell, Mail, Smartphone, CheckCircle2, AlertTriangle, Loader2, CircleCheck, CircleDashed } from "lucide-react";
+import { Bell, Mail, Smartphone, CheckCircle2, AlertTriangle, Loader2, CircleDashed } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -11,11 +11,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
-import { usePushConfigured } from "@/lib/push";
+import FirebasePushSetup from "./FirebasePushSetup";
 import { formatDistanceToNow } from "date-fns";
 
 const JobAlertsPanel = () => {
-  const pushReady = usePushConfigured();
   const { data, isLoading } = useQuery({
     queryKey: ["admin-job-alerts"],
     queryFn: async () => {
@@ -116,27 +115,7 @@ const JobAlertsPanel = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5 text-sm">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 font-medium">
-              <Smartphone className="h-4 w-4 text-primary" />
-              Browser notifications (Firebase)
-              {pushReady ? (
-                <Badge variant="secondary" className="gap-1">
-                  <CircleCheck className="h-3 w-3" /> Connected
-                </Badge>
-              ) : (
-                <Badge variant="outline" className="gap-1">
-                  <CircleDashed className="h-3 w-3" /> Not connected yet
-                </Badge>
-              )}
-            </div>
-            <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
-              <li>Create a free project at firebase.google.com (no billing needed).</li>
-              <li>In the Firebase project, add a "Web app" and copy its settings.</li>
-              <li>Ask in chat to "connect Firebase" and pick your project — include web push when asked.</li>
-              <li>Publish the site once after connecting. The "Browser notifications" switch then turns on for users automatically.</li>
-            </ol>
-          </div>
+          <FirebasePushSetup />
           <div className="space-y-2">
             <div className="flex items-center gap-2 font-medium">
               <Mail className="h-4 w-4 text-primary" />
