@@ -41,6 +41,7 @@ import { useUpdateApplicationStatus } from "@/hooks/useApplications";
 import { useUpdateWorkRequestStatus } from "@/hooks/useWorkRequests";
 import { openApplicationChat } from "@/components/chat/ChatWidget";
 import { toast } from "sonner";
+import { ViewReceiptButton, UploadReceiptButton } from "@/components/ReceiptControls";
 import ExpertStatsCards from "@/components/expert/ExpertStatsCards";
 import RefreshButton from "@/components/RefreshButton";
 import { useQueryClient } from "@tanstack/react-query";
@@ -395,6 +396,10 @@ const AssignmentCard = ({
               </Select>
             </div>
 
+            <div className="flex flex-col gap-2">
+              {assignment.receipt_url && <ViewReceiptButton receiptUrl={assignment.receipt_url} label="View receipt" />}
+              <UploadReceiptButton recordId={assignment.id} type={assignment.type === "application" ? "application" : "work_request"} hasReceipt={!!assignment.receipt_url} />
+            </div>
             <div className="flex gap-2">
               {assignment.type === "application" && (
                 <Button
@@ -427,6 +432,7 @@ const AssignmentCard = ({
           status: assignment.status,
           payment_amount: assignment.payment_amount,
           notes: assignment.notes,
+          receipt_url: assignment.receipt_url,
           created_at: assignment.created_at,
           job: assignment.job,
           category: assignment.category,

@@ -840,6 +840,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_receipt_folder: {
+        Args: { _folder: string; _write: boolean }
+        Returns: boolean
+      }
       eligible_users_for_job: { Args: { _job_id: string }; Returns: string[] }
       get_push_web_config: {
         Args: never
