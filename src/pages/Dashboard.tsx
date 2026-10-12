@@ -321,7 +321,7 @@ const Dashboard = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6">
+          <TabsList className="mb-6 h-auto flex-wrap justify-start">
             <TabsTrigger value="applications" className="gap-2">
               <Briefcase className="h-4 w-4" />
               Applications & Requests
