@@ -704,6 +704,7 @@ export type Database = {
           created_at: string
           data: Json
           id: string
+          name: string
           template: string
           updated_at: string
           user_id: string
@@ -712,6 +713,7 @@ export type Database = {
           created_at?: string
           data?: Json
           id?: string
+          name?: string
           template?: string
           updated_at?: string
           user_id: string
@@ -720,6 +722,7 @@ export type Database = {
           created_at?: string
           data?: Json
           id?: string
+          name?: string
           template?: string
           updated_at?: string
           user_id?: string
