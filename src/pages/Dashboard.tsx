@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
+const CvBuilder = lazy(() => import("@/components/dashboard/CvBuilder"));
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -332,6 +333,10 @@ const Dashboard = () => {
             <TabsTrigger value="documents" className="gap-2">
               <FileText className="h-4 w-4" />
               Documents
+            </TabsTrigger>
+            <TabsTrigger value="cv" className="gap-2">
+              <FileText className="h-4 w-4" />
+              My CV
             </TabsTrigger>
             <TabsTrigger value="alerts" className="gap-2">
               <Bell className="h-4 w-4" />
@@ -757,6 +762,10 @@ const Dashboard = () => {
           {/* Documents Tab */}
           <TabsContent value="documents">
             <MyDocuments />
+          </TabsContent>
+
+          <TabsContent value="cv">
+            <Suspense fallback={null}><CvBuilder /></Suspense>
           </TabsContent>
 
           {/* Job Alerts Tab */}
