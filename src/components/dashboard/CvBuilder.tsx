@@ -38,57 +38,98 @@ const emptyData = (): CvData => ({
 const fmtDate = (d?: string | null) => (d ? new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "");
 const list = (s: string) => s.split(/[,\n]/).map((x) => x.trim()).filter(Boolean);
 
+type SavedCv = { id: string; name: string; template: string; data: unknown; updated_at: string };
+
 const CvBuilder = () => {
   const { user, profile } = useAuth();
   const qc = useQueryClient();
   const { data: educations = [] } = useUserEducations(user?.id);
   const [template, setTemplate] = useState<Template>("classic");
   const [data, setData] = useState<CvData>(emptyData());
+  const [cvName, setCvName] = useState("My CV");
+  const [currentId, setCurrentId] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [exporting, setExporting] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
 
-  const { data: saved, isLoading } = useQuery({
-    queryKey: ["my-cv", user?.id],
+  const { data: cvs = [], isLoading } = useQuery({
+    queryKey: ["my-cvs", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase.from("user_cvs").select("*").eq("user_id", user!.id).maybeSingle();
+      const { data, error } = await supabase.from("user_cvs").select("id,name,template,data,updated_at").eq("user_id", user!.id).order("updated_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return (data || []) as SavedCv[];
     },
   });
+
+  const freshData = (): CvData => {
+    const d = emptyData();
+    d.email = (profile as any)?.gmail || user?.email || "";
+    d.education = educations.map((e) => ({
+      degree: [LEVEL_LABEL[e.education_level] || e.education_level, e.education_field?.display_name].filter(Boolean).join(" — "),
+      institute: "", year: "", marks: "",
+    }));
+    return d;
+  };
+
+  const openCv = (cv: SavedCv | null) => {
+    if (cv) {
+      setCurrentId(cv.id); setCvName(cv.name);
+      setTemplate((cv.template as Template) || "classic");
+      setData({ ...emptyData(), ...(cv.data as Partial<CvData>) });
+    } else {
+      setCurrentId(null); setCvName(cvs.length ? `CV ${cvs.length + 1}` : "My CV");
+      setTemplate("classic"); setData(freshData());
+    }
+  };
 
   useEffect(() => {
     if (isLoading || loaded) return;
-    if (saved) {
-      setTemplate((saved.template as Template) || "classic");
-      setData({ ...emptyData(), ...(saved.data as Partial<CvData>) });
-    } else {
-      setData((d) => ({ ...d, email: (profile as any)?.gmail || user?.email || "" }));
-    }
+    openCv(cvs[0] ?? null);
     setLoaded(true);
-  }, [isLoading, saved, loaded, profile, user]);
+  }, [isLoading, loaded, cvs]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Pre-fill education from profile once if empty
+  // Pre-fill education from profile for a brand-new CV once educations load
   useEffect(() => {
-    if (!loaded || data.education.length || !educations.length) return;
-    setData((d) => ({
-      ...d,
-      education: educations.map((e) => ({
-        degree: [LEVEL_LABEL[e.education_level] || e.education_level, e.education_field?.display_name].filter(Boolean).join(" — "),
-        institute: "", year: "", marks: "",
-      })),
-    }));
+    if (!loaded || currentId || data.education.length || !educations.length) return;
+    setData((d) => ({ ...d, education: freshData().education }));
   }, [loaded, educations]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const save = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from("user_cvs").upsert({ user_id: user!.id, template, data: data as any }, { onConflict: "user_id" });
-      if (error) throw error;
+    mutationFn: async (opts?: { silent?: boolean }) => {
+      const row = { user_id: user!.id, name: cvName.trim() || "Untitled CV", template, data: data as any };
+      if (currentId) {
+        const { error } = await supabase.from("user_cvs").update(row).eq("id", currentId);
+        if (error) throw error;
+      } else {
+        const { data: ins, error } = await supabase.from("user_cvs").insert(row).select("id").single();
+        if (error) throw error;
+        setCurrentId(ins.id);
+      }
+      return opts;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["my-cv"] }); toast.success("CV saved"); },
+    onSuccess: (opts) => { qc.invalidateQueries({ queryKey: ["my-cvs"] }); if (!opts?.silent) toast.success("CV saved"); },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const duplicate = async () => {
+    const { data: ins, error } = await supabase.from("user_cvs")
+      .insert({ user_id: user!.id, name: `${cvName} (copy)`, template, data: data as any }).select("id,name,template,data,updated_at").single();
+    if (error) return toast.error(error.message);
+    await qc.invalidateQueries({ queryKey: ["my-cvs"] });
+    openCv(ins as SavedCv);
+    toast.success("Copy created — edit it for another job");
+  };
+
+  const remove = async () => {
+    if (!currentId || !confirm(`Delete "${cvName}"? This cannot be undone.`)) return;
+    const { error } = await supabase.from("user_cvs").delete().eq("id", currentId);
+    if (error) return toast.error(error.message);
+    const rest = cvs.filter((c) => c.id !== currentId);
+    await qc.invalidateQueries({ queryKey: ["my-cvs"] });
+    openCv(rest[0] ?? null);
+    toast.success("CV deleted");
+  };
 
   const set = <K extends keyof CvData>(k: K, v: CvData[K]) => setData((d) => ({ ...d, [k]: v }));
   const setRow = <T,>(k: "education" | "experience", i: number, patch: Partial<T>) =>
