@@ -103,7 +103,7 @@ export default defineTool({
 
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
 
-    const job = { ...data, url: `https://pkjobs.lovable.app/jobs/${data.id}` };
+    const job = { ...data, url: `https://pkjobs.lovable.app/jobs/${data.slug || data.id}` };
     return {
       content: [{ type: "text", text: `Job created.\n${JSON.stringify(job, null, 2)}` }],
       structuredContent: { job },

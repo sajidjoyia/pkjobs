@@ -27,7 +27,7 @@ export default defineTool({
     let q = supabase
       .from("jobs")
       .select(
-        "id,title,department,description,required_education_levels,provinces,min_age,max_age,total_seats,last_date,total_fee,advertisement_link"
+        "id,slug,title,department,description,required_education_levels,provinces,min_age,max_age,total_seats,last_date,total_fee,advertisement_link"
       )
       .eq("is_active", true)
       .order("created_at", { ascending: false })
@@ -45,7 +45,7 @@ export default defineTool({
 
     const jobs = (data ?? []).map((j) => ({
       ...j,
-      url: `https://pkjobs.lovable.app/jobs/${j.id}`,
+      url: `https://pkjobs.lovable.app/jobs/${j.slug || j.id}`,
     }));
     return {
       content: [{ type: "text", text: JSON.stringify(jobs, null, 2) }],

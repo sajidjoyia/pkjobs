@@ -17,7 +17,7 @@ export default defineTool({
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     if (!data) return { content: [{ type: "text", text: "No job found with that id." }], isError: true };
 
-    const job = { ...data, url: `https://pkjobs.lovable.app/jobs/${data.id}` };
+    const job = { ...data, url: `https://pkjobs.lovable.app/jobs/${data.slug || data.id}` };
     return {
       content: [{ type: "text", text: JSON.stringify(job, null, 2) }],
       structuredContent: { job },

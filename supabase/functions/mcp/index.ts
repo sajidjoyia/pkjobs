@@ -77,7 +77,7 @@ var search_jobs_default = defineTool({
     const supabase = supabaseForUser(ctx);
     const max = Math.min(Math.max(limit ?? 20, 1), 50);
     let q = supabase.from("jobs").select(
-      "id,title,department,description,required_education_levels,provinces,min_age,max_age,total_seats,last_date,total_fee,advertisement_link"
+      "id,slug,title,department,description,required_education_levels,provinces,min_age,max_age,total_seats,last_date,total_fee,advertisement_link"
     ).eq("is_active", true).order("created_at", { ascending: false }).limit(max);
     if (query?.trim()) {
       const safe = query.replace(/[\\%_*]/g, "\\$&").replace(/[,()]/g, " ").trim();
@@ -89,7 +89,7 @@ var search_jobs_default = defineTool({
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     const jobs = (data ?? []).map((j) => ({
       ...j,
-      url: `https://pkjobs.lovable.app/jobs/${j.id}`
+      url: `https://pkjobs.lovable.app/jobs/${j.slug || j.id}`
     }));
     return {
       content: [{ type: "text", text: JSON.stringify(jobs, null, 2) }],
@@ -115,7 +115,7 @@ var get_job_default = defineTool2({
     const { data, error } = await supabase.from("jobs").select("*").eq("id", job_id).maybeSingle();
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     if (!data) return { content: [{ type: "text", text: "No job found with that id." }], isError: true };
-    const job = { ...data, url: `https://pkjobs.lovable.app/jobs/${data.id}` };
+    const job = { ...data, url: `https://pkjobs.lovable.app/jobs/${data.slug || data.id}` };
     return {
       content: [{ type: "text", text: JSON.stringify(job, null, 2) }],
       structuredContent: { job }
@@ -295,7 +295,7 @@ var create_job_default = defineTool6({
       created_by: userId
     }).select("*").single();
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
-    const job = { ...data, url: `https://pkjobs.lovable.app/jobs/${data.id}` };
+    const job = { ...data, url: `https://pkjobs.lovable.app/jobs/${data.slug || data.id}` };
     return {
       content: [{ type: "text", text: `Job created.
 ${JSON.stringify(job, null, 2)}` }],

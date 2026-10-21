@@ -356,7 +356,7 @@ const Jobs = () => {
                         <p className="text-xs text-muted-foreground">Total Cost</p>
                         <p className="text-lg sm:text-xl font-bold text-primary">Rs. {Number(job.total_fee).toLocaleString()}</p>
                       </div>
-                      <Link to={`/jobs/${job.id}`}>
+                      <Link to={`/jobs/${job.slug || job.id}`}>
                         <Button variant={expired ? "outline" : "default"} size="sm" className="gap-1.5">
                           View Details
                           <ArrowRight className="h-3.5 w-3.5" />
