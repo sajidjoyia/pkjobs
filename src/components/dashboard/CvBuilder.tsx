@@ -254,7 +254,7 @@ const CvBuilder = () => {
         </section>
 
         <div className="flex flex-wrap gap-2 sticky bottom-20 md:bottom-4 z-10">
-          <Button onClick={() => save.mutate()} variant="outline" disabled={save.isPending} className="gap-2 bg-background">
+          <Button onClick={() => save.mutate({})} variant="outline" disabled={save.isPending} className="gap-2 bg-background">
             {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save CV
           </Button>
           <Button onClick={exportPdf} disabled={exporting} className="gap-2">
