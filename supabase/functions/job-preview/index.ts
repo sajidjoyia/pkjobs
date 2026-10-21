@@ -10,6 +10,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import {
   buildJobShareSummary,
+  jobShareUrl,
   JOB_SHARE_COLUMNS,
   type JobShareRecord,
 } from "../_shared/job-share.ts";
@@ -53,19 +54,29 @@ Deno.serve(async (req) => {
     }
     if (!id) return notFoundHtml("Missing job id.");
 
-    // Basic UUID-ish guard
-    if (!/^[0-9a-f-]{8,}$/i.test(id)) return notFoundHtml("Invalid job id.");
+    // Slug or UUID (older shared links) both resolve.
+    let job: JobShareRecord | null = null;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    if (isUuid) {
+      const { data } = await supabase
+        .from("jobs")
+        .select(JOB_SHARE_COLUMNS)
+        .eq("id", id)
+        .maybeSingle();
+      job = data as JobShareRecord | null;
+    } else {
+      const { data } = await supabase
+        .from("jobs")
+        .select(JOB_SHARE_COLUMNS)
+        .eq("slug", id)
+        .maybeSingle();
+      job = data as JobShareRecord | null;
+    }
 
-    const { data: job, error } = await supabase
-      .from("jobs")
-      .select(JOB_SHARE_COLUMNS)
-      .eq("id", id)
-      .maybeSingle();
+    if (!job) return notFoundHtml("Job not found.");
 
-    if (error || !job) return notFoundHtml("Job not found.");
-
-    const summary = buildJobShareSummary(job as JobShareRecord);
-    const canonical = `${SITE_ORIGIN}/jobs/${summary.id}`;
+    const summary = buildJobShareSummary(job);
+    const canonical = jobShareUrl(summary, SITE_ORIGIN);
     const title = summary.shareTitle;
     const desc = summary.descriptionText;
 

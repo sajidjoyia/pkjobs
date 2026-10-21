@@ -278,6 +278,7 @@ export type Database = {
           provinces: string[] | null
           required_education_fields: string[] | null
           required_education_levels: string[] | null
+          slug: string | null
           test_preparation_available: boolean
           title: string
           total_fee: number | null
@@ -305,6 +306,7 @@ export type Database = {
           provinces?: string[] | null
           required_education_fields?: string[] | null
           required_education_levels?: string[] | null
+          slug?: string | null
           test_preparation_available?: boolean
           title: string
           total_fee?: number | null
@@ -332,6 +334,7 @@ export type Database = {
           provinces?: string[] | null
           required_education_fields?: string[] | null
           required_education_levels?: string[] | null
+          slug?: string | null
           test_preparation_available?: boolean
           title?: string
           total_fee?: number | null
@@ -891,6 +894,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      job_slugify: { Args: { raw: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "user" | "expert"

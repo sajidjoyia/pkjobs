@@ -36,6 +36,13 @@
       "when": 1791769247732,
       "tag": "0004_multiple_user_cvs",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792557722547,
+      "tag": "0005_add_job_slug",
+      "breakpoints": true
     }
   ]
 }

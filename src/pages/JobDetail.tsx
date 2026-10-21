@@ -28,7 +28,7 @@ import ShareButtons from "@/components/ShareButtons";
 import { formatSeats } from "@/lib/utils";
 import GlobalSeoHead from "@/components/seo/GlobalSeoHead";
 import TestPrepBanner from "@/components/TestPrepBanner";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ExternalLink } from "lucide-react";
 import {
   Tooltip,
@@ -114,8 +114,15 @@ const JobDetail = () => {
   const { user, profile } = useAuth();
   const { data: userEducations } = useUserEducations(user?.id);
   const { data: allEducationFields } = useEducationFields();
-  const { data: hasApplied } = useCheckIfApplied(id);
+  const { data: hasApplied } = useCheckIfApplied(job?.id);
   const createApplication = useCreateApplication();
+
+  // Links shared with the old UUID-style URL redirect to the readable slug URL.
+  useEffect(() => {
+    if (job && job.slug && id !== job.slug) {
+      navigate(`/jobs/${job.slug}`, { replace: true });
+    }
+  }, [job?.slug, id, navigate, job]);
 
   if (isLoading) {
     return (
@@ -187,13 +194,14 @@ const JobDetail = () => {
   };
 
   const siteOrigin = "https://pkjobs.lovable.app";
-  const canonicalUrl = `${siteOrigin}/jobs/${job.id}`;
+  const jobUrlParam = job.slug || job.id;
+  const canonicalUrl = `${siteOrigin}/jobs/${jobUrlParam}`;
   const supabaseProjectRef = import.meta.env.VITE_SUPABASE_PROJECT_ID;
   const ogImageUrl = supabaseProjectRef
-    ? `https://${supabaseProjectRef}.supabase.co/functions/v1/job-og-image?id=${job.id}`
+    ? `https://${supabaseProjectRef}.supabase.co/functions/v1/job-og-image?id=${jobUrlParam}`
     : undefined;
   const facebookShareUrl = supabaseProjectRef
-    ? `https://${supabaseProjectRef}.supabase.co/functions/v1/job-preview?id=${job.id}`
+    ? `https://${supabaseProjectRef}.supabase.co/functions/v1/job-preview?id=${jobUrlParam}`
     : canonicalUrl;
   const shareLastDate = new Date(job.last_date).toLocaleDateString("en-GB", {
     day: "2-digit",

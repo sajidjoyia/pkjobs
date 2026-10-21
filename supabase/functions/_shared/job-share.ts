@@ -1,5 +1,6 @@
 export interface JobShareRecord {
   id: string;
+  slug: string | null;
   title: string;
   department: string;
   description: string | null;
@@ -20,7 +21,12 @@ export interface JobShareSummary extends JobShareRecord {
 }
 
 export const JOB_SHARE_COLUMNS =
-  "id,title,department,description,last_date,total_seats,total_fee,provinces,is_active";
+  "id,slug,title,department,description,last_date,total_seats,total_fee,provinces,is_active";
+
+/** Readable public URL: slug-based, with the id as fallback for old rows. */
+export function jobShareUrl(job: JobShareRecord, siteOrigin: string): string {
+  return `${siteOrigin}/jobs/${job.slug || job.id}`;
+}
 
 export function buildJobShareSummary(job: JobShareRecord): JobShareSummary {
   const seatsText =

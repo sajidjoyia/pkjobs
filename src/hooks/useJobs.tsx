@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 export interface Job {
   id: string;
+  slug: string | null;
   title: string;
   department: string;
   description: string | null;
@@ -101,22 +102,32 @@ export const useJobs = (filters?: {
   });
 };
 
-export const useJob = (id: string | undefined) => {
+export const useJob = (slugOrId: string | undefined) => {
   return useQuery({
-    queryKey: ["job", id],
+    queryKey: ["job", slugOrId],
     queryFn: async () => {
-      if (!id) return null;
-      
+      if (!slugOrId) return null;
+
+      // URLs use the readable slug (/jobs/junior-clerk-bps-11-a1b2c3d4).
+      const { data: bySlug, error: slugError } = await supabase
+        .from("jobs")
+        .select("*")
+        .eq("slug", slugOrId)
+        .maybeSingle();
+      if (slugError && slugError.code !== "PGRST116") throw slugError;
+      if (bySlug) return normalizeJob(bySlug);
+
+      // Older links shared before slugs still resolve by UUID.
       const { data, error } = await supabase
         .from("jobs")
         .select("*")
-        .eq("id", id)
-        .single();
+        .eq("id", slugOrId)
+        .maybeSingle();
 
       if (error) throw error;
-      return normalizeJob(data);
+      return data ? normalizeJob(data) : null;
     },
-    enabled: !!id,
+    enabled: !!slugOrId,
   });
 };
 
