@@ -522,7 +522,7 @@ var track_my_applications_default = defineTool8({
     }
     const supabase = supabaseForUser(ctx);
     let q = supabase.from("applications").select(
-      "id,job_id,status,payment_amount,payment_date,receipt_url,expert_id,notes,created_at,updated_at,jobs(title,department,last_date)"
+      "id,job_id,status,payment_amount,payment_date,receipt_url,expert_id,notes,created_at,updated_at,jobs(title,department,last_date,slug)"
     ).eq("user_id", ctx.getUserId()).order("created_at", { ascending: false });
     if (job_id?.trim()) q = q.eq("job_id", job_id.trim());
     const { data, error } = await q;
@@ -554,7 +554,7 @@ var track_my_applications_default = defineTool8({
         created_at: a.created_at,
         updated_at: a.updated_at,
         timeline,
-        url: `https://pkjobs.lovable.app/jobs/${a.job_id}`
+        url: `https://pkjobs.lovable.app/jobs/${a.jobs?.slug || a.job_id}`
       };
     });
     return {

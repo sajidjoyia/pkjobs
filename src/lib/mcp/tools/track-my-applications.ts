@@ -38,7 +38,7 @@ export default defineTool({
     let q = supabase
       .from("applications")
       .select(
-        "id,job_id,status,payment_amount,payment_date,receipt_url,expert_id,notes,created_at,updated_at,jobs(title,department,last_date)"
+        "id,job_id,status,payment_amount,payment_date,receipt_url,expert_id,notes,created_at,updated_at,jobs(title,department,last_date,slug)"
       )
       .eq("user_id", ctx.getUserId()!)
       .order("created_at", { ascending: false });
@@ -74,7 +74,7 @@ export default defineTool({
         created_at: a.created_at,
         updated_at: a.updated_at,
         timeline,
-        url: `https://pkjobs.lovable.app/jobs/${a.job_id}`,
+        url: `https://pkjobs.lovable.app/jobs/${a.jobs?.slug || a.job_id}`,
       };
     });
 

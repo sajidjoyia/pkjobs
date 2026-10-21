@@ -57,7 +57,7 @@ async function sendPush(tokens: string[], job: JobRow) {
             title: "New job match!",
             body: `${job.title} — ${job.department}. Apply before ${job.last_date}.`,
           },
-          data: { path: `/jobs/${job.id}` },
+          data: { path: `/jobs/${job.slug || job.id}` },
         },
       }),
     });
