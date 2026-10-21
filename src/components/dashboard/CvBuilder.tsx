@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Download, Loader2, Plus, Save, Trash2 } from "lucide-react";
+import { Copy, Download, FilePlus2, Loader2, Plus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -140,9 +140,9 @@ const CvBuilder = () => {
     if (!previewRef.current) return;
     setExporting(true);
     try {
-      save.mutate();
+      save.mutate({ silent: true });
       const html2pdf = (await import("html2pdf.js")).default;
-      const name = (profile?.full_name || "CV").replace(/[^a-zA-Z0-9]+/g, "_");
+      const name = `${profile?.full_name || "CV"} ${cvName}`.replace(/[^a-zA-Z0-9]+/g, "_");
       await html2pdf()
         .set({
           margin: 0,
@@ -165,6 +165,31 @@ const CvBuilder = () => {
   return (
     <div className="grid gap-6 xl:grid-cols-2">
       <div className="space-y-6">
+        <section className="card-elevated p-4 sm:p-6 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-lg font-semibold">My saved CVs</h2>
+            <Button size="sm" variant="outline" className="gap-1" onClick={() => openCv(null)}><FilePlus2 className="h-4 w-4" />New CV</Button>
+          </div>
+          {cvs.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {cvs.map((c) => (
+                <button key={c.id} type="button" onClick={() => openCv(c)}
+                  className={cn("rounded-md border px-3 py-1.5 text-sm text-left", c.id === currentId ? "border-primary bg-primary/10 font-medium" : "border-border hover:bg-muted")}>
+                  {c.name}
+                  <span className="block text-[11px] text-muted-foreground">Updated {new Date(c.updated_at).toLocaleDateString("en-GB")}</span>
+                </button>
+              ))}
+            </div>
+          ) : <p className="text-sm text-muted-foreground">No saved CVs yet — fill the form and press Save CV.</p>}
+          <div className="grid gap-2 sm:grid-cols-[1fr_auto_auto] items-end">
+            <div className="space-y-1"><Label className="text-xs">CV name (e.g. "Police Constable 2026")</Label>
+              <Input value={cvName} onChange={(e) => setCvName(e.target.value)} maxLength={80} /></div>
+            <Button variant="outline" className="gap-1" onClick={duplicate}><Copy className="h-4 w-4" />Duplicate</Button>
+            <Button variant="outline" className="gap-1" onClick={remove} disabled={!currentId}><Trash2 className="h-4 w-4" />Delete</Button>
+          </div>
+          {!currentId && <p className="text-xs text-muted-foreground">This is a new, unsaved CV.</p>}
+        </section>
+
         <section className="card-elevated p-4 sm:p-6">
           <h2 className="text-lg font-semibold mb-1">1. Choose a template</h2>
           <p className="text-sm text-muted-foreground mb-4">Name, date of birth, gender, phone, province and domicile come from your profile.</p>
@@ -229,7 +254,7 @@ const CvBuilder = () => {
         </section>
 
         <div className="flex flex-wrap gap-2 sticky bottom-20 md:bottom-4 z-10">
-          <Button onClick={() => save.mutate()} variant="outline" disabled={save.isPending} className="gap-2 bg-background">
+          <Button onClick={() => save.mutate({})} variant="outline" disabled={save.isPending} className="gap-2 bg-background">
             {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save CV
           </Button>
           <Button onClick={exportPdf} disabled={exporting} className="gap-2">
