@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
 
     const { data: jobs, error: jobsError } = await supabase
       .from("jobs")
-      .select("id,title,department,last_date,total_seats")
+      .select("id,slug,title,department,last_date,total_seats")
       .eq("is_active", true)
       .gte("created_at", since);
     if (jobsError) throw jobsError;
@@ -141,7 +141,7 @@ Deno.serve(async (req) => {
                       department: j.department,
                       lastDate: j.last_date,
                       seats: formatSeats(j.total_seats),
-                      url: `${SITE_URL}/jobs/${j.id}`,
+                      url: `${SITE_URL}/jobs/${j.slug || j.id}`,
                     })),
                   },
                 },

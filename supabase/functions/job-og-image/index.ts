@@ -107,19 +107,28 @@ Deno.serve(async (req) => {
       const last = parts[parts.length - 1];
       if (last && last !== "job-og-image") id = last;
     }
-    if (!id || !/^[0-9a-f-]{8,}$/i.test(id)) {
-      return new Response("Missing/invalid id", { status: 400 });
+    // Slug or UUID (older shared links) both resolve.
+    let job: JobShareRecord | null = null;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id || "");
+    if (isUuid) {
+      const { data } = await supabase
+        .from("jobs")
+        .select(JOB_SHARE_COLUMNS)
+        .eq("id", id!)
+        .maybeSingle();
+      job = data as JobShareRecord | null;
+    } else if (id) {
+      const { data } = await supabase
+        .from("jobs")
+        .select(JOB_SHARE_COLUMNS)
+        .eq("slug", id)
+        .maybeSingle();
+      job = data as JobShareRecord | null;
     }
 
-    const { data: job, error } = await supabase
-      .from("jobs")
-      .select(JOB_SHARE_COLUMNS)
-      .eq("id", id)
-      .maybeSingle();
+    if (!job) return new Response("Not found", { status: 404 });
 
-    if (error || !job) return new Response("Not found", { status: 404 });
-
-    const svg = svgFor(buildJobShareSummary(job as JobShareRecord));
+    const svg = svgFor(buildJobShareSummary(job));
 
     return new Response(svg, {
       status: 200,

@@ -82,7 +82,7 @@ async function sendEmail(email: string, job: JobRow) {
         lastDate: job.last_date,
         seats: formatSeats(job.total_seats),
         totalFee: job.total_fee ? `PKR ${job.total_fee}` : "Not specified",
-        jobUrl: `${SITE_URL}/jobs/${job.id}`,
+        jobUrl: `${SITE_URL}/jobs/${job.slug || job.id}`,
       },
     },
   });
@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
 
     const { data: job, error: jobError } = await supabase
       .from("jobs")
-      .select("id,title,department,last_date,total_seats,total_fee,is_active")
+      .select("id,slug,title,department,last_date,total_seats,total_fee,is_active")
       .eq("id", job_id)
       .maybeSingle();
     if (jobError) throw jobError;
