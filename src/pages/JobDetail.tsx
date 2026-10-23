@@ -210,15 +210,58 @@ const JobDetail = () => {
   });
   const shareDescription = `${job.department} · Last date ${shareLastDate} · ${formatSeats(job.total_seats)} · Total fee Rs. ${Number(job.total_fee).toLocaleString("en-PK")}`;
 
+  // Unique, search-engine-facing description per job: what it is + key facts.
+  const metaDescription = [
+    `${job.title} at ${job.department}.`,
+    `Apply before ${shareLastDate}.`,
+    formatSeats(job.total_seats) + ".",
+    job.description ? String(job.description).replace(/\s+/g, " ").trim() : "",
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .slice(0, 155)
+    .replace(/\s+\S*$/, "");
+
+  // Structured job data so search engines understand and display the listing.
+  const jobJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "JobPosting",
+    title: job.title,
+    description: job.description ? String(job.description) : shareDescription,
+    identifier: {
+      "@type": "PropertyValue",
+      name: "PakJobs",
+      value: job.slug || job.id,
+    },
+    datePosted: job.created_at,
+    validThrough: job.last_date,
+    employmentType: "FULL_TIME",
+    hiringOrganization: {
+      "@type": "Organization",
+      name: job.department,
+    },
+    jobLocation: (job.provinces?.length ? job.provinces : ["Pakistan"]).map((p: string) => ({
+      "@type": "Place",
+      address: {
+        "@type": "PostalAddress",
+        addressRegion: p,
+        addressCountry: "PK",
+      },
+    })),
+    directApply: false,
+    url: canonicalUrl,
+  };
+
   return (
     <div className="py-8">
       <GlobalSeoHead
-        pageTitle={`${job.title} — ${job.department}`}
-        pageDescription={shareDescription}
+        pageTitle={`${job.title} — ${job.department} | PakJobs`}
+        pageDescription={metaDescription}
         pageOgTitle={job.title}
         pageOgDescription={shareDescription}
         pageOgImage={ogImageUrl}
         canonicalUrl={canonicalUrl}
+        jsonLd={jobJsonLd}
       />
       <div className="container max-w-5xl">
         {/* Back button */}

@@ -6,6 +6,8 @@ interface GlobalSeoHeadProps {
   pageDescription?: string;
   pageKeywords?: string;
   pageOgImage?: string;
+  /** Page-specific JSON-LD structured data (e.g. JobPosting). */
+  jsonLd?: object;
   pageOgTitle?: string;
   pageOgDescription?: string;
   pageOgType?: "website" | "article";
@@ -18,6 +20,7 @@ const GlobalSeoHead = ({
   pageDescription,
   pageKeywords,
   pageOgImage,
+  jsonLd,
   pageOgTitle,
   pageOgDescription,
   pageOgType,
@@ -166,11 +169,30 @@ const GlobalSeoHead = ({
       document.head.appendChild(schemaScript);
     }
 
+    // Page-level structured data (JobPosting etc.) — replaces any previous
+    // page script and is removed when this page unmounts so it doesn't leak
+    // into other routes.
+    const existingPageSchema = document.querySelector(
+      'script[type="application/ld+json"][data-seo="page"]',
+    );
+    if (existingPageSchema) existingPageSchema.remove();
+    if (jsonLd) {
+      const pageSchemaScript = document.createElement("script");
+      pageSchemaScript.type = "application/ld+json";
+      pageSchemaScript.setAttribute("data-seo", "page");
+      pageSchemaScript.innerHTML = JSON.stringify(jsonLd);
+      document.head.appendChild(pageSchemaScript);
+    }
+
     // Cleanup function
     return () => {
+      const pageSchema = document.querySelector(
+        'script[type="application/ld+json"][data-seo="page"]',
+      );
+      if (pageSchema) pageSchema.remove();
       // Note: We don't remove meta tags on unmount as they should persist
     };
-  }, [settings, pageTitle, pageDescription, pageKeywords, pageOgImage, pageOgTitle, pageOgDescription, pageOgType, canonicalUrl]);
+  }, [settings, pageTitle, pageDescription, pageKeywords, pageOgImage, pageOgTitle, pageOgDescription, pageOgType, canonicalUrl, jsonLd]);
 
   return null; // This component only manages head elements
 };
