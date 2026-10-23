@@ -14,3 +14,4 @@ User-agent: *
 Allow: /
 
 Sitemap: https://pkjobs.lovable.app/sitemap.xml
+Sitemap: https://qrxgpjvhepznplmpctbw.supabase.co/functions/v1/sitemap
