@@ -2,5 +2,5 @@
 
 - Keep homepage content in the existing Index and lazily imported below-fold module, with homepage-scoped semantic editorial tokens; this preserves other screens and initial loading performance.
 - Keep static site metadata in index.html and homepage runtime overrides in Layout's existing GlobalSeoHead; one runtime owner avoids competing homepage metadata effects.
-- Publish only real public routes in the static sitemap and maintain a factual llms.txt resource; protected account pages and unverified job URLs must not be advertised to crawlers.
+- Publish only real public routes in the static sitemap and maintain a factual llms.txt resource; protected account pages and unverified job URLs must not be advertised to crawlers. Job URLs come from the dynamic job sitemap edge function `supabase/functions/sitemap` (robots.txt declares both sitemaps); it must list only active, unexpired slugged jobs with trigger-maintained `updated_at` as lastmod.
 - Job URLs use the immutable slug `/jobs/<name-slug>-<first-8-of-id>` (generated once by a `jobs_set_slug` trigger; title edits never change it). New links always build from `job.slug || job.id`; UUID links must still resolve (client + edge functions fall back by id, JobDetail redirects to the slug URL).
