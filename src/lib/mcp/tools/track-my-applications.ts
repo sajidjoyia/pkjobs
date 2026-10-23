@@ -74,7 +74,7 @@ export default defineTool({
         created_at: a.created_at,
         updated_at: a.updated_at,
         timeline,
-        url: `https://pkjobs.lovable.app/jobs/${a.jobs?.slug || a.job_id}`,
+        url: `https://pkjobs.lovable.app/jobs/${(a.jobs as any)?.slug || a.job_id}`,
       };
     });
 
