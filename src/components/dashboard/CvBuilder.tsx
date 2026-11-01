@@ -45,6 +45,7 @@ const CvBuilder = () => {
   const [loaded, setLoaded] = useState(false);
   const [exporting, setExporting] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
+  const [sharing, setSharing] = useState(false);
 
   const { data: cvs = [], isLoading } = useQuery({
     queryKey: ["my-cvs", user?.id],
@@ -123,6 +124,63 @@ const CvBuilder = () => {
     await qc.invalidateQueries({ queryKey: ["my-cvs"] });
     openCv(rest[0] ?? null);
     toast.success("CV deleted");
+  };
+
+  const currentCv = cvs.find((c) => c.id === currentId) ?? null;
+  const shareUrl = currentCv?.is_public && currentCv?.slug ? `${window.location.origin}/cv/${currentCv.slug}` : null;
+
+  const copyShareLink = async () => {
+    if (!shareUrl) return;
+    try { await navigator.clipboard.writeText(shareUrl); toast.success("CV link copied"); }
+    catch { toast.error("Could not copy — long-press the link to copy it"); }
+  };
+
+  const shareOnWhatsApp = () => {
+    if (!shareUrl) return;
+    const text = `CV of ${profile?.full_name || ""}`.trim();
+    window.open(`https://wa.me/?text=${encodeURIComponent(`${text}\n${shareUrl}`)}`, "_blank", "noopener,noreferrer");
+  };
+
+  // Saves current edits (creating the CV if new — its link address is generated
+  // on creation), then makes the saved copy public.
+  const enableShare = async () => {
+    if (!user) return;
+    setSharing(true);
+    try {
+      const row = { user_id: user.id, name: cvName.trim() || "Untitled CV", template, data: data as any };
+      let slug: string | null = currentCv?.slug ?? null;
+      if (currentId) {
+        const { error } = await supabase.from("user_cvs").update(row).eq("id", currentId);
+        if (error) throw error;
+      } else {
+        const { data: ins, error } = await supabase.from("user_cvs").insert(row).select("id,slug").single();
+        if (error) throw error;
+        setCurrentId(ins.id);
+        slug = (ins as { slug?: string | null }).slug ?? null;
+      }
+      const { error: upErr } = await supabase.from("user_cvs").update({ is_public: true }).eq("id", currentId!);
+      if (upErr) throw upErr;
+      await qc.invalidateQueries({ queryKey: ["my-cvs"] });
+      if (slug) {
+        const url = `${window.location.origin}/cv/${slug}`;
+        try { await navigator.clipboard.writeText(url); toast.success("Public CV link created — link copied"); }
+        catch { toast.success("Public CV link created"); }
+      } else {
+        toast.success("Public CV link created");
+      }
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setSharing(false);
+    }
+  };
+
+  const disableShare = async () => {
+    if (!currentId || !confirm("Turn off sharing? The link will stop working for everyone.")) return;
+    const { error } = await supabase.from("user_cvs").update({ is_public: false }).eq("id", currentId);
+    if (error) return toast.error(error.message);
+    await qc.invalidateQueries({ queryKey: ["my-cvs"] });
+    toast.success("Sharing turned off — the link no longer works");
   };
 
   const set = <K extends keyof CvData>(k: K, v: CvData[K]) => setData((d) => ({ ...d, [k]: v }));
