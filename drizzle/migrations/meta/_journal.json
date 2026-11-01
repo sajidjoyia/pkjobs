@@ -43,6 +43,13 @@
       "when": 1792557722547,
       "tag": "0005_add_job_slug",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793504945368,
+      "tag": "0006_user_cv_public_share",
+      "breakpoints": true
     }
   ]
 }
