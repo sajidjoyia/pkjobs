@@ -707,7 +707,9 @@ export type Database = {
           created_at: string
           data: Json
           id: string
+          is_public: boolean
           name: string
+          slug: string | null
           template: string
           updated_at: string
           user_id: string
@@ -716,7 +718,9 @@ export type Database = {
           created_at?: string
           data?: Json
           id?: string
+          is_public?: boolean
           name?: string
+          slug?: string | null
           template?: string
           updated_at?: string
           user_id: string
@@ -725,7 +729,9 @@ export type Database = {
           created_at?: string
           data?: Json
           id?: string
+          is_public?: boolean
           name?: string
+          slug?: string | null
           template?: string
           updated_at?: string
           user_id?: string
@@ -877,7 +883,9 @@ export type Database = {
         Args: { _folder: string; _write: boolean }
         Returns: boolean
       }
+      cv_slugify: { Args: { raw: string }; Returns: string }
       eligible_users_for_job: { Args: { _job_id: string }; Returns: string[] }
+      get_public_cv: { Args: { _slug: string }; Returns: Json }
       get_push_web_config: {
         Args: never
         Returns: {

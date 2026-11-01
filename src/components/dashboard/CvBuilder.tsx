@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Copy, Download, FilePlus2, Loader2, Plus, Save, Trash2 } from "lucide-react";
+import { Copy, Download, FilePlus2, Globe, Link2, Loader2, MessageCircle, Plus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,21 +10,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserEducations } from "@/hooks/useEducationFields";
 import { cn } from "@/lib/utils";
-
-type EduRow = { degree: string; institute: string; year: string; marks: string };
-type ExpRow = { title: string; organization: string; period: string; details: string };
-export type CvData = {
-  father_name: string; cnic: string; religion: string; marital_status: string; nationality: string;
-  address: string; email: string; objective: string;
-  education: EduRow[]; experience: ExpRow[];
-  skills: string; languages: string; references: string;
-};
-type Template = "classic" | "modern" | "minimal";
+import CvDocument, { type CvData, type Template } from "@/components/dashboard/CvDocument";
 
 const TEMPLATES: { id: Template; name: string; desc: string }[] = [
   { id: "classic", name: "Classic Bio-Data", desc: "Traditional Pakistani bio-data with photo and table layout" },
   { id: "modern", name: "Modern Green", desc: "Coloured sidebar, ideal for private & semi-gov jobs" },
   { id: "minimal", name: "Simple Formal", desc: "Clean, single-column — prints well in black & white" },
+  { id: "executive", name: "Executive Header", desc: "Dark banner with your name on top — polished for officer posts" },
+  { id: "twocolumn", name: "Two-Column Elegant", desc: "Main column plus a side panel with photo and personal details" },
+  { id: "compact", name: "Compact One-Page", desc: "Space-saving layout — fits more on a single printed page" },
 ];
 
 const LEVEL_LABEL: Record<string, string> = { matric: "Matric / SSC", intermediate: "Intermediate / HSSC", bachelor: "Bachelor", master: "Master", phd: "PhD" };
@@ -38,7 +32,7 @@ const emptyData = (): CvData => ({
 const fmtDate = (d?: string | null) => (d ? new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "");
 const list = (s: string) => s.split(/[,\n]/).map((x) => x.trim()).filter(Boolean);
 
-type SavedCv = { id: string; name: string; template: string; data: unknown; updated_at: string };
+type SavedCv = { id: string; name: string; template: string; data: unknown; updated_at: string; slug: string | null; is_public: boolean };
 
 const CvBuilder = () => {
   const { user, profile } = useAuth();
@@ -51,6 +45,7 @@ const CvBuilder = () => {
   const [loaded, setLoaded] = useState(false);
   const [exporting, setExporting] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
+  const [sharing, setSharing] = useState(false);
 
   const { data: cvs = [], isLoading } = useQuery({
     queryKey: ["my-cvs", user?.id],
@@ -114,7 +109,7 @@ const CvBuilder = () => {
 
   const duplicate = async () => {
     const { data: ins, error } = await supabase.from("user_cvs")
-      .insert({ user_id: user!.id, name: `${cvName} (copy)`, template, data: data as any }).select("id,name,template,data,updated_at").single();
+      .insert({ user_id: user!.id, name: `${cvName} (copy)`, template, data: data as any }).select("id,name,template,data,updated_at,slug,is_public").single();
     if (error) return toast.error(error.message);
     await qc.invalidateQueries({ queryKey: ["my-cvs"] });
     openCv(ins as SavedCv);
@@ -129,6 +124,63 @@ const CvBuilder = () => {
     await qc.invalidateQueries({ queryKey: ["my-cvs"] });
     openCv(rest[0] ?? null);
     toast.success("CV deleted");
+  };
+
+  const currentCv = cvs.find((c) => c.id === currentId) ?? null;
+  const shareUrl = currentCv?.is_public && currentCv?.slug ? `${window.location.origin}/cv/${currentCv.slug}` : null;
+
+  const copyShareLink = async () => {
+    if (!shareUrl) return;
+    try { await navigator.clipboard.writeText(shareUrl); toast.success("CV link copied"); }
+    catch { toast.error("Could not copy — long-press the link to copy it"); }
+  };
+
+  const shareOnWhatsApp = () => {
+    if (!shareUrl) return;
+    const text = `CV of ${profile?.full_name || ""}`.trim();
+    window.open(`https://wa.me/?text=${encodeURIComponent(`${text}\n${shareUrl}`)}`, "_blank", "noopener,noreferrer");
+  };
+
+  // Saves current edits (creating the CV if new — its link address is generated
+  // on creation), then makes the saved copy public.
+  const enableShare = async () => {
+    if (!user) return;
+    setSharing(true);
+    try {
+      const row = { user_id: user.id, name: cvName.trim() || "Untitled CV", template, data: data as any };
+      let slug: string | null = currentCv?.slug ?? null;
+      if (currentId) {
+        const { error } = await supabase.from("user_cvs").update(row).eq("id", currentId);
+        if (error) throw error;
+      } else {
+        const { data: ins, error } = await supabase.from("user_cvs").insert(row).select("id,slug").single();
+        if (error) throw error;
+        setCurrentId(ins.id);
+        slug = (ins as { slug?: string | null }).slug ?? null;
+      }
+      const { error: upErr } = await supabase.from("user_cvs").update({ is_public: true }).eq("id", currentId!);
+      if (upErr) throw upErr;
+      await qc.invalidateQueries({ queryKey: ["my-cvs"] });
+      if (slug) {
+        const url = `${window.location.origin}/cv/${slug}`;
+        try { await navigator.clipboard.writeText(url); toast.success("Public CV link created — link copied"); }
+        catch { toast.success("Public CV link created"); }
+      } else {
+        toast.success("Public CV link created");
+      }
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setSharing(false);
+    }
+  };
+
+  const disableShare = async () => {
+    if (!currentId || !confirm("Turn off sharing? The link will stop working for everyone.")) return;
+    const { error } = await supabase.from("user_cvs").update({ is_public: false }).eq("id", currentId);
+    if (error) return toast.error(error.message);
+    await qc.invalidateQueries({ queryKey: ["my-cvs"] });
+    toast.success("Sharing turned off — the link no longer works");
   };
 
   const set = <K extends keyof CvData>(k: K, v: CvData[K]) => setData((d) => ({ ...d, [k]: v }));
@@ -187,7 +239,38 @@ const CvBuilder = () => {
             <Button variant="outline" className="gap-1" onClick={duplicate}><Copy className="h-4 w-4" />Duplicate</Button>
             <Button variant="outline" className="gap-1" onClick={remove} disabled={!currentId}><Trash2 className="h-4 w-4" />Delete</Button>
           </div>
-          {!currentId && <p className="text-xs text-muted-foreground">This is a new, unsaved CV.</p>}
+          {currentId ? (
+            <div className="rounded-lg border border-border p-3 space-y-2">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium flex items-center gap-1.5"><Globe className="h-3.5 w-3.5 text-primary" /> Online CV link</p>
+                  <p className="text-xs text-muted-foreground">
+                    {currentCv?.is_public
+                      ? "Public — anyone with the link can view this CV. Press Save CV after edits to update the shared copy."
+                      : "Private. Create a public link to share this CV in job applications or chat."}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {currentCv?.is_public ? (
+                    <>
+                      <Button size="sm" variant="outline" className="gap-1" onClick={copyShareLink}><Link2 className="h-4 w-4" />Copy link</Button>
+                      <Button size="sm" variant="outline" className="gap-1" onClick={shareOnWhatsApp}><MessageCircle className="h-4 w-4" />WhatsApp</Button>
+                      <Button size="sm" variant="outline" className="gap-1" onClick={disableShare}><Globe className="h-4 w-4" />Stop sharing</Button>
+                    </>
+                  ) : (
+                    <Button size="sm" onClick={enableShare} disabled={sharing} className="gap-1">
+                      {sharing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Globe className="h-4 w-4" />} Create public link
+                    </Button>
+                  )}
+                </div>
+              </div>
+              {currentCv?.is_public && shareUrl && (
+                <code className="block text-xs bg-muted rounded-md px-2 py-1.5 break-all select-all">{shareUrl}</code>
+              )}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">This is a new, unsaved CV. Save it first, then you can create a public link.</p>
+          )}
         </section>
 
         <section className="card-elevated p-4 sm:p-6">
