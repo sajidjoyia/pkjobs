@@ -109,7 +109,7 @@ const CvBuilder = () => {
 
   const duplicate = async () => {
     const { data: ins, error } = await supabase.from("user_cvs")
-      .insert({ user_id: user!.id, name: `${cvName} (copy)`, template, data: data as any }).select("id,name,template,data,updated_at").single();
+      .insert({ user_id: user!.id, name: `${cvName} (copy)`, template, data: data as any }).select("id,name,template,data,updated_at,slug,is_public").single();
     if (error) return toast.error(error.message);
     await qc.invalidateQueries({ queryKey: ["my-cvs"] });
     openCv(ins as SavedCv);
@@ -239,7 +239,38 @@ const CvBuilder = () => {
             <Button variant="outline" className="gap-1" onClick={duplicate}><Copy className="h-4 w-4" />Duplicate</Button>
             <Button variant="outline" className="gap-1" onClick={remove} disabled={!currentId}><Trash2 className="h-4 w-4" />Delete</Button>
           </div>
-          {!currentId && <p className="text-xs text-muted-foreground">This is a new, unsaved CV.</p>}
+          {currentId ? (
+            <div className="rounded-lg border border-border p-3 space-y-2">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium flex items-center gap-1.5"><Globe className="h-3.5 w-3.5 text-primary" /> Online CV link</p>
+                  <p className="text-xs text-muted-foreground">
+                    {currentCv?.is_public
+                      ? "Public — anyone with the link can view this CV. Press Save CV after edits to update the shared copy."
+                      : "Private. Create a public link to share this CV in job applications or chat."}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {currentCv?.is_public ? (
+                    <>
+                      <Button size="sm" variant="outline" className="gap-1" onClick={copyShareLink}><Link2 className="h-4 w-4" />Copy link</Button>
+                      <Button size="sm" variant="outline" className="gap-1" onClick={shareOnWhatsApp}><MessageCircle className="h-4 w-4" />WhatsApp</Button>
+                      <Button size="sm" variant="outline" className="gap-1" onClick={disableShare}><Globe className="h-4 w-4" />Stop sharing</Button>
+                    </>
+                  ) : (
+                    <Button size="sm" onClick={enableShare} disabled={sharing} className="gap-1">
+                      {sharing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Globe className="h-4 w-4" />} Create public link
+                    </Button>
+                  )}
+                </div>
+              </div>
+              {currentCv?.is_public && shareUrl && (
+                <code className="block text-xs bg-muted rounded-md px-2 py-1.5 break-all select-all">{shareUrl}</code>
+              )}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">This is a new, unsaved CV. Save it first, then you can create a public link.</p>
+          )}
         </section>
 
         <section className="card-elevated p-4 sm:p-6">
