@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Copy, Download, FilePlus2, Loader2, Plus, Save, Trash2 } from "lucide-react";
+import { Copy, Download, FilePlus2, Globe, Link2, Loader2, MessageCircle, Plus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,21 +10,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserEducations } from "@/hooks/useEducationFields";
 import { cn } from "@/lib/utils";
-
-type EduRow = { degree: string; institute: string; year: string; marks: string };
-type ExpRow = { title: string; organization: string; period: string; details: string };
-export type CvData = {
-  father_name: string; cnic: string; religion: string; marital_status: string; nationality: string;
-  address: string; email: string; objective: string;
-  education: EduRow[]; experience: ExpRow[];
-  skills: string; languages: string; references: string;
-};
-type Template = "classic" | "modern" | "minimal";
+import CvDocument, { type CvData, type Template } from "@/components/dashboard/CvDocument";
 
 const TEMPLATES: { id: Template; name: string; desc: string }[] = [
   { id: "classic", name: "Classic Bio-Data", desc: "Traditional Pakistani bio-data with photo and table layout" },
   { id: "modern", name: "Modern Green", desc: "Coloured sidebar, ideal for private & semi-gov jobs" },
   { id: "minimal", name: "Simple Formal", desc: "Clean, single-column — prints well in black & white" },
+  { id: "executive", name: "Executive Header", desc: "Dark banner with your name on top — polished for officer posts" },
+  { id: "twocolumn", name: "Two-Column Elegant", desc: "Main column plus a side panel with photo and personal details" },
+  { id: "compact", name: "Compact One-Page", desc: "Space-saving layout — fits more on a single printed page" },
 ];
 
 const LEVEL_LABEL: Record<string, string> = { matric: "Matric / SSC", intermediate: "Intermediate / HSSC", bachelor: "Bachelor", master: "Master", phd: "PhD" };
@@ -38,7 +32,7 @@ const emptyData = (): CvData => ({
 const fmtDate = (d?: string | null) => (d ? new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "");
 const list = (s: string) => s.split(/[,\n]/).map((x) => x.trim()).filter(Boolean);
 
-type SavedCv = { id: string; name: string; template: string; data: unknown; updated_at: string };
+type SavedCv = { id: string; name: string; template: string; data: unknown; updated_at: string; slug: string | null; is_public: boolean };
 
 const CvBuilder = () => {
   const { user, profile } = useAuth();
