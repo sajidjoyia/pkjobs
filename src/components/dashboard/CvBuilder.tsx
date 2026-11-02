@@ -51,7 +51,7 @@ const CvBuilder = () => {
     queryKey: ["my-cvs", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase.from("user_cvs").select("id,name,template,data,updated_at").eq("user_id", user!.id).order("updated_at", { ascending: false });
+      const { data, error } = await supabase.from("user_cvs").select("id,name,template,data,updated_at,slug,is_public").eq("user_id", user!.id).order("updated_at", { ascending: false });
       if (error) throw error;
       return (data || []) as SavedCv[];
     },
