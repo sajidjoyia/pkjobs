@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserEducations } from "@/hooks/useEducationFields";
 import { cn } from "@/lib/utils";
-import CvDocument, { type CvData, type Template } from "@/components/dashboard/CvDocument";
+import CvDocument, { type CvData, type EduRow, type ExpRow, type Template } from "@/components/dashboard/CvDocument";
 
 const TEMPLATES: { id: Template; name: string; desc: string }[] = [
   { id: "classic", name: "Classic Bio-Data", desc: "Traditional Pakistani bio-data with photo and table layout" },
@@ -357,3 +357,5 @@ const CvBuilder = () => {
   );
 };
 
+
+export default CvBuilder;
