@@ -29,9 +29,6 @@ const emptyData = (): CvData => ({
   education: [], experience: [], skills: "", languages: "Urdu, English", references: "Will be furnished on demand.",
 });
 
-const fmtDate = (d?: string | null) => (d ? new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "");
-const list = (s: string) => s.split(/[,\n]/).map((x) => x.trim()).filter(Boolean);
-
 type SavedCv = { id: string; name: string; template: string; data: unknown; updated_at: string; slug: string | null; is_public: boolean };
 
 const CvBuilder = () => {
@@ -360,86 +357,3 @@ const CvBuilder = () => {
   );
 };
 
-/* ---------- PDF document (fixed print colours, intentionally not themed) ---------- */
-const CvDocument = ({ template, data, profile }: { template: Template; data: CvData; profile: any }) => {
-  const personal = useMemo(() => ([
-    ["Father's Name", data.father_name], ["CNIC No.", data.cnic], ["Date of Birth", fmtDate(profile?.date_of_birth)],
-    ["Gender", profile?.gender ? profile.gender[0].toUpperCase() + profile.gender.slice(1) : ""], ["Religion", data.religion],
-    ["Marital Status", data.marital_status], ["Nationality", data.nationality], ["Domicile", profile?.domicile],
-    ["Province", profile?.province], ["Contact No.", profile?.phone], ["Email", data.email], ["Address", data.address],
-  ] as [string, string | undefined][]).filter(([, v]) => v), [data, profile]);
-
-  const name = profile?.full_name || "Your Name";
-  const accent = template === "classic" ? "#16734F" : template === "modern" ? "#16734F" : "#202923";
-  const page: React.CSSProperties = { width: 794, minHeight: 1123, background: "#fff", color: "#202923", fontFamily: template === "minimal" ? "Georgia, 'Times New Roman', serif" : "Arial, Helvetica, sans-serif", fontSize: 13, lineHeight: 1.5, boxSizing: "border-box" };
-  const h = (t: string) => (
-    <h3 style={{ fontSize: 14, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: accent, borderBottom: `2px solid ${template === "minimal" ? "#202923" : "#D5A62F"}`, padding: "0 0 3px", margin: "18px 0 8px" }}>{t}</h3>
-  );
-  const photo = profile?.avatar_url ? (
-    <img src={profile.avatar_url} crossOrigin="anonymous" alt="" style={{ width: 110, height: 130, objectFit: "cover", border: "1px solid #ccc" }} />
-  ) : (
-    <div style={{ width: 110, height: 130, border: "1px dashed #999", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: "#777", textAlign: "center" }}>Paste<br />Photo</div>
-  );
-  const td: React.CSSProperties = { border: "1px solid #cfd8d3", padding: "5px 8px", verticalAlign: "top" };
-
-  const eduTable = data.education.length > 0 && (
-    <>{h("Academic Qualification")}
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
-        <thead><tr style={{ background: template === "minimal" ? "#eee" : "#E8F3EE" }}>{["Degree / Certificate", "Board / University", "Year", "Marks / Grade"].map((x) => <th key={x} style={{ ...td, textAlign: "left" }}>{x}</th>)}</tr></thead>
-        <tbody>{data.education.map((r, i) => <tr key={i}><td style={td}>{r.degree}</td><td style={td}>{r.institute}</td><td style={td}>{r.year}</td><td style={td}>{r.marks}</td></tr>)}</tbody>
-      </table></>
-  );
-  const exp = data.experience.length > 0 && (
-    <>{h("Experience")}{data.experience.map((r, i) => (
-      <div key={i} style={{ marginBottom: 8 }}><b>{r.title}</b>{r.organization && <> — {r.organization}</>} {r.period && <span style={{ color: "#666" }}>({r.period})</span>}
-        {r.details && <div style={{ color: "#444" }}>{r.details}</div>}</div>))}</>
-  );
-  const bullets = (t: string, s: string) => list(s).length > 0 && (<>{h(t)}<ul style={{ margin: 0, paddingLeft: 18 }}>{list(s).map((x) => <li key={x}>{x}</li>)}</ul></>);
-  const tail = (<>{data.references && <>{h("References")}<p style={{ margin: 0 }}>{data.references}</p></>}
-    <div style={{ marginTop: 40, display: "flex", justifyContent: "space-between", fontSize: 12 }}><span>Date: ____________</span><span>Signature: ____________</span></div></>);
-
-  if (template === "modern") {
-    return (
-      <div style={{ ...page, display: "flex" }}>
-        <aside style={{ width: 250, background: "#16734F", color: "#fff", padding: 24, boxSizing: "border-box" }}>
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>{photo}</div>
-          <h3 style={{ fontSize: 13, letterSpacing: 1, textTransform: "uppercase", borderBottom: "2px solid #D5A62F", paddingBottom: 3 }}>Personal Info</h3>
-          {personal.map(([k, v]) => <div key={k} style={{ marginBottom: 6, fontSize: 12 }}><div style={{ opacity: 0.75, fontSize: 10, textTransform: "uppercase" }}>{k}</div><div style={{ wordBreak: "break-word" }}>{v}</div></div>)}
-          {list(data.languages).length > 0 && <><h3 style={{ fontSize: 13, letterSpacing: 1, textTransform: "uppercase", borderBottom: "2px solid #D5A62F", paddingBottom: 3, marginTop: 16 }}>Languages</h3>{list(data.languages).map((x) => <div key={x} style={{ fontSize: 12 }}>{x}</div>)}</>}
-        </aside>
-        <main style={{ flex: 1, padding: 32 }}>
-          <h1 style={{ fontSize: 30, margin: 0, color: "#16734F" }}>{name}</h1>
-          <div style={{ height: 4, width: 60, background: "#D5A62F", margin: "8px 0 4px" }} />
-          {data.objective && <>{h("Objective")}<p style={{ margin: 0 }}>{data.objective}</p></>}
-          {eduTable}{exp}{bullets("Skills", data.skills)}{tail}
-        </main>
-      </div>
-    );
-  }
-
-  return (
-    <div style={{ ...page, padding: 40 }}>
-      {template === "classic" ? (
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "3px double #16734F", paddingBottom: 12 }}>
-          <div><p style={{ margin: 0, fontSize: 12, letterSpacing: 3, color: "#D5A62F", fontWeight: 700 }}>BIO-DATA</p>
-            <h1 style={{ fontSize: 28, margin: "4px 0", color: "#16734F" }}>{name}</h1>
-            <p style={{ margin: 0, fontSize: 12 }}>{[profile?.phone, data.email].filter(Boolean).join("  |  ")}</p></div>
-          {photo}
-        </div>
-      ) : (
-        <div style={{ textAlign: "center", borderBottom: "1px solid #202923", paddingBottom: 10 }}>
-          <h1 style={{ fontSize: 28, margin: 0, letterSpacing: 2, textTransform: "uppercase" }}>{name}</h1>
-          <p style={{ margin: "4px 0 0", fontSize: 12 }}>{[profile?.phone, data.email, data.address].filter(Boolean).join("  •  ")}</p>
-        </div>
-      )}
-      {data.objective && <>{h("Career Objective")}<p style={{ margin: 0 }}>{data.objective}</p></>}
-      {h("Personal Information")}
-      <table style={{ width: "100%", borderCollapse: "collapse" }}><tbody>
-        {personal.map(([k, v]) => <tr key={k}><td style={{ ...td, width: 170, fontWeight: 700, background: template === "minimal" ? "#f5f5f5" : "#F8FAF9" }}>{k}</td><td style={td}>{v}</td></tr>)}
-      </tbody></table>
-      {eduTable}{exp}{bullets("Skills", data.skills)}{bullets("Languages", data.languages)}{tail}
-    </div>
-  );
-};
-
-export default CvBuilder;
