@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Download, ExternalLink, Link2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
 import GlobalSeoHead from "@/components/seo/GlobalSeoHead";
 import { Button } from "@/components/ui/button";
 import CvDocument, { defaultCvData, type CvData, type Template } from "@/components/dashboard/CvDocument";
@@ -39,10 +38,6 @@ const PublicCv = () => {
     enabled: !!slug,
     staleTime: 1000 * 60 * 5,
   });
-
-  // Prefetch profile-cache invalidation is not needed; but a fresh share state
-  // on revisit is ensured by the standard staleTime above.
-  qc.setQueryData(["public-cv-exists"], true);
 
   const cvData: CvData = { ...defaultCvData(), ...(data?.data || {}) };
   const profile = data
