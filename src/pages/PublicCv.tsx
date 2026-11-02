@@ -24,7 +24,6 @@ type PublicCvPayload = {
 
 const PublicCv = () => {
   const { slug = "" } = useParams();
-  const qc = useQueryClient();
   const docRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
 
@@ -114,7 +113,6 @@ const PublicCv = () => {
         pageOgDescription={`Online bio-data of ${data.name} — education, experience and skills.`}
         pageOgImage={data.avatar_url || undefined}
         canonicalUrl={pageUrl}
-        pageOgType="profile" as never
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "ProfilePage",
