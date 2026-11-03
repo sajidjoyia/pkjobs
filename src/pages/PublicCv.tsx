@@ -1,11 +1,15 @@
 import { useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Download, ExternalLink, Link2, Loader2 } from "lucide-react";
+import { Download, ExternalLink, Link2, Loader2, Mail, Send } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import GlobalSeoHead from "@/components/seo/GlobalSeoHead";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/hooks/useAuth";
 import CvDocument, { defaultCvData, type CvData, type Template } from "@/components/dashboard/CvDocument";
 
 type PublicCvPayload = {
@@ -20,12 +24,46 @@ type PublicCvPayload = {
   data: Partial<CvData> | null;
   updated_at: string;
   slug: string;
+  cv_id: string;
+  owner_user_id: string | null;
+};
+
+const VISITOR_KEY = "pk-visitor-id";
+const VIEW_THROTTLE_MS = 30 * 60 * 1000; // one view per visitor per 30 minutes
+
+const getVisitorId = (): string => {
+  try {
+    let id = localStorage.getItem(VISITOR_KEY);
+    if (!id) {
+      id = typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `v-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+      localStorage.setItem(VISITOR_KEY, id);
+    }
+    return id;
+  } catch {
+    return `v-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+  }
+};
+
+const throttled = (key: string, ms: number): boolean => {
+  try {
+    const now = Date.now();
+    const last = Number(localStorage.getItem(key) || 0);
+    if (now - last < ms) return false;
+    localStorage.setItem(key, String(now));
+  } catch { /* storage unavailable — still record */ }
+  return true;
 };
 
 const PublicCv = () => {
   const { slug = "" } = useParams();
   const docRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
+  const { user } = useAuth();
+  const [contact, setContact] = useState({ name: "", email: "", company: "", message: "" });
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["public-cv", slug],
@@ -53,9 +91,23 @@ const PublicCv = () => {
   const template = (data?.template as Template) || "classic";
   const pageUrl = `${window.location.origin}/cv/${slug}`;
 
+  const recordEvent = async (type: "view" | "pdf_download", cvId: string) => {
+    if (!cvId) return;
+    try {
+      await supabase.from("cv_events").insert({ cv_id: cvId, event_type: type, visitor_key: getVisitorId() });
+    } catch { /* analytics must never break the page */ }
+  };
+
+  const trackView = (cvId: string) => {
+    if (user && user.id === (data?.owner_user_id || null)) return; // don't count the owner's own visits
+    if (!throttled(`pk-cv-view-${cvId}`, VIEW_THROTTLE_MS)) return;
+    recordEvent("view", cvId);
+  };
+
   const exportPdf = async () => {
     if (!docRef.current || !data) return;
     setExporting(true);
+    recordEvent("pdf_download", data.cv_id);
     try {
       const html2pdf = (await import("html2pdf.js")).default;
       const name = (data.name || "CV").replace(/[^a-zA-Z0-9]+/g, "_");
@@ -73,6 +125,37 @@ const PublicCv = () => {
       toast.error("Could not create PDF");
     } finally {
       setExporting(false);
+    }
+  };
+
+  const submitContact = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!data) return;
+    const name = contact.name.trim();
+    const email = contact.email.trim();
+    const message = contact.message.trim();
+    const company = contact.company.trim();
+    if (!name || name.length > 100) return toast.error("Please enter your name (max 100 characters).");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return toast.error("Please enter a valid email address.");
+    if (company.length > 120) return toast.error("Company name is too long.");
+    if (!message || message.length > 2000) return toast.error("Please write a short message (max 2000 characters).");
+    setSending(true);
+    try {
+      const { error } = await supabase.from("cv_contact_messages").insert({
+        cv_id: data.cv_id,
+        sender_name: name,
+        sender_email: email,
+        company: company || null,
+        message,
+      });
+      if (error) throw error;
+      setSent(true);
+      setContact({ name: "", email: "", company: "", message: "" });
+      toast.success("Message sent — the candidate will get your details.");
+    } catch {
+      toast.error("Could not send the message. Please try again.");
+    } finally {
+      setSending(false);
     }
   };
 
@@ -103,6 +186,9 @@ const PublicCv = () => {
       </div>
     );
   }
+
+  const isOwner = !!user && user.id === data.owner_user_id;
+  if (!isOwner) trackView(data.cv_id);
 
   return (
     <div className="py-8">
@@ -155,6 +241,62 @@ const PublicCv = () => {
             </div>
           </div>
         </div>
+
+        {!isOwner && (
+          <section className="card-elevated mt-6 p-4 sm:p-6">
+            <div className="flex items-center gap-2 mb-1">
+              <Mail className="h-4 w-4 text-primary" />
+              <h2 className="text-base font-semibold">Contact {data.name}</h2>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Recruiting or have an opportunity? Leave your details — {data.name.split(" ")[0]} gets your name, email and message.
+            </p>
+            {sent ? (
+              <div className="rounded-lg border border-border bg-muted p-4 text-sm">
+                <p className="font-medium">Message sent</p>
+                <p className="text-muted-foreground mt-1">
+                  Your details reached the candidate. They may reply to your email directly.
+                </p>
+                <Button size="sm" variant="outline" className="mt-3" onClick={() => setSent(false)}>
+                  Send another message
+                </Button>
+              </div>
+            ) : (
+              <form onSubmit={submitContact} className="space-y-3">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Your name *</Label>
+                    <Input maxLength={100} value={contact.name} onChange={(e) => setContact((c) => ({ ...c, name: e.target.value }))} required />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Your email *</Label>
+                    <Input type="email" maxLength={255} value={contact.email} onChange={(e) => setContact((c) => ({ ...c, email: e.target.value }))} required />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Company / organisation (optional)</Label>
+                  <Input maxLength={120} placeholder="e.g. Allied Bank" value={contact.company} onChange={(e) => setContact((c) => ({ ...c, company: e.target.value }))} />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Message *</Label>
+                  <Textarea
+                    rows={4}
+                    maxLength={2000}
+                    placeholder="Introduce yourself and the role you have in mind…"
+                    value={contact.message}
+                    onChange={(e) => setContact((c) => ({ ...c, message: e.target.value }))}
+                    required
+                  />
+                  <p className="text-[11px] text-muted-foreground">{contact.message.length}/2000</p>
+                </div>
+                <Button type="submit" size="sm" className="gap-1" disabled={sending}>
+                  {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Send message
+                </Button>
+              </form>
+            )}
+          </section>
+        )}
+
         <p className="text-xs text-muted-foreground text-center mt-4">
           CV created with{" "}
           <a href="/" className="underline hover:text-primary">PakJobs</a>{" "}
