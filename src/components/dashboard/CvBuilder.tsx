@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Copy, Download, FilePlus2, Globe, Link2, Loader2, MessageCircle, Plus, Save, Trash2 } from "lucide-react";
+import { BarChart3, Copy, Download, Eye, FileDown, FilePlus2, Globe, Link2, Loader2, MailOpen, MessageCircle, Plus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,17 @@ const emptyData = (): CvData => ({
 
 type SavedCv = { id: string; name: string; template: string; data: unknown; updated_at: string; slug: string | null; is_public: boolean };
 
+type CvStats = {
+  cv_id: string; cv_name: string; cv_slug: string | null; cv_is_public: boolean;
+  total_views: number; unique_views: number; pdf_downloads: number;
+  total_messages: number; unread_messages: number;
+};
+
+type ContactMessage = {
+  id: string; cv_id: string; sender_name: string; sender_email: string;
+  company: string | null; message: string; is_read: boolean; created_at: string;
+};
+
 const CvBuilder = () => {
   const { user, profile } = useAuth();
   const qc = useQueryClient();
@@ -53,6 +64,18 @@ const CvBuilder = () => {
       return (data || []) as SavedCv[];
     },
   });
+
+  const { data: stats = [] } = useQuery({
+    queryKey: ["my-cv-stats", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_my_cv_stats");
+      if (error) throw error;
+      return (data || []) as CvStats[];
+    },
+  });
+  const currentStats = stats.find((s) => s.cv_id === currentId) ?? null;
+  const unreadTotal = stats.reduce((n, s) => n + Number(s.unread_messages || 0), 0);
 
   const freshData = (): CvData => {
     const d = emptyData();
