@@ -139,6 +139,79 @@ export type Database = {
         }
         Relationships: []
       }
+      cv_contact_messages: {
+        Row: {
+          company: string | null
+          created_at: string
+          cv_id: string
+          id: string
+          is_read: boolean
+          message: string
+          sender_email: string
+          sender_name: string
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string
+          cv_id: string
+          id?: string
+          is_read?: boolean
+          message: string
+          sender_email: string
+          sender_name: string
+        }
+        Update: {
+          company?: string | null
+          created_at?: string
+          cv_id?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          sender_email?: string
+          sender_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cv_contact_messages_cv_id_fkey"
+            columns: ["cv_id"]
+            isOneToOne: false
+            referencedRelation: "user_cvs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cv_events: {
+        Row: {
+          created_at: string
+          cv_id: string
+          event_type: string
+          id: string
+          visitor_key: string
+        }
+        Insert: {
+          created_at?: string
+          cv_id: string
+          event_type: string
+          id?: string
+          visitor_key: string
+        }
+        Update: {
+          created_at?: string
+          cv_id?: string
+          event_type?: string
+          id?: string
+          visitor_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cv_events_cv_id_fkey"
+            columns: ["cv_id"]
+            isOneToOne: false
+            referencedRelation: "user_cvs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       education_fields: {
         Row: {
           created_at: string
@@ -885,6 +958,20 @@ export type Database = {
       }
       cv_slugify: { Args: { raw: string }; Returns: string }
       eligible_users_for_job: { Args: { _job_id: string }; Returns: string[] }
+      get_my_cv_stats: {
+        Args: never
+        Returns: {
+          cv_id: string
+          cv_is_public: boolean
+          cv_name: string
+          cv_slug: string
+          pdf_downloads: number
+          total_messages: number
+          total_views: number
+          unique_views: number
+          unread_messages: number
+        }[]
+      }
       get_public_cv: { Args: { _slug: string }; Returns: Json }
       get_push_web_config: {
         Args: never
@@ -902,7 +989,9 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_cv_public: { Args: { _cv_id: string }; Returns: boolean }
       job_slugify: { Args: { raw: string }; Returns: string }
+      owns_cv: { Args: { _cv_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user" | "expert"

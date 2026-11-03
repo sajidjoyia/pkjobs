@@ -50,6 +50,13 @@
       "when": 1793504945368,
       "tag": "0006_user_cv_public_share",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793672192439,
+      "tag": "0007_cv_analytics_and_contact",
+      "breakpoints": true
     }
   ]
 }

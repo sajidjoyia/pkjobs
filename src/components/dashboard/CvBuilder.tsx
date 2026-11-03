@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Copy, Download, FilePlus2, Globe, Link2, Loader2, MessageCircle, Plus, Save, Trash2 } from "lucide-react";
+import { BarChart3, Copy, Download, Eye, FileDown, FilePlus2, Globe, Link2, Loader2, MailOpen, MessageCircle, Plus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,17 @@ const emptyData = (): CvData => ({
 
 type SavedCv = { id: string; name: string; template: string; data: unknown; updated_at: string; slug: string | null; is_public: boolean };
 
+type CvStats = {
+  cv_id: string; cv_name: string; cv_slug: string | null; cv_is_public: boolean;
+  total_views: number; unique_views: number; pdf_downloads: number;
+  total_messages: number; unread_messages: number;
+};
+
+type ContactMessage = {
+  id: string; cv_id: string; sender_name: string; sender_email: string;
+  company: string | null; message: string; is_read: boolean; created_at: string;
+};
+
 const CvBuilder = () => {
   const { user, profile } = useAuth();
   const qc = useQueryClient();
@@ -53,6 +64,18 @@ const CvBuilder = () => {
       return (data || []) as SavedCv[];
     },
   });
+
+  const { data: stats = [] } = useQuery({
+    queryKey: ["my-cv-stats", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_my_cv_stats");
+      if (error) throw error;
+      return (data || []) as CvStats[];
+    },
+  });
+  const currentStats = stats.find((s) => s.cv_id === currentId) ?? null;
+  const unreadTotal = stats.reduce((n, s) => n + Number(s.unread_messages || 0), 0);
 
   const freshData = (): CvData => {
     const d = emptyData();
@@ -180,6 +203,39 @@ const CvBuilder = () => {
     toast.success("Sharing turned off — the link no longer works");
   };
 
+  const { data: messages = [] } = useQuery({
+    queryKey: ["cv-messages", currentId],
+    enabled: !!currentId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cv_contact_messages")
+        .select("id,cv_id,sender_name,sender_email,company,message,is_read,created_at")
+        .eq("cv_id", currentId!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data || []) as ContactMessage[];
+    },
+  });
+
+  const invalidateCvData = () => {
+    qc.invalidateQueries({ queryKey: ["cv-messages"] });
+    qc.invalidateQueries({ queryKey: ["my-cv-stats"] });
+  };
+
+  const markAllRead = async () => {
+    if (!currentId) return;
+    const { error } = await supabase.from("cv_contact_messages").update({ is_read: true }).eq("cv_id", currentId).eq("is_read", false);
+    if (error) return toast.error(error.message);
+    invalidateCvData();
+  };
+
+  const removeMessage = async (id: string) => {
+    const { error } = await supabase.from("cv_contact_messages").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    invalidateCvData();
+    toast.success("Message deleted");
+  };
+
   const set = <K extends keyof CvData>(k: K, v: CvData[K]) => setData((d) => ({ ...d, [k]: v }));
   const setRow = <T,>(k: "education" | "experience", i: number, patch: Partial<T>) =>
     setData((d) => ({ ...d, [k]: (d[k] as any[]).map((r, idx) => (idx === i ? { ...r, ...patch } : r)) }));
@@ -221,13 +277,19 @@ const CvBuilder = () => {
           </div>
           {cvs.length > 0 ? (
             <div className="flex flex-wrap gap-2">
-              {cvs.map((c) => (
-                <button key={c.id} type="button" onClick={() => openCv(c)}
-                  className={cn("rounded-md border px-3 py-1.5 text-sm text-left", c.id === currentId ? "border-primary bg-primary/10 font-medium" : "border-border hover:bg-muted")}>
-                  {c.name}
-                  <span className="block text-[11px] text-muted-foreground">Updated {new Date(c.updated_at).toLocaleDateString("en-GB")}</span>
-                </button>
-              ))}
+              {cvs.map((c) => {
+                const unread = Number(stats.find((s) => s.cv_id === c.id)?.unread_messages || 0);
+                return (
+                  <button key={c.id} type="button" onClick={() => openCv(c)}
+                    className={cn("rounded-md border px-3 py-1.5 text-sm text-left", c.id === currentId ? "border-primary bg-primary/10 font-medium" : "border-border hover:bg-muted")}>
+                    {c.name}
+                    <span className="block text-[11px] text-muted-foreground">
+                      Updated {new Date(c.updated_at).toLocaleDateString("en-GB")}
+                      {unread > 0 && <span className="text-primary font-medium"> • {unread} new message{unread > 1 ? "s" : ""}</span>}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           ) : <p className="text-sm text-muted-foreground">No saved CVs yet — fill the form and press Save CV.</p>}
           <div className="grid gap-2 sm:grid-cols-[1fr_auto_auto] items-end">
@@ -264,9 +326,56 @@ const CvBuilder = () => {
               {currentCv?.is_public && shareUrl && (
                 <code className="block text-xs bg-muted rounded-md px-2 py-1.5 break-all select-all">{shareUrl}</code>
               )}
+              {currentStats && (
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <span className="inline-flex items-center gap-1 text-xs rounded-full border border-border px-2 py-0.5"><Eye className="h-3 w-3 text-primary" />{currentStats.total_views} view{currentStats.total_views === 1 ? "" : "s"}</span>
+                  <span className="inline-flex items-center gap-1 text-xs rounded-full border border-border px-2 py-0.5"><BarChart3 className="h-3 w-3 text-primary" />{currentStats.unique_views} unique</span>
+                  <span className="inline-flex items-center gap-1 text-xs rounded-full border border-border px-2 py-0.5"><FileDown className="h-3 w-3 text-primary" />{currentStats.pdf_downloads} PDF download{currentStats.pdf_downloads === 1 ? "" : "s"}</span>
+                  <span className={cn("inline-flex items-center gap-1 text-xs rounded-full border px-2 py-0.5", currentStats.unread_messages > 0 ? "border-primary bg-primary/10 text-primary font-medium" : "border-border")}>
+                    <MessageCircle className="h-3 w-3" />{currentStats.total_messages} message{currentStats.total_messages === 1 ? "" : "s"}
+                    {currentStats.unread_messages > 0 ? ` • ${currentStats.unread_messages} new` : ""}
+                  </span>
+                </div>
+              )}
             </div>
           ) : (
             <p className="text-xs text-muted-foreground">This is a new, unsaved CV. Save it first, then you can create a public link.</p>
+          )}
+          {messages.length > 0 && (
+            <div className="rounded-lg border border-border p-3 space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-medium flex items-center gap-1.5">
+                  <MessageCircle className="h-3.5 w-3.5 text-primary" /> Messages about this CV
+                </p>
+                <Button size="sm" variant="outline" className="gap-1" onClick={markAllRead}><MailOpen className="h-3.5 w-3.5" />Mark all read</Button>
+              </div>
+              <div className="space-y-2 max-h-72 overflow-auto">
+                {messages.map((m) => (
+                  <div key={m.id} className={cn("rounded-md border p-2.5 text-sm", m.is_read ? "border-border" : "border-primary/40 bg-primary/5")}>
+                    <div className="flex flex-wrap items-center justify-between gap-1">
+                      <p className="font-medium">
+                        {m.sender_name}
+                        {m.company && <span className="font-normal text-muted-foreground"> — {m.company}</span>}
+                      </p>
+                      <span className="text-[11px] text-muted-foreground">{new Date(m.created_at).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
+                    </div>
+                    <a href={`mailto:${m.sender_email}`} className="text-xs text-primary underline">{m.sender_email}</a>
+                    <p className="mt-1 whitespace-pre-wrap">{m.message}</p>
+                    <div className="flex gap-2 mt-1.5">
+                      {!m.is_read && (
+                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={async () => {
+                          await supabase.from("cv_contact_messages").update({ is_read: true }).eq("id", m.id);
+                          invalidateCvData();
+                        }}>Mark read</Button>
+                      )}
+                      <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-destructive hover:text-destructive" onClick={() => removeMessage(m.id)}>
+                        <Trash2 className="h-3 w-3 mr-0.5" />Delete
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </section>
 
