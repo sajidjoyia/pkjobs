@@ -326,9 +326,56 @@ const CvBuilder = () => {
               {currentCv?.is_public && shareUrl && (
                 <code className="block text-xs bg-muted rounded-md px-2 py-1.5 break-all select-all">{shareUrl}</code>
               )}
+              {currentStats && (
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <span className="inline-flex items-center gap-1 text-xs rounded-full border border-border px-2 py-0.5"><Eye className="h-3 w-3 text-primary" />{currentStats.total_views} view{currentStats.total_views === 1 ? "" : "s"}</span>
+                  <span className="inline-flex items-center gap-1 text-xs rounded-full border border-border px-2 py-0.5"><BarChart3 className="h-3 w-3 text-primary" />{currentStats.unique_views} unique</span>
+                  <span className="inline-flex items-center gap-1 text-xs rounded-full border border-border px-2 py-0.5"><FileDown className="h-3 w-3 text-primary" />{currentStats.pdf_downloads} PDF download{currentStats.pdf_downloads === 1 ? "" : "s"}</span>
+                  <span className={cn("inline-flex items-center gap-1 text-xs rounded-full border px-2 py-0.5", currentStats.unread_messages > 0 ? "border-primary bg-primary/10 text-primary font-medium" : "border-border")}>
+                    <MessageCircle className="h-3 w-3" />{currentStats.total_messages} message{currentStats.total_messages === 1 ? "" : "s"}
+                    {currentStats.unread_messages > 0 ? ` • ${currentStats.unread_messages} new` : ""}
+                  </span>
+                </div>
+              )}
             </div>
           ) : (
             <p className="text-xs text-muted-foreground">This is a new, unsaved CV. Save it first, then you can create a public link.</p>
+          )}
+          {messages.length > 0 && (
+            <div className="rounded-lg border border-border p-3 space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-medium flex items-center gap-1.5">
+                  <MessageCircle className="h-3.5 w-3.5 text-primary" /> Messages about this CV
+                </p>
+                <Button size="sm" variant="outline" className="gap-1" onClick={markAllRead}><MailOpen className="h-3.5 w-3.5" />Mark all read</Button>
+              </div>
+              <div className="space-y-2 max-h-72 overflow-auto">
+                {messages.map((m) => (
+                  <div key={m.id} className={cn("rounded-md border p-2.5 text-sm", m.is_read ? "border-border" : "border-primary/40 bg-primary/5")}>
+                    <div className="flex flex-wrap items-center justify-between gap-1">
+                      <p className="font-medium">
+                        {m.sender_name}
+                        {m.company && <span className="font-normal text-muted-foreground"> — {m.company}</span>}
+                      </p>
+                      <span className="text-[11px] text-muted-foreground">{new Date(m.created_at).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
+                    </div>
+                    <a href={`mailto:${m.sender_email}`} className="text-xs text-primary underline">{m.sender_email}</a>
+                    <p className="mt-1 whitespace-pre-wrap">{m.message}</p>
+                    <div className="flex gap-2 mt-1.5">
+                      {!m.is_read && (
+                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={async () => {
+                          await supabase.from("cv_contact_messages").update({ is_read: true }).eq("id", m.id);
+                          invalidateCvData();
+                        }}>Mark read</Button>
+                      )}
+                      <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-destructive hover:text-destructive" onClick={() => removeMessage(m.id)}>
+                        <Trash2 className="h-3 w-3 mr-0.5" />Delete
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </section>
 
