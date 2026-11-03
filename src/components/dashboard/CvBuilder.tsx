@@ -203,6 +203,39 @@ const CvBuilder = () => {
     toast.success("Sharing turned off — the link no longer works");
   };
 
+  const { data: messages = [] } = useQuery({
+    queryKey: ["cv-messages", currentId],
+    enabled: !!currentId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cv_contact_messages")
+        .select("id,cv_id,sender_name,sender_email,company,message,is_read,created_at")
+        .eq("cv_id", currentId!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data || []) as ContactMessage[];
+    },
+  });
+
+  const invalidateCvData = () => {
+    qc.invalidateQueries({ queryKey: ["cv-messages"] });
+    qc.invalidateQueries({ queryKey: ["my-cv-stats"] });
+  };
+
+  const markAllRead = async () => {
+    if (!currentId) return;
+    const { error } = await supabase.from("cv_contact_messages").update({ is_read: true }).eq("cv_id", currentId).eq("is_read", false);
+    if (error) return toast.error(error.message);
+    invalidateCvData();
+  };
+
+  const removeMessage = async (id: string) => {
+    const { error } = await supabase.from("cv_contact_messages").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    invalidateCvData();
+    toast.success("Message deleted");
+  };
+
   const set = <K extends keyof CvData>(k: K, v: CvData[K]) => setData((d) => ({ ...d, [k]: v }));
   const setRow = <T,>(k: "education" | "experience", i: number, patch: Partial<T>) =>
     setData((d) => ({ ...d, [k]: (d[k] as any[]).map((r, idx) => (idx === i ? { ...r, ...patch } : r)) }));
@@ -244,13 +277,19 @@ const CvBuilder = () => {
           </div>
           {cvs.length > 0 ? (
             <div className="flex flex-wrap gap-2">
-              {cvs.map((c) => (
-                <button key={c.id} type="button" onClick={() => openCv(c)}
-                  className={cn("rounded-md border px-3 py-1.5 text-sm text-left", c.id === currentId ? "border-primary bg-primary/10 font-medium" : "border-border hover:bg-muted")}>
-                  {c.name}
-                  <span className="block text-[11px] text-muted-foreground">Updated {new Date(c.updated_at).toLocaleDateString("en-GB")}</span>
-                </button>
-              ))}
+              {cvs.map((c) => {
+                const unread = Number(stats.find((s) => s.cv_id === c.id)?.unread_messages || 0);
+                return (
+                  <button key={c.id} type="button" onClick={() => openCv(c)}
+                    className={cn("rounded-md border px-3 py-1.5 text-sm text-left", c.id === currentId ? "border-primary bg-primary/10 font-medium" : "border-border hover:bg-muted")}>
+                    {c.name}
+                    <span className="block text-[11px] text-muted-foreground">
+                      Updated {new Date(c.updated_at).toLocaleDateString("en-GB")}
+                      {unread > 0 && <span className="text-primary font-medium"> • {unread} new message{unread > 1 ? "s" : ""}</span>}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           ) : <p className="text-sm text-muted-foreground">No saved CVs yet — fill the form and press Save CV.</p>}
           <div className="grid gap-2 sm:grid-cols-[1fr_auto_auto] items-end">
