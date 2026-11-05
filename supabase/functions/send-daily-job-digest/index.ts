@@ -21,9 +21,6 @@ interface JobRow {
   total_seats: number | null;
 }
 
-const formatSeats = (seats: number | null) =>
-  !seats || seats < 1 ? "Seats not specified" : `${seats} seat${seats === 1 ? "" : "s"}`;
-
 async function recordDelivery(user_id: string, job_id: string, channel: string, status: string, error?: string) {
   await supabase
     .from("notification_deliveries")
