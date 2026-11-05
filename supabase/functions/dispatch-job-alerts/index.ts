@@ -1,5 +1,10 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import {
+  EmailJob,
+  jobMatchEmailHtml,
+  sendResendEmail,
+} from "../_shared/email.ts";
 
 const SITE_URL = "https://pkjobs.lovable.app";
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/firebase_messaging";
@@ -70,23 +75,16 @@ async function sendPush(tokens: string[], job: JobRow) {
   return { skipped: false, stale };
 }
 
-async function sendEmail(email: string, job: JobRow) {
-  const { error } = await supabase.functions.invoke("send-transactional-email", {
-    body: {
-      templateName: "new-job-match",
-      recipientEmail: email,
-      idempotencyKey: `job-match-${job.id}-${email}`,
-      templateData: {
-        jobTitle: job.title,
-        department: job.department,
-        lastDate: job.last_date,
-        seats: formatSeats(job.total_seats),
-        totalFee: job.total_fee ? `PKR ${job.total_fee}` : "Not specified",
-        jobUrl: `${SITE_URL}/jobs/${job.slug || job.id}`,
-      },
-    },
+async function sendEmail(email: string, job: EmailJob, unsubscribeToken: string) {
+  const result = await sendResendEmail(supabase, {
+    to: email,
+    subject: `New job match: ${job.title} — apply by ${job.last_date}`,
+    html: jobMatchEmailHtml(job, unsubscribeToken),
+    unsubscribeToken,
   });
-  if (error) throw error;
+  if (result.skipped) return result.skipped;
+  if (result.error) throw new Error(result.error);
+  return null;
 }
 
 Deno.serve(async (req) => {
