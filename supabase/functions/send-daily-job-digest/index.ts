@@ -178,9 +178,12 @@ Deno.serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ jobs: jobs.length, users: usersNotified }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ jobs: jobs.length, users: usersNotified, email_skipped: emailSkipped }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     console.error("send-daily-job-digest failed:", message);
