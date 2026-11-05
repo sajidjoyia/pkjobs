@@ -139,6 +139,7 @@ Deno.serve(async (req) => {
     const sentKey = new Set((alreadySent ?? []).map((d) => `${d.user_id}:${d.channel}`));
 
     let sent = 0;
+    let emailSkipped: string | null = null;
 
     for (const pref of prefs ?? []) {
       if (pref.email_enabled && !sentKey.has(`${pref.user_id}:email`)) {
@@ -146,9 +147,17 @@ Deno.serve(async (req) => {
           const { data: authUser } = await supabase.auth.admin.getUserById(pref.user_id);
           const email = authUser?.user?.email;
           if (email) {
-            await sendEmail(email, job as JobRow);
-            await recordDelivery(pref.user_id, job_id, "email", "sent");
-            sent++;
+            const skipped = await sendEmail(
+              email,
+              job as EmailJob,
+              pref.unsubscribe_token as string
+            );
+            if (skipped) {
+              emailSkipped = skipped;
+            } else {
+              await recordDelivery(pref.user_id, job_id, "email", "sent");
+              sent++;
+            }
           }
         } catch (e) {
           await recordDelivery(
@@ -190,9 +199,12 @@ Deno.serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ eligible: userIds.length, sent }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ eligible: userIds.length, sent, email_skipped: emailSkipped }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     console.error("dispatch-job-alerts failed:", message);
