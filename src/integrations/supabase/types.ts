@@ -242,6 +242,30 @@ export type Database = {
         }
         Relationships: []
       }
+      email_sender_config: {
+        Row: {
+          from_email: string
+          from_name: string
+          id: boolean
+          reply_to: string | null
+          updated_at: string
+        }
+        Insert: {
+          from_email: string
+          from_name?: string
+          id?: boolean
+          reply_to?: string | null
+          updated_at?: string
+        }
+        Update: {
+          from_email?: string
+          from_name?: string
+          id?: boolean
+          reply_to?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       global_seo_settings: {
         Row: {
           created_at: string
@@ -528,6 +552,7 @@ export type Database = {
           id: string
           paused: boolean
           push_enabled: boolean
+          unsubscribe_token: string | null
           updated_at: string
           user_id: string
           whatsapp_enabled: boolean
@@ -540,6 +565,7 @@ export type Database = {
           id?: string
           paused?: boolean
           push_enabled?: boolean
+          unsubscribe_token?: string | null
           updated_at?: string
           user_id: string
           whatsapp_enabled?: boolean
@@ -552,6 +578,7 @@ export type Database = {
           id?: string
           paused?: boolean
           push_enabled?: boolean
+          unsubscribe_token?: string | null
           updated_at?: string
           user_id?: string
           whatsapp_enabled?: boolean

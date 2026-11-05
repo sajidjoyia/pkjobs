@@ -57,6 +57,13 @@
       "when": 1793672192439,
       "tag": "0007_cv_analytics_and_contact",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793849990994,
+      "tag": "0008_email_unsubscribe_token_and_sender_config",
+      "breakpoints": true
     }
   ]
 }
