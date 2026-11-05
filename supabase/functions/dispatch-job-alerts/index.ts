@@ -1,7 +1,11 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import {
+  EmailJob,
+  jobMatchEmailHtml,
+  sendResendEmail,
+} from "../_shared/email.ts";
 
-const SITE_URL = "https://pkjobs.lovable.app";
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/firebase_messaging";
 
 const supabase = createClient(
@@ -70,23 +74,16 @@ async function sendPush(tokens: string[], job: JobRow) {
   return { skipped: false, stale };
 }
 
-async function sendEmail(email: string, job: JobRow) {
-  const { error } = await supabase.functions.invoke("send-transactional-email", {
-    body: {
-      templateName: "new-job-match",
-      recipientEmail: email,
-      idempotencyKey: `job-match-${job.id}-${email}`,
-      templateData: {
-        jobTitle: job.title,
-        department: job.department,
-        lastDate: job.last_date,
-        seats: formatSeats(job.total_seats),
-        totalFee: job.total_fee ? `PKR ${job.total_fee}` : "Not specified",
-        jobUrl: `${SITE_URL}/jobs/${job.slug || job.id}`,
-      },
-    },
+async function sendEmail(email: string, job: EmailJob, unsubscribeToken: string) {
+  const result = await sendResendEmail(supabase, {
+    to: email,
+    subject: `New job match: ${job.title} — apply by ${job.last_date}`,
+    html: jobMatchEmailHtml(job, unsubscribeToken),
+    unsubscribeToken,
   });
-  if (error) throw error;
+  if (result.skipped) return result.skipped;
+  if (result.error) throw new Error(result.error);
+  return null;
 }
 
 Deno.serve(async (req) => {
@@ -141,6 +138,7 @@ Deno.serve(async (req) => {
     const sentKey = new Set((alreadySent ?? []).map((d) => `${d.user_id}:${d.channel}`));
 
     let sent = 0;
+    let emailSkipped: string | null = null;
 
     for (const pref of prefs ?? []) {
       if (pref.email_enabled && !sentKey.has(`${pref.user_id}:email`)) {
@@ -148,9 +146,17 @@ Deno.serve(async (req) => {
           const { data: authUser } = await supabase.auth.admin.getUserById(pref.user_id);
           const email = authUser?.user?.email;
           if (email) {
-            await sendEmail(email, job as JobRow);
-            await recordDelivery(pref.user_id, job_id, "email", "sent");
-            sent++;
+            const skipped = await sendEmail(
+              email,
+              job as EmailJob,
+              pref.unsubscribe_token as string
+            );
+            if (skipped) {
+              emailSkipped = skipped;
+            } else {
+              await recordDelivery(pref.user_id, job_id, "email", "sent");
+              sent++;
+            }
           }
         } catch (e) {
           await recordDelivery(
@@ -192,9 +198,12 @@ Deno.serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ eligible: userIds.length, sent }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ eligible: userIds.length, sent, email_skipped: emailSkipped }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     console.error("dispatch-job-alerts failed:", message);

@@ -1,7 +1,11 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import {
+  digestEmailHtml,
+  EmailJob,
+  sendResendEmail,
+} from "../_shared/email.ts";
 
-const SITE_URL = "https://pkjobs.lovable.app";
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/firebase_messaging";
 
 const supabase = createClient(
@@ -16,9 +20,6 @@ interface JobRow {
   last_date: string;
   total_seats: number | null;
 }
-
-const formatSeats = (seats: number | null) =>
-  !seats || seats < 1 ? "Seats not specified" : `${seats} seat${seats === 1 ? "" : "s"}`;
 
 async function recordDelivery(user_id: string, job_id: string, channel: string, status: string, error?: string) {
   await supabase
@@ -118,6 +119,7 @@ Deno.serve(async (req) => {
     const sentKey = new Set((alreadySent ?? []).map((d) => `${d.user_id}:${d.job_id}:${d.channel}`));
 
     let usersNotified = 0;
+    let emailSkipped: string | null = null;
 
     for (const pref of prefs ?? []) {
       const allMatches = perUser.get(pref.user_id) ?? [];
@@ -129,26 +131,20 @@ Deno.serve(async (req) => {
             const { data: authUser } = await supabase.auth.admin.getUserById(pref.user_id);
             const email = authUser?.user?.email;
             if (email) {
-              const { error } = await supabase.functions.invoke("send-transactional-email", {
-                body: {
-                  templateName: "daily-job-digest",
-                  recipientEmail: email,
-                  idempotencyKey: `digest-${pref.user_id}-${new Date().toISOString().slice(0, 10)}`,
-                  templateData: {
-                    count: fresh.length,
-                    jobs: fresh.map((j) => ({
-                      title: j.title,
-                      department: j.department,
-                      lastDate: j.last_date,
-                      seats: formatSeats(j.total_seats),
-                      url: `${SITE_URL}/jobs/${j.slug || j.id}`,
-                    })),
-                  },
-                },
+              const result = await sendResendEmail(supabase, {
+                to: email,
+                subject: `Your job matches today: ${fresh.length} new government job${fresh.length === 1 ? "" : "s"}`,
+                html: digestEmailHtml(fresh as EmailJob[], pref.unsubscribe_token as string),
+                unsubscribeToken: pref.unsubscribe_token as string,
               });
-              if (error) throw error;
-              for (const j of fresh) await recordDelivery(pref.user_id, j.id, "email", "sent");
-              usersNotified++;
+              if (result.skipped) {
+                emailSkipped = result.skipped;
+              } else if (result.error) {
+                throw new Error(result.error);
+              } else {
+                for (const j of fresh) await recordDelivery(pref.user_id, j.id, "email", "sent");
+                usersNotified++;
+              }
             }
           } catch (e) {
             for (const j of fresh) {
@@ -179,9 +175,12 @@ Deno.serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ jobs: jobs.length, users: usersNotified }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ jobs: jobs.length, users: usersNotified, email_skipped: emailSkipped }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     console.error("send-daily-job-digest failed:", message);
