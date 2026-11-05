@@ -6,6 +6,8 @@ import {
   sendResendEmail,
 } from "../_shared/email.ts";
 
+const GATEWAY_URL = "https://connector-gateway.lovable.dev/firebase_messaging";
+
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
