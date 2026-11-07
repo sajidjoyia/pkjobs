@@ -35,6 +35,7 @@ const Careers = lazy(() => import("./pages/Careers"));
 const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
 const McpDocs = lazy(() => import("./pages/McpDocs"));
 const PublicCv = lazy(() => import("./pages/PublicCv"));
+const EmailUnsubscribe = lazy(() => import("./pages/EmailUnsubscribe"));
 
 export const RQ_PERSIST_KEY = "pkjobs-rq-cache";
 
@@ -87,6 +88,7 @@ const App = () => (
                   <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
                   <Route path="/mcp-docs" element={<McpDocs />} />
                   <Route path="/cv/:slug" element={<PublicCv />} />
+                  <Route path="/email-unsubscribe" element={<EmailUnsubscribe />} />
                   <Route path="/dashboard" element={
                     <ProtectedRoute>
                       <Dashboard />

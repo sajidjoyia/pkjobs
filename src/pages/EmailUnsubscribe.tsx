@@ -3,8 +3,6 @@ import { useSearchParams } from "react-router-dom";
 import { CheckCircle2, Loader2, MailX, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 
 const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 
@@ -52,8 +50,7 @@ const EmailUnsubscribe = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <Header />
+    <div className="flex flex-col bg-background">
       <main className="flex-1 flex items-start justify-center px-4 py-16 sm:py-24">
         <Card className="w-full max-w-md text-center">
           <CardHeader className="space-y-3">
@@ -114,7 +111,6 @@ const EmailUnsubscribe = () => {
           </CardContent>
         </Card>
       </main>
-      <Footer />
     </div>
   );
 };

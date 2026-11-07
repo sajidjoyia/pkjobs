@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import FirebasePushSetup from "./FirebasePushSetup";
+import EmailSetup from "./EmailSetup";
 import { formatDistanceToNow } from "date-fns";
 
 const JobAlertsPanel = () => {
@@ -116,20 +117,7 @@ const JobAlertsPanel = () => {
         </CardHeader>
         <CardContent className="space-y-5 text-sm">
           <FirebasePushSetup />
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 font-medium">
-              <Mail className="h-4 w-4 text-primary" />
-              Email alerts
-              <Badge variant="outline" className="gap-1">
-                <CircleDashed className="h-3 w-3" /> Needs a sender domain
-              </Badge>
-            </div>
-            <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
-              <li>You need a domain you own (e.g. yourdomain.com). You can buy one in Project Settings → Domains.</li>
-              <li>Ask in chat to "set up email domain" and follow the short steps shown.</li>
-              <li>Once verified, job alert emails start sending automatically — nothing else to change.</li>
-            </ol>
-          </div>
+          <EmailSetup />
           <p className="text-xs text-muted-foreground">
             Until a channel is connected, users simply don't see it — bell alerts inside the site keep working regardless.
           </p>
